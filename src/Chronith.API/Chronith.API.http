@@ -1,6 +1,0 @@
-@Chronith.API_HostAddress = http://localhost:5137
-
-GET {{Chronith.API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
