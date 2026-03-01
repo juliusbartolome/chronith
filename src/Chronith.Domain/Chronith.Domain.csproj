@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Chronith.Infrastructure" />
     <InternalsVisibleTo Include="Chronith.Tests.Unit" />
     <InternalsVisibleTo Include="Chronith.Tests.Integration" />
     <InternalsVisibleTo Include="Chronith.Tests.Functional" />
