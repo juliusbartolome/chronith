@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Chronith.API/Chronith.API.csproj" />
+    <Project Path="src/Chronith.Application/Chronith.Application.csproj" />
+    <Project Path="src/Chronith.Domain/Chronith.Domain.csproj" />
+    <Project Path="src/Chronith.Infrastructure/Chronith.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Chronith.Tests.Functional/Chronith.Tests.Functional.csproj" />
+    <Project Path="tests/Chronith.Tests.Integration/Chronith.Tests.Integration.csproj" />
+    <Project Path="tests/Chronith.Tests.Performance/Chronith.Tests.Performance.csproj" />
+    <Project Path="tests/Chronith.Tests.Unit/Chronith.Tests.Unit.csproj" />
+  </Folder>
+</Solution>
