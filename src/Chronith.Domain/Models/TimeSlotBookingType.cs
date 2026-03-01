@@ -13,6 +13,54 @@ public sealed class TimeSlotBookingType : BookingType
     // For Infrastructure hydration
     internal TimeSlotBookingType() { }
 
+    public static TimeSlotBookingType Create(
+        Guid tenantId,
+        string slug,
+        string name,
+        int capacity,
+        PaymentMode paymentMode,
+        string? paymentProvider,
+        int durationMinutes,
+        int bufferBeforeMinutes,
+        int bufferAfterMinutes,
+        IReadOnlyList<TimeSlotWindow> availabilityWindows)
+    {
+        return new TimeSlotBookingType
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Slug = slug,
+            Name = name,
+            Capacity = capacity,
+            PaymentMode = paymentMode,
+            PaymentProvider = paymentProvider,
+            DurationMinutes = durationMinutes,
+            BufferBeforeMinutes = bufferBeforeMinutes,
+            BufferAfterMinutes = bufferAfterMinutes,
+            AvailabilityWindows = availabilityWindows
+        };
+    }
+
+    public override void Update(
+        string name,
+        int capacity,
+        PaymentMode paymentMode,
+        string? paymentProvider,
+        int durationMinutes,
+        int bufferBeforeMinutes,
+        int bufferAfterMinutes,
+        IReadOnlyList<TimeSlotWindow>? availabilityWindows,
+        IReadOnlyList<DayOfWeek>? availableDays)
+    {
+        base.Update(name, capacity, paymentMode, paymentProvider,
+            durationMinutes, bufferBeforeMinutes, bufferAfterMinutes,
+            availabilityWindows, availableDays);
+        DurationMinutes = durationMinutes;
+        BufferBeforeMinutes = bufferBeforeMinutes;
+        BufferAfterMinutes = bufferAfterMinutes;
+        AvailabilityWindows = availabilityWindows ?? Array.Empty<TimeSlotWindow>();
+    }
+
     public override (DateTimeOffset Start, DateTimeOffset End) ResolveSlot(
         DateTimeOffset requestedStart, TenantTimeZone tz)
     {

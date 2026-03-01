@@ -25,4 +25,24 @@ public abstract class BookingType
     /// </summary>
     public abstract (DateTimeOffset EffectiveStart, DateTimeOffset EffectiveEnd)
         GetEffectiveRange(DateTimeOffset start, DateTimeOffset end);
+
+    /// <summary>Updates mutable fields. Subclasses extend this for type-specific fields.</summary>
+    public virtual void Update(
+        string name,
+        int capacity,
+        PaymentMode paymentMode,
+        string? paymentProvider,
+        int durationMinutes,
+        int bufferBeforeMinutes,
+        int bufferAfterMinutes,
+        IReadOnlyList<TimeSlotWindow>? availabilityWindows,
+        IReadOnlyList<DayOfWeek>? availableDays)
+    {
+        Name = name;
+        Capacity = capacity;
+        PaymentMode = paymentMode;
+        PaymentProvider = paymentProvider;
+    }
+
+    public void SoftDelete() => IsDeleted = true;
 }

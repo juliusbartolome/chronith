@@ -10,6 +10,45 @@ public sealed class CalendarBookingType : BookingType
     // For Infrastructure hydration
     internal CalendarBookingType() { }
 
+    public static CalendarBookingType Create(
+        Guid tenantId,
+        string slug,
+        string name,
+        int capacity,
+        PaymentMode paymentMode,
+        string? paymentProvider,
+        IReadOnlyList<DayOfWeek> availableDays)
+    {
+        return new CalendarBookingType
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Slug = slug,
+            Name = name,
+            Capacity = capacity,
+            PaymentMode = paymentMode,
+            PaymentProvider = paymentProvider,
+            AvailableDays = availableDays
+        };
+    }
+
+    public override void Update(
+        string name,
+        int capacity,
+        PaymentMode paymentMode,
+        string? paymentProvider,
+        int durationMinutes,
+        int bufferBeforeMinutes,
+        int bufferAfterMinutes,
+        IReadOnlyList<TimeSlotWindow>? availabilityWindows,
+        IReadOnlyList<DayOfWeek>? availableDays)
+    {
+        base.Update(name, capacity, paymentMode, paymentProvider,
+            durationMinutes, bufferBeforeMinutes, bufferAfterMinutes,
+            availabilityWindows, availableDays);
+        AvailableDays = availableDays ?? Array.Empty<DayOfWeek>();
+    }
+
     public override (DateTimeOffset Start, DateTimeOffset End) ResolveSlot(
         DateTimeOffset requestedStart, TenantTimeZone tz)
     {
