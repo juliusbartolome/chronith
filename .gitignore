@@ -3,6 +3,9 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# EF Core Design tools emit bin artifacts with backslash paths on macOS
+src/*/bin\*
+
 # dotenv files
 .env
 
