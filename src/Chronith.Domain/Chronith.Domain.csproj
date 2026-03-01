@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Chronith.Tests.Unit" />
+    <InternalsVisibleTo Include="Chronith.Tests.Integration" />
+    <InternalsVisibleTo Include="Chronith.Tests.Functional" />
+  </ItemGroup>
+
 </Project>
