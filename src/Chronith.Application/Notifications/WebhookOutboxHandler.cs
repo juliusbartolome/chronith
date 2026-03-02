@@ -7,7 +7,8 @@ namespace Chronith.Application.Notifications;
 
 public sealed class WebhookOutboxHandler(
     IWebhookRepository webhookRepo,
-    IWebhookOutboxRepository outboxRepo)
+    IWebhookOutboxRepository outboxRepo,
+    IUnitOfWork unitOfWork)
     : INotificationHandler<BookingStatusChangedNotification>
 {
     private static readonly JsonSerializerOptions JsonOptions =
@@ -52,5 +53,6 @@ public sealed class WebhookOutboxHandler(
         }).ToList();
 
         await outboxRepo.AddRangeAsync(entries, ct);
+        await unitOfWork.SaveChangesAsync(ct);
     }
 }

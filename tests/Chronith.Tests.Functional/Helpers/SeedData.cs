@@ -114,4 +114,24 @@ public static class SeedData
         await db.SaveChangesAsync();
         return id;
     }
+
+    public static async Task<Guid> SeedWebhookAsync(
+        ChronithDbContext db,
+        Guid bookingTypeId,
+        string url = "https://example.com/webhook",
+        string secret = "webhook-secret-at-least-16chars")
+    {
+        var id = Guid.NewGuid();
+        db.Webhooks.Add(new WebhookEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            BookingTypeId = bookingTypeId,
+            Url = url,
+            Secret = secret,
+            IsDeleted = false
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
 }
