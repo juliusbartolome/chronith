@@ -144,8 +144,8 @@ jobs:
           JWT_SIGNING_KEY: change-me-in-production-at-least-32-chars
         run: |
           k6 run tests/Chronith.Tests.Load/scripts/availability.js \
-            --env BASE_URL=$BASE_URL \
-            --env JWT_SIGNING_KEY=$JWT_SIGNING_KEY \
+            --env BASE_URL="$BASE_URL" \
+            --env JWT_SIGNING_KEY="$JWT_SIGNING_KEY" \
             2>&1 | tee k6-availability.txt
 
       - name: Run create-booking.js
@@ -154,8 +154,8 @@ jobs:
           JWT_SIGNING_KEY: change-me-in-production-at-least-32-chars
         run: |
           k6 run tests/Chronith.Tests.Load/scripts/create-booking.js \
-            --env BASE_URL=$BASE_URL \
-            --env JWT_SIGNING_KEY=$JWT_SIGNING_KEY \
+            --env BASE_URL="$BASE_URL" \
+            --env JWT_SIGNING_KEY="$JWT_SIGNING_KEY" \
             2>&1 | tee k6-create-booking.txt
 
       - name: Clear bookings before lifecycle
@@ -172,8 +172,8 @@ jobs:
           JWT_SIGNING_KEY: change-me-in-production-at-least-32-chars
         run: |
           k6 run tests/Chronith.Tests.Load/scripts/booking-lifecycle.js \
-            --env BASE_URL=$BASE_URL \
-            --env JWT_SIGNING_KEY=$JWT_SIGNING_KEY \
+            --env BASE_URL="$BASE_URL" \
+            --env JWT_SIGNING_KEY="$JWT_SIGNING_KEY" \
             2>&1 | tee k6-booking-lifecycle.txt
 
       - name: Clear slot before concurrent test
@@ -189,43 +189,45 @@ jobs:
           JWT_SIGNING_KEY: change-me-in-production-at-least-32-chars
         run: |
           k6 run tests/Chronith.Tests.Load/scripts/concurrent-booking.js \
-            --env BASE_URL=$BASE_URL \
-            --env JWT_SIGNING_KEY=$JWT_SIGNING_KEY \
+            --env BASE_URL="$BASE_URL" \
+            --env JWT_SIGNING_KEY="$JWT_SIGNING_KEY" \
             2>&1 | tee k6-concurrent-booking.txt
 
       - name: Write job summary
         if: always()
         run: |
-          echo "## k6 Load Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Script | Result |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
-          for script in availability create-booking booking-lifecycle concurrent-booking; do
-            file="k6-${script}.txt"
-            if [ -f "$file" ]; then
-              if grep -q "default ✓" "$file"; then
-                result="✅ PASS"
+          {
+            echo "## k6 Load Test Results"
+            echo ""
+            echo "| Script | Result |"
+            echo "|--------|--------|"
+            for script in availability create-booking booking-lifecycle concurrent-booking; do
+              file="k6-${script}.txt"
+              if [ -f "$file" ]; then
+                if grep -q "default ✓" "$file"; then
+                  result="✅ PASS"
+                else
+                  result="❌ FAIL"
+                fi
               else
-                result="❌ FAIL"
+                result="⚠️ NOT RUN"
               fi
-            else
-              result="⚠️ NOT RUN"
-            fi
-            echo "| ${script} | ${result} |" >> $GITHUB_STEP_SUMMARY
-          done
-          echo "" >> $GITHUB_STEP_SUMMARY
-          for script in availability create-booking booking-lifecycle concurrent-booking; do
-            file="k6-${script}.txt"
-            if [ -f "$file" ]; then
-              echo "<details><summary>${script} full output</summary>" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo '```' >> $GITHUB_STEP_SUMMARY
-              cat "$file" >> $GITHUB_STEP_SUMMARY
-              echo '```' >> $GITHUB_STEP_SUMMARY
-              echo "</details>" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-            fi
-          done
+              echo "| ${script} | ${result} |"
+            done
+            echo ""
+            for script in availability create-booking booking-lifecycle concurrent-booking; do
+              file="k6-${script}.txt"
+              if [ -f "$file" ]; then
+                echo "<details><summary>${script} full output</summary>"
+                echo ""
+                echo '```'
+                cat "$file"
+                echo '```'
+                echo "</details>"
+                echo ""
+              fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload k6 artifacts
         uses: actions/upload-artifact@v4
@@ -262,14 +264,16 @@ jobs:
       - name: Write benchmark summary
         if: always()
         run: |
-          echo "## BenchmarkDotNet Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          for f in BenchmarkDotNet.Artifacts/results/*.md; do
-            if [ -f "$f" ]; then
-              cat "$f" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-            fi
-          done
+          {
+            echo "## BenchmarkDotNet Results"
+            echo ""
+            for f in BenchmarkDotNet.Artifacts/results/*.md; do
+              if [ -f "$f" ]; then
+                cat "$f"
+                echo ""
+              fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload BenchmarkDotNet artifacts
         uses: actions/upload-artifact@v4
