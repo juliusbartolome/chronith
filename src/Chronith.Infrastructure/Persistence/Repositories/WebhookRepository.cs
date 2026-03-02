@@ -36,7 +36,7 @@ public sealed class WebhookRepository : IWebhookRepository
     /// Retrieves a webhook by ID only, ignoring tenant filter.
     /// Used by the cross-tenant WebhookDispatcherService background worker.
     /// </summary>
-    public async Task<Webhook?> GetByIdAsync(Guid webhookId, CancellationToken ct = default)
+    public async Task<Webhook?> GetByIdCrossTenantAsync(Guid webhookId, CancellationToken ct = default)
     {
         var entity = await _db.Webhooks
             .AsNoTracking()

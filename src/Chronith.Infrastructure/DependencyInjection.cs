@@ -42,7 +42,11 @@ public static class DependencyInjection
         services.AddScoped<IWebhookRepository, WebhookRepository>();
         services.AddScoped<IWebhookOutboxRepository, WebhookOutboxRepository>();
         services.AddHostedService<WebhookDispatcherService>();
-        services.AddHttpClient("WebhookDispatcher");
+        var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
+        services.AddHttpClient("WebhookDispatcher", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(httpTimeoutSeconds);
+        });
         services.Configure<WebhookDispatcherOptions>(configuration.GetSection("Webhooks"));
 
         return services;

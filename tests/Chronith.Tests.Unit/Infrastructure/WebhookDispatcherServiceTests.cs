@@ -58,7 +58,7 @@ public sealed class WebhookDispatcherServiceTests
 
         await sut.DispatchBatchAsync(CancellationToken.None);
 
-        await webhookRepo.DidNotReceive().GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await webhookRepo.DidNotReceive().GetByIdCrossTenantAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -71,13 +71,13 @@ public sealed class WebhookDispatcherServiceTests
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
         httpHandler.StatusCode = HttpStatusCode.OK;
-        webhookRepo.GetByIdAsync(webhookId, Arg.Any<CancellationToken>()).Returns(webhook);
+        webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns(webhook);
 
         await sut.DispatchBatchAsync(CancellationToken.None);
 
         await outboxRepo.Received(1).MarkDeliveredAsync(entryId, Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>());
         await outboxRepo.DidNotReceive().MarkFailedAttemptAsync(
-            Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<DateTimeOffset?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -90,32 +90,37 @@ public sealed class WebhookDispatcherServiceTests
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
         httpHandler.StatusCode = HttpStatusCode.InternalServerError;
-        webhookRepo.GetByIdAsync(webhookId, Arg.Any<CancellationToken>()).Returns(webhook);
+        webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns(webhook);
 
         await sut.DispatchBatchAsync(CancellationToken.None);
 
         await outboxRepo.Received(1).MarkFailedAttemptAsync(
-            entryId, 1, Arg.Any<DateTimeOffset?>(), false, Arg.Any<CancellationToken>());
+            entryId, 1, Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset?>(), false, Arg.Any<CancellationToken>());
         await outboxRepo.DidNotReceive().MarkDeliveredAsync(
             Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task DispatchBatchAsync_WebhookNotFound_SkipsEntry()
+    public async Task DispatchBatchAsync_WebhookNotFound_PermanentlyFailsEntry()
     {
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
         var entry = new PendingOutboxEntry(entryId, webhookId, "booking.confirmed", "{}", AttemptCount: 0);
 
         var (sut, outboxRepo, webhookRepo, _) = BuildSut(pending: [entry]);
-        webhookRepo.GetByIdAsync(webhookId, Arg.Any<CancellationToken>()).Returns((Webhook?)null);
+        webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns((Webhook?)null);
 
         await sut.DispatchBatchAsync(CancellationToken.None);
 
         await outboxRepo.DidNotReceive().MarkDeliveredAsync(
             Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>());
-        await outboxRepo.DidNotReceive().MarkFailedAttemptAsync(
-            Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<DateTimeOffset?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await outboxRepo.Received(1).MarkFailedAttemptAsync(
+            entryId,
+            WebhookOutboxEntry.MaxAttempts,
+            Arg.Any<DateTimeOffset>(),
+            null,
+            true,
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -130,13 +135,14 @@ public sealed class WebhookDispatcherServiceTests
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
         httpHandler.StatusCode = HttpStatusCode.ServiceUnavailable;
-        webhookRepo.GetByIdAsync(webhookId, Arg.Any<CancellationToken>()).Returns(webhook);
+        webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns(webhook);
 
         await sut.DispatchBatchAsync(CancellationToken.None);
 
         await outboxRepo.Received(1).MarkFailedAttemptAsync(
             entryId,
             5,
+            Arg.Any<DateTimeOffset>(),
             Arg.Is<DateTimeOffset?>(d => d.HasValue),  // nextRetryAt should be set
             false,  // not final
             Arg.Any<CancellationToken>());
@@ -153,13 +159,14 @@ public sealed class WebhookDispatcherServiceTests
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
         httpHandler.StatusCode = HttpStatusCode.ServiceUnavailable;
-        webhookRepo.GetByIdAsync(webhookId, Arg.Any<CancellationToken>()).Returns(webhook);
+        webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns(webhook);
 
         await sut.DispatchBatchAsync(CancellationToken.None);
 
         await outboxRepo.Received(1).MarkFailedAttemptAsync(
             entryId,
             6,
+            Arg.Any<DateTimeOffset>(),
             null,   // nextRetryAt = null when final
             true,   // isFinal = true
             Arg.Any<CancellationToken>());

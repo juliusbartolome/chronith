@@ -18,7 +18,7 @@ public sealed class WebhookOutboxEntry
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 
     // Back-off schedule: 30s, 2m, 10m, 1h, 4h
-    private static readonly TimeSpan[] BackOffSchedule =
+    public static readonly TimeSpan[] BackOffSchedule =
     [
         TimeSpan.FromSeconds(30),
         TimeSpan.FromMinutes(2),

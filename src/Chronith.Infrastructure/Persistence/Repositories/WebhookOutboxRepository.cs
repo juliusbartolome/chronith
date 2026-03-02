@@ -43,14 +43,14 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
     }
 
     public async Task MarkFailedAttemptAsync(
-        Guid entryId, int newAttemptCount, DateTimeOffset? nextRetryAt, bool isFinalFailure, CancellationToken ct)
+        Guid entryId, int newAttemptCount, DateTimeOffset now, DateTimeOffset? nextRetryAt, bool isFinalFailure, CancellationToken ct)
     {
         var entity = await db.WebhookOutboxEntries.FindAsync([entryId], ct)
             ?? throw new InvalidOperationException($"WebhookOutboxEntry {entryId} not found");
 
         entity.AttemptCount = newAttemptCount;
         entity.NextRetryAt = nextRetryAt;
-        entity.LastAttemptAt = DateTimeOffset.UtcNow;
+        entity.LastAttemptAt = now;
         entity.Status = isFinalFailure ? OutboxStatus.Failed : OutboxStatus.Pending;
 
         await db.SaveChangesAsync(ct);

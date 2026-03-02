@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Domain.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -16,19 +17,6 @@ public sealed class WebhookDispatcherService(
     ILogger<WebhookDispatcherService> logger)
     : BackgroundService
 {
-    // IMPORTANT: MaxAttempts = 6 (after 6 attempts, mark Failed)
-    // BackOffSchedule applies to attempts 1-5, attempt 6 is the final failure
-    private static readonly TimeSpan[] BackOffSchedule =
-    [
-        TimeSpan.FromSeconds(30),
-        TimeSpan.FromMinutes(2),
-        TimeSpan.FromMinutes(10),
-        TimeSpan.FromHours(1),
-        TimeSpan.FromHours(4)
-    ];
-
-    private const int MaxAttempts = 6;
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -45,7 +33,8 @@ public sealed class WebhookDispatcherService(
         }
     }
 
-    public async Task DispatchBatchAsync(CancellationToken ct)
+    // internal to allow unit tests via InternalsVisibleTo
+    internal async Task DispatchBatchAsync(CancellationToken ct)
     {
         using var scope = scopeFactory.CreateScope();
         var outboxRepo = scope.ServiceProvider.GetRequiredService<IWebhookOutboxRepository>();
@@ -56,10 +45,14 @@ public sealed class WebhookDispatcherService(
 
         foreach (var entry in pending)
         {
-            var webhook = await webhookRepo.GetByIdAsync(entry.WebhookId, ct);
+            var webhook = await webhookRepo.GetByIdCrossTenantAsync(entry.WebhookId, ct);
             if (webhook is null)
             {
-                logger.LogWarning("Webhook {WebhookId} not found for outbox entry {EntryId}", entry.WebhookId, entry.Id);
+                logger.LogWarning(
+                    "Webhook {WebhookId} not found for outbox entry {EntryId} — marking as permanently failed",
+                    entry.WebhookId, entry.Id);
+                await outboxRepo.MarkFailedAttemptAsync(
+                    entry.Id, WebhookOutboxEntry.MaxAttempts, DateTimeOffset.UtcNow, null, true, ct);
                 continue;
             }
 
@@ -102,11 +95,18 @@ public sealed class WebhookDispatcherService(
                 await MarkFailureAsync(entry, now, outboxRepo, ct);
             }
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        catch (HttpRequestException ex)
         {
             logger.LogWarning(ex, "HTTP error delivering outbox entry {EntryId} to {Url}", entry.Id, url);
             await MarkFailureAsync(entry, now, outboxRepo, ct);
         }
+        catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+        {
+            // Timeout — not a graceful shutdown; treat as delivery failure
+            logger.LogWarning(ex, "HTTP timeout delivering outbox entry {EntryId} to {Url}", entry.Id, url);
+            await MarkFailureAsync(entry, now, outboxRepo, ct);
+        }
+        // OperationCanceledException (shutdown) propagates naturally
     }
 
     private static async Task MarkFailureAsync(
@@ -116,12 +116,12 @@ public sealed class WebhookDispatcherService(
         CancellationToken ct)
     {
         var newAttemptCount = entry.AttemptCount + 1;
-        var isFinal = newAttemptCount >= MaxAttempts;
+        var isFinal = newAttemptCount >= WebhookOutboxEntry.MaxAttempts;
         DateTimeOffset? nextRetryAt = isFinal
             ? null
-            : now.Add(BackOffSchedule[newAttemptCount - 1]);
+            : now.Add(WebhookOutboxEntry.BackOffSchedule[newAttemptCount - 1]);
 
-        await outboxRepo.MarkFailedAttemptAsync(entry.Id, newAttemptCount, nextRetryAt, isFinal, ct);
+        await outboxRepo.MarkFailedAttemptAsync(entry.Id, newAttemptCount, now, nextRetryAt, isFinal, ct);
     }
 
     private static string ComputeHmacSignature(string payload, string secret)
