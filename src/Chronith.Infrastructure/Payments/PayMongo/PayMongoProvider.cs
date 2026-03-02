@@ -10,7 +10,7 @@ namespace Chronith.Infrastructure.Payments.PayMongo;
 
 public sealed class PayMongoProvider(
     IOptions<PayMongoOptions> options,
-    HttpClient httpClient)
+    IHttpClientFactory httpClientFactory)
     : IPaymentProvider
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -20,6 +20,8 @@ public sealed class PayMongoProvider(
     public async Task<PaymentIntentResult> CreatePaymentIntentAsync(
         Booking booking, string currency, CancellationToken ct)
     {
+        var httpClient = httpClientFactory.CreateClient("PayMongo");
+
         // PayMongo uses amount in centavos (multiply by 100)
         var requestBody = new
         {

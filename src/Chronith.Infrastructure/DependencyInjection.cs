@@ -53,12 +53,13 @@ public static class DependencyInjection
 
         // Payment providers
         services.AddSingleton<IPaymentProvider, StubPaymentProvider>();
-        services.AddHttpClient<PayMongoProvider>(client =>
+        services.AddHttpClient("PayMongo", client =>
         {
             client.BaseAddress = new Uri("https://api.paymongo.com");
         });
         services.Configure<PayMongoOptions>(configuration.GetSection("Payments:PayMongo"));
-        services.AddSingleton<IPaymentProvider>(sp => sp.GetRequiredService<PayMongoProvider>());
+        services.AddTransient<PayMongoProvider>();
+        services.AddTransient<IPaymentProvider>(sp => sp.GetRequiredService<PayMongoProvider>());
         services.AddSingleton<IPaymentProviderFactory, PaymentProviderFactory>();
 
         return services;

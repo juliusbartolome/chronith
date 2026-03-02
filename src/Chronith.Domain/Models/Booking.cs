@@ -13,6 +13,7 @@ public sealed class Booking
     public string CustomerId { get; private set; } = string.Empty;
     public string CustomerEmail { get; private set; } = string.Empty;
     public string? PaymentReference { get; private set; }
+    public string? CheckoutUrl { get; private set; }
     public bool IsDeleted { get; private set; }
     public uint RowVersion { get; private set; }
 
@@ -70,6 +71,9 @@ public sealed class Booking
 
     public void SetPaymentReference(string? paymentReference)
         => PaymentReference = paymentReference;
+
+    public void SetCheckoutUrl(string? checkoutUrl)
+        => CheckoutUrl = checkoutUrl;
 
     private void Transition(BookingStatus to, string changedById, string changedByRole)
     {

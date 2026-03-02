@@ -1,9 +1,11 @@
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Chronith.Infrastructure.Payments.PayMongo;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
+using NSubstitute;
 
 namespace Chronith.Tests.Unit.Infrastructure;
 
@@ -15,7 +17,7 @@ public sealed class PayMongoProviderTests
     public PayMongoProviderTests()
     {
         var options = Options.Create(new PayMongoOptions { WebhookSecret = WebhookSecret });
-        _provider = new PayMongoProvider(options, null!); // HttpClient not needed for signature tests
+        _provider = new PayMongoProvider(options, Substitute.For<IHttpClientFactory>()); // IHttpClientFactory not needed for signature tests
     }
 
     [Fact]

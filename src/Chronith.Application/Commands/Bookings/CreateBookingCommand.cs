@@ -98,6 +98,7 @@ public sealed class CreateBookingHandler(
             var provider = paymentProviderFactory.GetProvider(providerName);
             var result = await provider.CreatePaymentIntentAsync(booking, "PHP", ct);
             booking.SetPaymentReference(result.ExternalId);
+            booking.SetCheckoutUrl(result.CheckoutUrl);
 
             // Persist the PaymentReference. The booking was committed inside the
             // advisory-lock transaction above, so a second SaveChangesAsync is

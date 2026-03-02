@@ -145,6 +145,20 @@ public sealed class CreateBookingHandlerTests
     }
 
     [Fact]
+    public async Task Handle_AutomaticPaymentMode_ReturnedDtoContainsCheckoutUrl()
+    {
+        // Arrange
+        var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
+        var (handler, _, _) = Build(bookingType);
+
+        // Act
+        var result = await handler.Handle(MakeCommand(), CancellationToken.None);
+
+        // Assert — the DTO returned to the caller must include the CheckoutUrl
+        result.CheckoutUrl.Should().Be("https://pay.example.com/checkout/123");
+    }
+
+    [Fact]
     public async Task Handle_ManualPaymentMode_DoesNotCallPaymentProvider()
     {
         // Arrange — Manual mode
@@ -157,5 +171,19 @@ public sealed class CreateBookingHandlerTests
         // Assert
         await provider.DidNotReceive()
             .CreatePaymentIntentAsync(Arg.Any<Booking>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ManualPaymentMode_ReturnedDtoHasNullCheckoutUrl()
+    {
+        // Arrange — Manual mode never calls payment provider
+        var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Manual);
+        var (handler, _, _) = Build(bookingType);
+
+        // Act
+        var result = await handler.Handle(MakeCommand(), CancellationToken.None);
+
+        // Assert
+        result.CheckoutUrl.Should().BeNull();
     }
 }

@@ -11,6 +11,7 @@ public sealed record BookingDto(
     string CustomerId,
     string CustomerEmail,
     string? PaymentReference,
+    string? CheckoutUrl,
     IReadOnlyList<BookingStatusChangeDto> StatusChanges
 );
 
