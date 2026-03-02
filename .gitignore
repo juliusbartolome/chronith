@@ -6,6 +6,9 @@
 # EF Core Design tools emit bin artifacts with backslash paths on macOS
 src/*/bin\*
 
+# Git worktrees
+.worktrees/
+
 # dotenv files
 .env
 
