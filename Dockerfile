@@ -22,6 +22,14 @@ RUN dotnet restore src/Chronith.API/Chronith.API.csproj
 # Copy all source (excluding tests via .dockerignore)
 COPY src/ src/
 
+# MSBuild's default **/*.cs glob traverses bin/ and obj/ subdirectories.
+# .dockerignore strips those directories from the context, so MSBuild throws
+# an AggregateException trying to enumerate a missing path and falls back to
+# treating "**/*.cs" as a literal filename — causing CS2021/CS2001.
+# Pre-creating the expected directories prevents that traversal failure.
+RUN find /app/src -name "*.csproj" -exec dirname {} \; | \
+    xargs -I{} sh -c 'mkdir -p "{}/bin/Debug" "{}/bin/Release" "{}/obj"'
+
 # Build first so bin/Release exists before publish runs incremental glob expansion
 RUN dotnet build src/Chronith.API/Chronith.API.csproj \
     -c Release \
