@@ -15,7 +15,7 @@ public sealed class TenantApiKeyRepositoryTests(PostgresFixture postgres)
         await using var db = await DbContextFactory.CreateAsync(
             postgres.ConnectionString, tenantId, applyMigrations: true);
 
-        var (rawKey, keyHash) = Chronith.Domain.Models.TenantApiKey.GenerateKey();
+        var (_, keyHash) = Chronith.Domain.Models.TenantApiKey.GenerateKey();
 
         var entity = new TenantApiKeyEntity
         {
