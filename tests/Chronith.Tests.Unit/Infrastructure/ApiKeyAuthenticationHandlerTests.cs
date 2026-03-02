@@ -90,6 +90,7 @@ public sealed class ApiKeyAuthenticationHandlerTests
         var claims = result.Principal!.Claims.ToList();
         claims.Should().Contain(c => c.Type == "tenant_id" && c.Value == tenantId.ToString());
         claims.Should().Contain(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+        claims.Should().Contain(c => c.Type == ClaimTypes.NameIdentifier && c.Value == keyId.ToString());
         claims.Should().Contain(c => c.Type == "sub" && c.Value == keyId.ToString());
     }
 
