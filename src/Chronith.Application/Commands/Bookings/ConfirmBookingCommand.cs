@@ -44,7 +44,6 @@ public sealed class ConfirmBookingHandler(
         var from = booking.Status;
         booking.Confirm(tenantContext.UserId, tenantContext.Role);
         await bookingRepo.UpdateAsync(booking, ct);
-        await unitOfWork.SaveChangesAsync(ct);
 
         await publisher.Publish(
             new Notifications.BookingStatusChangedNotification(
@@ -59,6 +58,8 @@ public sealed class ConfirmBookingHandler(
                 CustomerId: booking.CustomerId,
                 CustomerEmail: booking.CustomerEmail),
             ct);
+
+        await unitOfWork.SaveChangesAsync(ct);
 
         return booking.ToDto();
     }
