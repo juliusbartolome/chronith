@@ -1,4 +1,5 @@
-import { crypto } from "k6/experimental/webcrypto";
+import { b64encode } from "k6/encoding";
+import { hmac } from "k6/crypto";
 
 /**
  * Returns the base URL for the API under test.
@@ -51,16 +52,10 @@ export function authHeader(role) {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function base64url(str) {
-  const bytes = new TextEncoder().encode(str);
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  return b64encode(str, "rawurl");
 }
 
 function hmacSha256Base64url(secret, message) {
-  // k6 encoding module provides hmac
-  const { hmac } = require("k6/crypto");
   const sig = hmac("sha256", secret, message, "base64");
   return sig.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }

@@ -41,10 +41,8 @@ const SLOT_END = __ENV.SLOT_END || "2026-05-04T11:00:00Z";
 export default function () {
   const url = `${baseUrl()}/booking-types/${SLUG}/bookings`;
   const payload = JSON.stringify({
-    start: SLOT_START,
-    end: SLOT_END,
+    startTime: SLOT_START,
     customerEmail: `concurrent-${__VU}@example.com`,
-    customerName: `Concurrent VU ${__VU}`,
   });
 
   const params = {
