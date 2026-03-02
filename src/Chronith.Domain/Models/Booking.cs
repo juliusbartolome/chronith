@@ -68,6 +68,9 @@ public sealed class Booking
 
     public void SoftDelete() => IsDeleted = true;
 
+    public void SetPaymentReference(string? paymentReference)
+        => PaymentReference = paymentReference;
+
     private void Transition(BookingStatus to, string changedById, string changedByRole)
     {
         var change = new BookingStatusChange(Id, Status, to, changedById, changedByRole);

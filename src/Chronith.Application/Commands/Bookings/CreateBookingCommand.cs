@@ -39,7 +39,8 @@ public sealed class CreateBookingHandler(
     IBookingRepository bookingRepo,
     ITenantRepository tenantRepo,
     IUnitOfWork unitOfWork,
-    IPublisher publisher)
+    IPublisher publisher,
+    IPaymentProviderFactory paymentProviderFactory)
     : IRequestHandler<CreateBookingCommand, BookingDto>
 {
     private static readonly BookingStatus[] ConflictStatuses =
@@ -61,10 +62,7 @@ public sealed class CreateBookingHandler(
         var (start, end) = bookingType.ResolveSlot(cmd.StartTime, tz);
         var (effStart, effEnd) = bookingType.GetEffectiveRange(start, end);
 
-        // Stub payment reference for Automatic payment mode
-        string? paymentRef = bookingType.PaymentMode == PaymentMode.Automatic
-            ? Guid.NewGuid().ToString()
-            : null;
+        var customerId = cmd.CustomerId ?? tenantContext.UserId;
 
         // Use the lower 64 bits of the booking type ID as a stable advisory lock key.
         // This serializes all concurrent create attempts for the same booking type,
@@ -82,19 +80,25 @@ public sealed class CreateBookingHandler(
         if (conflictCount >= bookingType.Capacity)
             throw new SlotConflictException();
 
-        var customerId = cmd.CustomerId ?? tenantContext.UserId;
-
         var booking = Booking.Create(
             tenantContext.TenantId,
             bookingType.Id,
             start,
             end,
             customerId,
-            cmd.CustomerEmail,
-            paymentRef);
+            cmd.CustomerEmail);
 
         await bookingRepo.AddAsync(booking, ct);
         await tx.CommitAsync(ct);
+
+        // For Automatic payment mode, call the payment provider after saving
+        if (bookingType.PaymentMode == PaymentMode.Automatic)
+        {
+            var providerName = bookingType.PaymentProvider ?? "Stub";
+            var provider = paymentProviderFactory.GetProvider(providerName);
+            var result = await provider.CreatePaymentIntentAsync(booking, "PHP", ct);
+            booking.SetPaymentReference(result.ExternalId);
+        }
 
         await publisher.Publish(
             new Notifications.BookingStatusChangedNotification(

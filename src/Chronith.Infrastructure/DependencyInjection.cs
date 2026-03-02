@@ -1,4 +1,6 @@
 using Chronith.Application.Interfaces;
+using Chronith.Infrastructure.Payments;
+using Chronith.Infrastructure.Payments.PayMongo;
 using Chronith.Infrastructure.Persistence;
 using Chronith.Infrastructure.Persistence.Repositories;
 using Chronith.Infrastructure.Providers;
@@ -48,6 +50,16 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(httpTimeoutSeconds);
         });
         services.Configure<WebhookDispatcherOptions>(configuration.GetSection("Webhooks"));
+
+        // Payment providers
+        services.AddSingleton<IPaymentProvider, StubPaymentProvider>();
+        services.AddHttpClient<PayMongoProvider>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.paymongo.com");
+        });
+        services.Configure<PayMongoOptions>(configuration.GetSection("Payments:PayMongo"));
+        services.AddSingleton<IPaymentProvider>(sp => sp.GetRequiredService<PayMongoProvider>());
+        services.AddSingleton<IPaymentProviderFactory, PaymentProviderFactory>();
 
         return services;
     }

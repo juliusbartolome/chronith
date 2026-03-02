@@ -36,11 +36,15 @@ public sealed class PayMongoProvider(
         };
 
         var json = JsonSerializer.Serialize(requestBody, JsonOptions);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
         var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{options.Value.SecretKey}:"));
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", encoded);
 
-        var response = await httpClient.PostAsync("/v1/links", content, ct);
+        var request = new HttpRequestMessage(HttpMethod.Post, "/v1/links")
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", encoded);
+
+        var response = await httpClient.SendAsync(request, ct);
         response.EnsureSuccessStatusCode();
 
         var responseBody = await response.Content.ReadAsStringAsync(ct);
