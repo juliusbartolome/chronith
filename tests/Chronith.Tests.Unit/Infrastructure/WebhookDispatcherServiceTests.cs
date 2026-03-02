@@ -108,7 +108,7 @@ public sealed class WebhookDispatcherServiceTests
         var webhookId = Guid.NewGuid();
         var entry = new PendingOutboxEntry(entryId, webhookId, "booking.confirmed", "{}", AttemptCount: 0);
 
-        var (sut, outboxRepo, webhookRepo, _) = BuildSut(pending: [entry]);
+        webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns(null);
         webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns((Webhook?)null);
 
         await sut.DispatchBatchAsync(CancellationToken.None);
