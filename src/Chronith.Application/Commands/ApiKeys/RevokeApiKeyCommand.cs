@@ -7,7 +7,7 @@ namespace Chronith.Application.Commands.ApiKeys;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record RevokeApiKeyCommand(Guid KeyId) : IRequest;
+public sealed record RevokeApiKeyCommand(Guid Id) : IRequest;
 
 // ── Validator ────────────────────────────────────────────────────────────────
 
@@ -15,7 +15,7 @@ public sealed class RevokeApiKeyValidator : AbstractValidator<RevokeApiKeyComman
 {
     public RevokeApiKeyValidator()
     {
-        RuleFor(x => x.KeyId).NotEmpty();
+        RuleFor(x => x.Id).NotEmpty();
     }
 }
 
@@ -29,8 +29,8 @@ public sealed class RevokeApiKeyHandler(
 {
     public async Task Handle(RevokeApiKeyCommand cmd, CancellationToken ct)
     {
-        var key = await apiKeyRepo.GetByIdAsync(cmd.KeyId, tenantContext.TenantId, ct)
-            ?? throw new NotFoundException("ApiKey", cmd.KeyId);
+        var key = await apiKeyRepo.GetByIdAsync(cmd.Id, tenantContext.TenantId, ct)
+            ?? throw new NotFoundException("ApiKey", cmd.Id);
 
         key.Revoke();
         await apiKeyRepo.UpdateAsync(key, ct);

@@ -146,4 +146,17 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
         var listResp = await apiKeyClient.GetAsync(ApiKeysUrl);
         listResp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact]
+    public async Task RevokeApiKey_NotFound_Returns404()
+    {
+        await using var db = SeedData.CreateDbContext(fixture.Factory);
+        await SeedData.SeedTenantAsync(db);
+
+        var client = fixture.CreateClient("TenantAdmin");
+        var nonExistentId = Guid.NewGuid();
+        var response = await client.DeleteAsync($"/tenant/api-keys/{nonExistentId}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }

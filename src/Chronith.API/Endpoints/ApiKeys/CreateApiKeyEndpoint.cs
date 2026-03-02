@@ -18,6 +18,7 @@ public sealed class CreateApiKeyEndpoint(ISender sender)
     {
         Post("/tenant/api-keys");
         Roles("TenantAdmin");
+        // Intentionally Bearer-only: API keys cannot create other API keys.
     }
 
     public override async Task HandleAsync(CreateApiKeyRequest req, CancellationToken ct)

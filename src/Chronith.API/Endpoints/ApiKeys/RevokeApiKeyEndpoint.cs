@@ -16,6 +16,7 @@ public sealed class RevokeApiKeyEndpoint(ISender sender)
     {
         Delete("/tenant/api-keys/{id}");
         Roles("TenantAdmin");
+        // Intentionally Bearer-only: API keys cannot revoke other API keys.
     }
 
     public override async Task HandleAsync(RevokeApiKeyRequest req, CancellationToken ct)
