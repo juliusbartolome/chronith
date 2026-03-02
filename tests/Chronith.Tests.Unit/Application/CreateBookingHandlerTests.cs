@@ -1,10 +1,12 @@
 using Chronith.Application.Commands.Bookings;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Options;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Tests.Unit.Helpers;
 using FluentAssertions;
 using MediatR;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace Chronith.Tests.Unit.Application;
@@ -101,7 +103,8 @@ public sealed class CreateBookingHandlerTests
             tenantRepo,
             unitOfWork,
             publisher,
-            providerFactory);
+            providerFactory,
+            Options.Create(new PaymentsOptions()));
 
         return (handler, unitOfWork, bookingRepo, provider);
     }

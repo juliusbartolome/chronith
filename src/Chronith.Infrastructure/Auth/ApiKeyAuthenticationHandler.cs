@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Models;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -12,7 +13,8 @@ public sealed class ApiKeyAuthenticationHandler(
     IOptionsMonitor<ApiKeyAuthenticationOptions> options,
     ILoggerFactory logger,
     UrlEncoder encoder,
-    IApiKeyRepository apiKeyRepo)
+    IApiKeyRepository apiKeyRepo,
+    IServiceScopeFactory scopeFactory)
     : AuthenticationHandler<ApiKeyAuthenticationOptions>(options, logger, encoder)
 {
     private const string HeaderName = "X-Api-Key";
@@ -30,8 +32,9 @@ public sealed class ApiKeyAuthenticationHandler(
         if (key is null)
             return AuthenticateResult.Fail("Invalid or revoked API key");
 
-        // Fire-and-forget last-used update (non-blocking, best-effort)
-        _ = UpdateLastUsedAtSafeAsync(apiKeyRepo, key.Id, Logger);
+        // Fire-and-forget last-used update — uses a fresh DI scope so that the
+        // scoped IApiKeyRepository is not captured after the request scope disposes.
+        _ = UpdateLastUsedAtSafeAsync(scopeFactory, key.Id, Logger);
 
         var claims = new[]
         {
@@ -49,10 +52,12 @@ public sealed class ApiKeyAuthenticationHandler(
     }
 
     private static async Task UpdateLastUsedAtSafeAsync(
-        IApiKeyRepository repo, Guid id, ILogger logger)
+        IServiceScopeFactory scopeFactory, Guid id, ILogger logger)
     {
         try
         {
+            using var scope = scopeFactory.CreateScope();
+            var repo = scope.ServiceProvider.GetRequiredService<IApiKeyRepository>();
             await repo.UpdateLastUsedAtAsync(id, DateTimeOffset.UtcNow, CancellationToken.None);
         }
         catch (Exception ex)

@@ -1,11 +1,13 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
+using Chronith.Application.Options;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 namespace Chronith.Application.Commands.Bookings;
 
@@ -40,7 +42,8 @@ public sealed class CreateBookingHandler(
     ITenantRepository tenantRepo,
     IUnitOfWork unitOfWork,
     IPublisher publisher,
-    IPaymentProviderFactory paymentProviderFactory)
+    IPaymentProviderFactory paymentProviderFactory,
+    IOptions<PaymentsOptions> paymentsOptions)
     : IRequestHandler<CreateBookingCommand, BookingDto>
 {
     private static readonly BookingStatus[] ConflictStatuses =
@@ -96,7 +99,7 @@ public sealed class CreateBookingHandler(
         {
             var providerName = bookingType.PaymentProvider ?? "Stub";
             var provider = paymentProviderFactory.GetProvider(providerName);
-            var result = await provider.CreatePaymentIntentAsync(booking, "PHP", ct);
+            var result = await provider.CreatePaymentIntentAsync(booking, paymentsOptions.Value.Currency, ct);
             booking.SetPaymentReference(result.ExternalId);
             booking.SetCheckoutUrl(result.CheckoutUrl);
 

@@ -1,4 +1,5 @@
 using Chronith.Application.Interfaces;
+using Chronith.Application.Options;
 using Chronith.Infrastructure.Payments;
 using Chronith.Infrastructure.Payments.PayMongo;
 using Chronith.Infrastructure.Persistence;
@@ -53,6 +54,7 @@ public static class DependencyInjection
         services.Configure<WebhookDispatcherOptions>(configuration.GetSection("Webhooks"));
 
         // Payment providers
+        services.Configure<PaymentsOptions>(configuration.GetSection("Payments"));
         services.AddSingleton<IPaymentProvider, StubPaymentProvider>();
         services.AddHttpClient("PayMongo", client =>
         {

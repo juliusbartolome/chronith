@@ -6,6 +6,7 @@ using Chronith.Infrastructure.Auth;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -29,7 +30,15 @@ public sealed class ApiKeyAuthenticationHandlerTests
 
         var encoder = UrlEncoder.Default;
 
-        var handler = new ApiKeyAuthenticationHandler(optionsMonitor, loggerFactory, encoder, apiKeyRepo);
+        // Build a scope factory whose scope resolves the provided repo
+        var scopeFactory = Substitute.For<IServiceScopeFactory>();
+        var scope = Substitute.For<IServiceScope>();
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        serviceProvider.GetService(typeof(IApiKeyRepository)).Returns(apiKeyRepo);
+        scope.ServiceProvider.Returns(serviceProvider);
+        scopeFactory.CreateScope().Returns(scope);
+
+        var handler = new ApiKeyAuthenticationHandler(optionsMonitor, loggerFactory, encoder, apiKeyRepo, scopeFactory);
 
         var context = new DefaultHttpContext();
         if (headerValue is not null)
