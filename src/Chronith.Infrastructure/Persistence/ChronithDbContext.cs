@@ -25,6 +25,7 @@ public sealed class ChronithDbContext : DbContext
     // No global query filter: webhook_outbox_entries is accessed by the
     // WebhookDispatcherService background worker, which requires cross-tenant access.
     public DbSet<WebhookOutboxEntryEntity> WebhookOutboxEntries => Set<WebhookOutboxEntryEntity>();
+    public DbSet<TenantApiKeyEntity> TenantApiKeys => Set<TenantApiKeyEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
