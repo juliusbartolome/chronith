@@ -17,7 +17,7 @@ public sealed class PaginationTests(PostgresFixture postgres)
         // Arrange — seed 10 bookings with distinct start times
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         var bookingTypeId = await SeedData.SeedBookingTypeAsync(db, tenantId);
@@ -53,7 +53,7 @@ public sealed class PaginationTests(PostgresFixture postgres)
         // Arrange — seed 10 bookings
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         var bookingTypeId = await SeedData.SeedBookingTypeAsync(db, tenantId);

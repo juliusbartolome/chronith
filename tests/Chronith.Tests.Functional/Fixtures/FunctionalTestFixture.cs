@@ -9,23 +9,31 @@ namespace Chronith.Tests.Functional.Fixtures;
 
 public sealed class FunctionalTestFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine")
-        .WithDatabase("chronith_functional")
-        .WithUsername("test")
-        .WithPassword("test")
-        .Build();
+    private static readonly string? CiConnectionString =
+        Environment.GetEnvironmentVariable("CI_FUNCTIONAL_CONNECTION_STRING");
+
+    private readonly PostgreSqlContainer? _postgres = CiConnectionString is null
+        ? new PostgreSqlBuilder("postgres:17-alpine")
+            .WithDatabase("chronith_functional")
+            .WithUsername("test")
+            .WithPassword("test")
+            .Build()
+        : null;
 
     public WebApplicationFactory<Program> Factory { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
-        await _postgres.StartAsync();
+        if (_postgres is not null)
+            await _postgres.StartAsync();
+
+        var connectionString = CiConnectionString ?? _postgres!.GetConnectionString();
 
         Factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
                 builder.UseSetting("Database:Provider", "PostgreSQL");
-                builder.UseSetting("Database:ConnectionString", _postgres.GetConnectionString());
+                builder.UseSetting("Database:ConnectionString", connectionString);
                 builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
             });
 
@@ -38,7 +46,8 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
     public async Task DisposeAsync()
     {
         await Factory.DisposeAsync();
-        await _postgres.DisposeAsync();
+        if (_postgres is not null)
+            await _postgres.DisposeAsync();
     }
 
     public HttpClient CreateClient(string role, string? userId = null) =>

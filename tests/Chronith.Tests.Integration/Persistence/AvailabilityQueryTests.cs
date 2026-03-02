@@ -18,7 +18,7 @@ public sealed class AvailabilityQueryTests(PostgresFixture postgres)
         // Arrange
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         var bookingTypeId = await SeedData.SeedBookingTypeAsync(db, tenantId);
@@ -49,9 +49,9 @@ public sealed class AvailabilityQueryTests(PostgresFixture postgres)
         var tenantIdB = Guid.NewGuid();
 
         await using var dbA = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantIdA, applyMigrations: true);
+            postgres.ConnectionString, tenantIdA, applyMigrations: true);
         await using var dbB = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantIdB);
+            postgres.ConnectionString, tenantIdB);
 
         await SeedData.SeedTenantAsync(dbA, $"tenant-{tenantIdA:N}");
         await SeedData.SeedTenantAsync(dbB, $"tenant-{tenantIdB:N}");
@@ -81,7 +81,7 @@ public sealed class AvailabilityQueryTests(PostgresFixture postgres)
         // Arrange
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         var bookingTypeId1 = await SeedData.SeedBookingTypeAsync(db, tenantId, slug: "type-1");
@@ -111,7 +111,7 @@ public sealed class AvailabilityQueryTests(PostgresFixture postgres)
         // Arrange
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         var bookingTypeId = await SeedData.SeedBookingTypeAsync(db, tenantId);

@@ -14,6 +14,20 @@ jobs:
   dotnet-test:
     name: .NET Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: chronith_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +43,9 @@ jobs:
         run: dotnet build Chronith.slnx --no-restore -c Release
 
       - name: Test
+        env:
+          CI_INTEGRATION_CONNECTION_STRING: "Host=localhost;Port=5432;Database=chronith_test;Username=test;Password=test"
+          CI_FUNCTIONAL_CONNECTION_STRING: "Host=localhost;Port=5432;Database=chronith_test;Username=test;Password=test"
         run: |
           dotnet test tests/Chronith.Tests.Unit --no-build -c Release \
             --logger "trx;LogFileName=unit.trx" \

@@ -12,7 +12,7 @@ public sealed class MigrationTests(PostgresFixture postgres)
     {
         // Arrange & Act
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(),
+            postgres.ConnectionString,
             Guid.NewGuid(),
             applyMigrations: true);
 
@@ -25,7 +25,7 @@ public sealed class MigrationTests(PostgresFixture postgres)
     public async Task Migration_IsIdempotent_WhenAppliedTwice()
     {
         // Arrange
-        var cs = postgres.Container.GetConnectionString();
+        var cs = postgres.ConnectionString;
         await using var db1 = await DbContextFactory.CreateAsync(cs, Guid.NewGuid(), applyMigrations: true);
 
         // Act — apply again

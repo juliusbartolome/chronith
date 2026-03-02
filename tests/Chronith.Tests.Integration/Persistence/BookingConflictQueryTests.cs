@@ -18,7 +18,7 @@ public sealed class BookingConflictQueryTests(PostgresFixture postgres)
         // Arrange
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         var _ = await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         var bookingTypeId = await SeedData.SeedBookingTypeAsync(db, tenantId);
@@ -51,7 +51,7 @@ public sealed class BookingConflictQueryTests(PostgresFixture postgres)
         // Arrange
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         var _ = await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         var bookingTypeId = await SeedData.SeedBookingTypeAsync(db, tenantId);
@@ -90,7 +90,7 @@ public sealed class BookingConflictQueryTests(PostgresFixture postgres)
         // Arrange
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         var _ = await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         var bookingTypeId = await SeedData.SeedBookingTypeAsync(db, tenantId);
@@ -124,7 +124,7 @@ public sealed class BookingConflictQueryTests(PostgresFixture postgres)
         // Arrange
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         var _ = await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         var bookingTypeId = await SeedData.SeedBookingTypeAsync(db, tenantId);
@@ -157,7 +157,7 @@ public sealed class BookingConflictQueryTests(PostgresFixture postgres)
         // Arrange
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         var _ = await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         var bookingTypeId = await SeedData.SeedBookingTypeAsync(db, tenantId);
@@ -190,7 +190,7 @@ public sealed class BookingConflictQueryTests(PostgresFixture postgres)
         // Arrange — simulate a 15-minute buffer before/after that widens the query range
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         var _ = await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         // BookingType has 15-min buffers

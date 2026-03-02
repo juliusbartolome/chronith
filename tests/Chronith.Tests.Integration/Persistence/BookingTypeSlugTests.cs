@@ -14,7 +14,7 @@ public sealed class BookingTypeSlugTests(PostgresFixture postgres)
         // Arrange
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         var bookingTypeId = await SeedData.SeedBookingTypeAsync(db, tenantId, slug: "my-service");
@@ -38,14 +38,14 @@ public sealed class BookingTypeSlugTests(PostgresFixture postgres)
         var tenantIdB = Guid.NewGuid();
 
         await using var dbA = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantIdA, applyMigrations: true);
+            postgres.ConnectionString, tenantIdA, applyMigrations: true);
 
         await SeedData.SeedTenantAsync(dbA, $"tenant-{tenantIdA:N}");
         await SeedData.SeedBookingTypeAsync(dbA, tenantIdA, slug: "shared-slug");
 
         // Act — look up the same slug but scoped to tenantB's context
         await using var dbB = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantIdB);
+            postgres.ConnectionString, tenantIdB);
 
         // The global query filter on dbB restricts to tenantIdB — nothing should match
         var found = await dbB.BookingTypes
@@ -62,7 +62,7 @@ public sealed class BookingTypeSlugTests(PostgresFixture postgres)
         // Arrange
         var tenantId = Guid.NewGuid();
         await using var db = await DbContextFactory.CreateAsync(
-            postgres.Container.GetConnectionString(), tenantId, applyMigrations: true);
+            postgres.ConnectionString, tenantId, applyMigrations: true);
 
         await SeedData.SeedTenantAsync(db, $"tenant-{tenantId:N}");
         await SeedData.SeedBookingTypeAsync(db, tenantId, slug: "duplicate-slug");

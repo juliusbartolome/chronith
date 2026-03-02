@@ -13,7 +13,7 @@ public sealed class OptimisticConcurrencyTests(PostgresFixture postgres)
     {
         // Arrange — seed a booking type
         var tenantId = Guid.NewGuid();
-        var cs = postgres.Container.GetConnectionString();
+        var cs = postgres.ConnectionString;
 
         await using var dbSetup = await DbContextFactory.CreateAsync(cs, tenantId, applyMigrations: true);
         await SeedData.SeedTenantAsync(dbSetup, $"tenant-{tenantId:N}");
