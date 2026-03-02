@@ -50,8 +50,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
 
         entity.IsRevoked = key.IsRevoked;
         entity.LastUsedAt = key.LastUsedAt;
-
-        await db.SaveChangesAsync(ct);
+        // SaveChanges is deferred to the caller's IUnitOfWork
     }
 
     private static TenantApiKeyEntity MapToEntity(TenantApiKey d) => new()
