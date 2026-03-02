@@ -7,5 +7,46 @@ on:
     branches: [main, develop]
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+jobs:
+  dotnet-test:
+    name: .NET Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore
+        run: dotnet restore Chronith.slnx
+
+      - name: Build
+        run: dotnet build Chronith.slnx --no-restore -c Release
+
+      - name: Test
+        run: |
+          dotnet test Chronith.slnx --no-build -c Release \
+            --logger "trx;LogFileName=results.trx" \
+            --results-directory ./test-results
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: 'Unit · Integration · Functional'
+          path: './test-results/results.trx'
+          reporter: dotnet-trx
+          fail-on-error: true
+
+      - name: Upload TRX artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ./test-results/
+          retention-days: 7
