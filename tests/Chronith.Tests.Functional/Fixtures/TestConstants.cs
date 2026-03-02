@@ -1,0 +1,11 @@
+namespace Chronith.Tests.Functional.Fixtures;
+
+public static class TestConstants
+{
+    public const string JwtSigningKey = "functional-test-signing-key-at-least-32-chars!!";
+    public static readonly Guid TenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+    public const string AdminUserId      = "user-admin-1";
+    public const string StaffUserId      = "user-staff-1";
+    public const string CustomerUserId   = "user-customer-1";
+    public const string PaymentSvcUserId = "user-paymentsvc-1";
+}

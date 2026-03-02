@@ -98,21 +98,25 @@ public sealed class BookingRepository : IBookingRepository
 
     public async Task UpdateAsync(Booking booking, CancellationToken ct = default)
     {
-        var entity = await _db.Bookings
-            .Include(b => b.StatusChanges)
-            .FirstOrDefaultAsync(b => b.Id == booking.Id, ct);
+        // Update scalar fields directly — avoids xmin concurrency token mismatch
+        // since the booking was loaded with AsNoTracking and RowVersion is not propagated.
+        await _db.Bookings
+            .Where(b => b.Id == booking.Id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(b => b.Status, booking.Status)
+                .SetProperty(b => b.IsDeleted, booking.IsDeleted)
+                .SetProperty(b => b.PaymentReference, booking.PaymentReference),
+                ct);
 
-        if (entity is null) return;
+        // Insert any new status change records
+        var existingIds = await _db.BookingStatusChanges
+            .Where(sc => sc.BookingId == booking.Id)
+            .Select(sc => sc.Id)
+            .ToListAsync(ct);
 
-        entity.Status = booking.Status;
-        entity.IsDeleted = booking.IsDeleted;
-        entity.PaymentReference = booking.PaymentReference;
-
-        // Sync new status changes
-        var existingIds = entity.StatusChanges.Select(sc => sc.Id).ToHashSet();
-        foreach (var sc in booking.StatusChanges.Where(sc => !existingIds.Contains(sc.Id)))
-        {
-            entity.StatusChanges.Add(new Persistence.Entities.BookingStatusChangeEntity
+        var newChanges = booking.StatusChanges
+            .Where(sc => !existingIds.Contains(sc.Id))
+            .Select(sc => new Persistence.Entities.BookingStatusChangeEntity
             {
                 Id = sc.Id,
                 BookingId = sc.BookingId,
@@ -121,7 +125,10 @@ public sealed class BookingRepository : IBookingRepository
                 ChangedById = sc.ChangedById,
                 ChangedByRole = sc.ChangedByRole,
                 ChangedAt = sc.ChangedAt
-            });
-        }
+            })
+            .ToList();
+
+        if (newChanges.Count > 0)
+            await _db.BookingStatusChanges.AddRangeAsync(newChanges, ct);
     }
 }

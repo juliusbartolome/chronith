@@ -40,4 +40,6 @@ public interface IBookingRepository
         CancellationToken ct = default);
 
     Task AddAsync(Booking booking, CancellationToken ct = default);
+
+    Task UpdateAsync(Booking booking, CancellationToken ct = default);
 }

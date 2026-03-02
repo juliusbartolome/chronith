@@ -43,6 +43,7 @@ public sealed class PayBookingHandler(
 
         var from = booking.Status;
         booking.Pay(tenantContext.UserId, tenantContext.Role);
+        await bookingRepo.UpdateAsync(booking, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
         await publisher.Publish(

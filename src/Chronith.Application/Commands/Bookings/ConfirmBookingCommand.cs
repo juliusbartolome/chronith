@@ -43,6 +43,7 @@ public sealed class ConfirmBookingHandler(
 
         var from = booking.Status;
         booking.Confirm(tenantContext.UserId, tenantContext.Role);
+        await bookingRepo.UpdateAsync(booking, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
         await publisher.Publish(
