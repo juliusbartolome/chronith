@@ -16,7 +16,9 @@ public static class BookingTypeBuilder
         int bufferBeforeMinutes = 0,
         int bufferAfterMinutes = 0,
         IReadOnlyList<TimeSlotWindow>? windows = null,
-        Guid? tenantId = null)
+        Guid? tenantId = null,
+        PaymentMode paymentMode = PaymentMode.Manual,
+        string? paymentProvider = null)
     {
         var bt = new TimeSlotBookingType();
         Set(bt, "Id", Guid.NewGuid());
@@ -24,7 +26,8 @@ public static class BookingTypeBuilder
         Set(bt, "Slug", "test-slot");
         Set(bt, "Name", "Test Slot Booking");
         Set(bt, "Capacity", 1);
-        Set(bt, "PaymentMode", PaymentMode.Manual);
+        Set(bt, "PaymentMode", paymentMode);
+        Set(bt, "PaymentProvider", paymentProvider);
         Set(bt, "DurationMinutes", durationMinutes);
         Set(bt, "BufferBeforeMinutes", bufferBeforeMinutes);
         Set(bt, "BufferAfterMinutes", bufferAfterMinutes);

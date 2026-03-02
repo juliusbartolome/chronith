@@ -98,6 +98,11 @@ public sealed class CreateBookingHandler(
             var provider = paymentProviderFactory.GetProvider(providerName);
             var result = await provider.CreatePaymentIntentAsync(booking, "PHP", ct);
             booking.SetPaymentReference(result.ExternalId);
+
+            // Persist the PaymentReference. The booking was committed inside the
+            // advisory-lock transaction above, so a second SaveChangesAsync is
+            // required to write the updated field to the database.
+            await unitOfWork.SaveChangesAsync(ct);
         }
 
         await publisher.Publish(
