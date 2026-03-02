@@ -9,4 +9,5 @@ public interface IApiKeyRepository
     Task<TenantApiKey?> GetByHashAsync(string keyHash, CancellationToken ct);
     Task<TenantApiKey?> GetByIdAsync(Guid id, Guid tenantId, CancellationToken ct);
     Task UpdateAsync(TenantApiKey key, CancellationToken ct);
+    Task UpdateLastUsedAtAsync(Guid id, DateTimeOffset now, CancellationToken ct);
 }

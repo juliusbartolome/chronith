@@ -53,6 +53,13 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
         // SaveChanges is deferred to the caller's IUnitOfWork
     }
 
+    public async Task UpdateLastUsedAtAsync(Guid id, DateTimeOffset now, CancellationToken ct)
+    {
+        await db.TenantApiKeys
+            .Where(k => k.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(k => k.LastUsedAt, now), ct);
+    }
+
     private static TenantApiKeyEntity MapToEntity(TenantApiKey d) => new()
     {
         Id = d.Id,
