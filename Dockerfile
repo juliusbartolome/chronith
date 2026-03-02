@@ -26,6 +26,9 @@ RUN dotnet publish src/Chronith.API/Chronith.API.csproj \
 # ── Stage 2: runtime ──────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
+# Install curl for HEALTHCHECK (run as root before switching to app user)
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # Run as non-root (app user pre-exists in the aspnet base image)
 USER app
 
