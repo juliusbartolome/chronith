@@ -59,7 +59,17 @@ public sealed class CancelBookingHandler(
         await unitOfWork.SaveChangesAsync(ct);
 
         await publisher.Publish(
-            new Notifications.BookingStatusChangedNotification(booking.Id, from, BookingStatus.Cancelled),
+            new Notifications.BookingStatusChangedNotification(
+                BookingId: booking.Id,
+                TenantId: booking.TenantId,
+                BookingTypeId: booking.BookingTypeId,
+                BookingTypeSlug: cmd.BookingTypeSlug,
+                FromStatus: from,
+                ToStatus: BookingStatus.Cancelled,
+                Start: booking.Start,
+                End: booking.End,
+                CustomerId: booking.CustomerId,
+                CustomerEmail: booking.CustomerEmail),
             ct);
 
         return booking.ToDto();

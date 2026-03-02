@@ -47,7 +47,17 @@ public sealed class PayBookingHandler(
         await unitOfWork.SaveChangesAsync(ct);
 
         await publisher.Publish(
-            new Notifications.BookingStatusChangedNotification(booking.Id, from, BookingStatus.PendingVerification),
+            new Notifications.BookingStatusChangedNotification(
+                BookingId: booking.Id,
+                TenantId: booking.TenantId,
+                BookingTypeId: booking.BookingTypeId,
+                BookingTypeSlug: cmd.BookingTypeSlug,
+                FromStatus: from,
+                ToStatus: BookingStatus.PendingVerification,
+                Start: booking.Start,
+                End: booking.End,
+                CustomerId: booking.CustomerId,
+                CustomerEmail: booking.CustomerEmail),
             ct);
 
         return booking.ToDto();

@@ -97,7 +97,17 @@ public sealed class CreateBookingHandler(
         await tx.CommitAsync(ct);
 
         await publisher.Publish(
-            new Notifications.BookingStatusChangedNotification(booking.Id, null, BookingStatus.PendingPayment),
+            new Notifications.BookingStatusChangedNotification(
+                BookingId: booking.Id,
+                TenantId: booking.TenantId,
+                BookingTypeId: booking.BookingTypeId,
+                BookingTypeSlug: cmd.BookingTypeSlug,
+                FromStatus: null,
+                ToStatus: BookingStatus.PendingPayment,
+                Start: booking.Start,
+                End: booking.End,
+                CustomerId: booking.CustomerId,
+                CustomerEmail: booking.CustomerEmail),
             ct);
 
         return booking.ToDto();
