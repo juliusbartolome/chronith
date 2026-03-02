@@ -134,7 +134,7 @@ jobs:
       - name: Seed database
         run: |
           docker exec chronith-postgres-1 psql -U chronith -d chronith -c "
-            INSERT INTO tenants ("Id", "Name", "Slug", "TimeZoneId", "IsDeleted", "CreatedAt")
+            INSERT INTO tenants (\"Id\", \"Name\", \"Slug\", \"TimeZoneId\", \"IsDeleted\", \"CreatedAt\")
             VALUES ('00000000-0000-0000-0000-000000000001','Test Tenant','test-tenant','UTC',false,NOW())
             ON CONFLICT (\"Id\") DO NOTHING;
 
