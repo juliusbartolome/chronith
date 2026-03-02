@@ -133,27 +133,27 @@ jobs:
 
       - name: Seed database
         run: |
-          docker exec chronith-postgres-1 psql -U chronith -d chronith -c "
-            INSERT INTO tenants (\"Id\", \"Name\", \"Slug\", \"TimeZoneId\", \"IsDeleted\", \"CreatedAt\")
+          docker exec -i chronith-postgres-1 psql -U chronith -d chronith <<'SQL'
+            INSERT INTO tenants ("Id", "Name", "Slug", "TimeZoneId", "IsDeleted", "CreatedAt")
             VALUES ('00000000-0000-0000-0000-000000000001','Test Tenant','test-tenant','UTC',false,NOW())
-            ON CONFLICT (\"Id\") DO NOTHING;
+            ON CONFLICT ("Id") DO NOTHING;
 
-            INSERT INTO booking_types (\"Id\", \"TenantId\", \"Name\", \"Slug\", \"DurationMinutes\", \"Capacity\", \"Kind\", \"PaymentMode\", \"IsDeleted\", \"CreatedAt\")
+            INSERT INTO booking_types ("Id", "TenantId", "Name", "Slug", "DurationMinutes", "Capacity", "Kind", "PaymentMode", "IsDeleted", "CreatedAt")
             VALUES
               ('00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000001','Test Type','test-type',60,100,'Fixed','Manual',false,NOW()),
               ('00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000001','Capacity One Type','capacity-one-type',60,1,'Fixed','Manual',false,NOW())
-            ON CONFLICT (\"Id\") DO NOTHING;
+            ON CONFLICT ("Id") DO NOTHING;
 
-            INSERT INTO availability_windows (\"Id\", \"BookingTypeId\", \"DayOfWeek\", \"StartTime\", \"EndTime\", \"IsDeleted\", \"CreatedAt\")
-            SELECT gen_random_uuid(), bt.\"Id\", d.day, '08:00'::time, '18:00'::time, false, NOW()
+            INSERT INTO availability_windows ("Id", "BookingTypeId", "DayOfWeek", "StartTime", "EndTime", "IsDeleted", "CreatedAt")
+            SELECT gen_random_uuid(), bt."Id", d.day, '08:00'::time, '18:00'::time, false, NOW()
             FROM booking_types bt
             CROSS JOIN (SELECT generate_series(0,6) AS day) d
-            WHERE bt.\"Id\" IN (
+            WHERE bt."Id" IN (
               '00000000-0000-0000-0000-000000000010',
               '00000000-0000-0000-0000-000000000011'
             )
             ON CONFLICT DO NOTHING;
-          "
+          SQL
 
       - name: Install k6
         uses: grafana/setup-k6-action@v1
@@ -180,11 +180,11 @@ jobs:
 
       - name: Clear bookings before lifecycle
         run: |
-          docker exec chronith-postgres-1 psql -U chronith -d chronith -c "
+          docker exec -i chronith-postgres-1 psql -U chronith -d chronith <<'SQL'
             DELETE FROM bookings
-            WHERE \"StartTime\" >= '2026-06-01T00:00:00+00:00'
-              AND \"StartTime\" <  '2026-07-01T00:00:00+00:00';
-          "
+            WHERE "StartTime" >= '2026-06-01T00:00:00+00:00'
+              AND "StartTime" <  '2026-07-01T00:00:00+00:00';
+          SQL
 
       - name: Run booking-lifecycle.js
         env:
@@ -198,10 +198,10 @@ jobs:
 
       - name: Clear slot before concurrent test
         run: |
-          docker exec chronith-postgres-1 psql -U chronith -d chronith -c "
+          docker exec -i chronith-postgres-1 psql -U chronith -d chronith <<'SQL'
             DELETE FROM bookings
-            WHERE \"StartTime\" = '2026-05-04T10:00:00+00:00';
-          "
+            WHERE "StartTime" = '2026-05-04T10:00:00+00:00';
+          SQL
 
       - name: Run concurrent-booking.js
         env:
