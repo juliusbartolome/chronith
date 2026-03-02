@@ -31,7 +31,7 @@ public sealed class ApiKeyAuthenticationHandler(
             return AuthenticateResult.Fail("Invalid or revoked API key");
 
         // Fire-and-forget last-used update (non-blocking, best-effort)
-        _ = apiKeyRepo.UpdateLastUsedAtAsync(key.Id, DateTimeOffset.UtcNow, CancellationToken.None);
+        _ = UpdateLastUsedAtSafeAsync(apiKeyRepo, key.Id, Logger);
 
         var claims = new[]
         {
@@ -46,5 +46,18 @@ public sealed class ApiKeyAuthenticationHandler(
         var ticket = new AuthenticationTicket(principal, Scheme.Name);
 
         return AuthenticateResult.Success(ticket);
+    }
+
+    private static async Task UpdateLastUsedAtSafeAsync(
+        IApiKeyRepository repo, Guid id, ILogger logger)
+    {
+        try
+        {
+            await repo.UpdateLastUsedAtAsync(id, DateTimeOffset.UtcNow, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to update LastUsedAt for key {Id}", id);
+        }
     }
 }

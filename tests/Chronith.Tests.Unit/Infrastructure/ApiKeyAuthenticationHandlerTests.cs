@@ -77,11 +77,14 @@ public sealed class ApiKeyAuthenticationHandlerTests
 
         var repo = Substitute.For<IApiKeyRepository>();
         repo.GetByHashAsync(hash, Arg.Any<CancellationToken>()).Returns(apiKey);
+        repo.UpdateLastUsedAtAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
         var handler = await BuildHandlerAsync(repo, headerValue: rawKey);
 
         // Act
         var result = await handler.AuthenticateAsync();
+        await Task.Delay(50); // allow fire-and-forget to complete
 
         // Assert
         result.Succeeded.Should().BeTrue();
@@ -92,6 +95,8 @@ public sealed class ApiKeyAuthenticationHandlerTests
         claims.Should().Contain(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
         claims.Should().Contain(c => c.Type == ClaimTypes.NameIdentifier && c.Value == keyId.ToString());
         claims.Should().Contain(c => c.Type == "sub" && c.Value == keyId.ToString());
+
+        await repo.Received(1).UpdateLastUsedAtAsync(keyId, Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
