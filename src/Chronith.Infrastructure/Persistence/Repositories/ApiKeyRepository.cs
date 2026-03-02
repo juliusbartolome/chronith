@@ -19,7 +19,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
     {
         var entities = await db.TenantApiKeys
             .AsNoTracking()
-            .Where(k => k.TenantId == tenantId && !k.IsRevoked)
+            .Where(k => k.TenantId == tenantId)
             .ToListAsync(ct);
 
         return entities.Select(MapToDomain).ToList();
@@ -29,7 +29,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
     {
         var entity = await db.TenantApiKeys
             .AsNoTracking()
-            .FirstOrDefaultAsync(k => k.KeyHash == keyHash, ct);
+            .FirstOrDefaultAsync(k => k.KeyHash == keyHash && !k.IsRevoked, ct);
 
         return entity is null ? null : MapToDomain(entity);
     }
