@@ -8,7 +8,7 @@ public sealed class TenantApiKeyConfiguration : IEntityTypeConfiguration<TenantA
 {
     public void Configure(EntityTypeBuilder<TenantApiKeyEntity> builder)
     {
-        builder.ToTable("TenantApiKeys", "chronith");
+        builder.ToTable("tenant_api_keys", "chronith");
 
         builder.HasKey(e => e.Id);
 
@@ -19,10 +19,10 @@ public sealed class TenantApiKeyConfiguration : IEntityTypeConfiguration<TenantA
         // Primary auth lookup — unique hash
         builder.HasIndex(e => e.KeyHash)
             .IsUnique()
-            .HasDatabaseName("IX_TenantApiKeys_KeyHash");
+            .HasDatabaseName("IX_tenant_api_keys_key_hash");
 
         // List endpoint filter
         builder.HasIndex(e => new { e.TenantId, e.IsRevoked })
-            .HasDatabaseName("IX_TenantApiKeys_TenantId_IsRevoked");
+            .HasDatabaseName("IX_tenant_api_keys_tenant_id_is_revoked");
     }
 }

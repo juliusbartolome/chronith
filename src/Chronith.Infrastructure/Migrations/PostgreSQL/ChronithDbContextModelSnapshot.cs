@@ -251,12 +251,12 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
                     b.HasIndex("KeyHash")
                         .IsUnique()
-                        .HasDatabaseName("IX_TenantApiKeys_KeyHash");
+                        .HasDatabaseName("IX_tenant_api_keys_key_hash");
 
                     b.HasIndex("TenantId", "IsRevoked")
-                        .HasDatabaseName("IX_TenantApiKeys_TenantId_IsRevoked");
+                        .HasDatabaseName("IX_tenant_api_keys_tenant_id_is_revoked");
 
-                    b.ToTable("TenantApiKeys", "chronith");
+                    b.ToTable("tenant_api_keys", "chronith");
                 });
 
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.TenantEntity", b =>

@@ -12,7 +12,7 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "TenantApiKeys",
+                name: "tenant_api_keys",
                 schema: "chronith",
                 columns: table => new
                 {
@@ -27,20 +27,20 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TenantApiKeys", x => x.Id);
+                    table.PrimaryKey("PK_tenant_api_keys", x => x.Id);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_TenantApiKeys_KeyHash",
+                name: "IX_tenant_api_keys_key_hash",
                 schema: "chronith",
-                table: "TenantApiKeys",
+                table: "tenant_api_keys",
                 column: "KeyHash",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_TenantApiKeys_TenantId_IsRevoked",
+                name: "IX_tenant_api_keys_tenant_id_is_revoked",
                 schema: "chronith",
-                table: "TenantApiKeys",
+                table: "tenant_api_keys",
                 columns: new[] { "TenantId", "IsRevoked" });
         }
 
@@ -48,7 +48,7 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "TenantApiKeys",
+                name: "tenant_api_keys",
                 schema: "chronith");
         }
     }
