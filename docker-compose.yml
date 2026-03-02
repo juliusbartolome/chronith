@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: chronith
+      POSTGRES_USER: chronith
+      POSTGRES_PASSWORD: chronith
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chronith"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chronith-api:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      Database__Provider: PostgreSQL
+      Database__ConnectionString: "Host=postgres;Port=5432;Database=chronith;Username=chronith;Password=chronith"
+      Jwt__SigningKey: "change-me-in-production-at-least-32-chars"
+      ASPNETCORE_URLS: "http://+:8080"
+
+volumes:
+  postgres_data:

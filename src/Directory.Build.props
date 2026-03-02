@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- Suppress the default **/*.resx glob — no .resx files exist in this project. -->
+    <!-- Without this, MSBuild 10 raises MSB3552 when the glob matches zero files.   -->
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+  </PropertyGroup>
+</Project>
