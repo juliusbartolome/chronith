@@ -13,6 +13,7 @@ public sealed class BookingEntity
     public string CustomerId { get; set; } = string.Empty;
     public string CustomerEmail { get; set; } = string.Empty;
     public string? PaymentReference { get; set; }
+    public string? CheckoutUrl { get; set; }
     public bool IsDeleted { get; set; }
     public uint RowVersion { get; set; }
 

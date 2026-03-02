@@ -26,6 +26,9 @@ A multi-tenant booking engine API built with .NET 10. Supports two booking model
   - `Calendar` — whole-day block bookings
 - **Booking state machine** — `PendingPayment → PendingVerification → Confirmed`, cancellable from any non-terminal state
 - **Webhook subscriptions** — per-booking-type outbound webhooks for booking lifecycle events
+- **Real webhook delivery** — outbox pattern with background dispatcher, exponential back-off (30s, 2m, 10m, 1h, 4h), up to 6 attempts
+- **Payment provider abstraction** — pluggable `IPaymentProvider` with stub (default) and PayMongo implementations
+- **API key authentication** — `X-Api-Key` header alongside JWT Bearer; keys use `cth_` prefix, SHA-256 hash stored
 - **Payment integration** — dedicated `TenantPaymentService` role and a payment webhook receiver endpoint
 - **Optimistic concurrency** — row-level via PostgreSQL `xmin`
 - **Clean Architecture** — Domain / Application (MediatR CQRS) / Infrastructure / API layers
@@ -76,6 +79,12 @@ The application applies EF Core migrations on startup. No manual migration step 
 | `Jwt:SigningKey`                      | `change-me-in-production-at-least-32-chars` | Symmetric HMAC signing key — **change this in production** |
 | `Jwt:Issuer`                          | `chronith`                                  | JWT issuer claim                                           |
 | `Jwt:Audience`                        | `chronith`                                  | JWT audience claim                                         |
+| `Payments:Provider`                   | `Stub`                                      | Payment provider: `Stub` or `PayMongo`                     |
+| `Payments:Currency`                   | `PHP`                                       | Currency code for payment intents                          |
+| `Payments:PayMongo:SecretKey`         | _(none)_                                    | PayMongo secret key (required when provider is `PayMongo`) |
+| `Payments:PayMongo:WebhookSecret`     | _(none)_                                    | PayMongo webhook signing secret                            |
+| `Webhooks:DispatchIntervalSeconds`    | `10`                                        | Outbox dispatcher poll interval                            |
+| `Webhooks:HttpTimeoutSeconds`         | `10`                                        | HTTP timeout for webhook delivery                          |
 
 Override any value via environment variables using the `__` separator (e.g., `Jwt__SigningKey=...`).
 
@@ -131,6 +140,14 @@ All endpoints require a valid JWT Bearer token unless noted otherwise.
 | `GET`    | `/booking-types/{slug}/webhooks`             | `TenantAdmin` | List webhooks for a booking type      |
 | `DELETE` | `/booking-types/{slug}/webhooks/{webhookId}` | `TenantAdmin` | Delete a webhook subscription         |
 
+### API Keys
+
+| Method   | Route                   | Roles         | Description                          |
+| -------- | ----------------------- | ------------- | ------------------------------------ |
+| `POST`   | `/tenant/api-keys`      | `TenantAdmin` | Create a new API key (returns raw key once) |
+| `GET`    | `/tenant/api-keys`      | `TenantAdmin` | List all API keys for the tenant     |
+| `DELETE` | `/tenant/api-keys/{id}` | `TenantAdmin` | Revoke an API key                    |
+
 ### Payments (Inbound Webhook Receiver)
 
 | Method | Route               | Roles                  | Description                                              |
@@ -161,6 +178,16 @@ Example token payload:
   "aud": "chronith"
 }
 ```
+
+### API Key Authentication
+
+Endpoints that accept `ApiKey` scheme (currently `GET /tenant/api-keys`) also accept an `X-Api-Key` header:
+
+```
+X-Api-Key: cth_<base64url-encoded-32-random-bytes>
+```
+
+API keys are created via `POST /tenant/api-keys` and are scoped to a role. The raw key is returned once on creation and never stored — only its SHA-256 hash is persisted. Keys with `TenantAdmin` role can access all `TenantAdmin`-protected endpoints that accept the `ApiKey` scheme.
 
 ## Booking State Machine
 
@@ -206,7 +233,7 @@ dotnet test tests/Chronith.Tests.Functional
 
 Integration and functional tests use [Testcontainers](https://testcontainers.com/) to spin up a PostgreSQL container automatically. In CI, they connect to a pre-provisioned service container instead.
 
-**Test counts:** 56 unit · 21 integration · 89 functional = **166 total**
+**Test counts:** 107 unit · 24 integration · 98 functional = **229 total**
 
 ## Load Tests
 
@@ -250,7 +277,7 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push to `main
 
 | Job                   | Trigger                  | Description                                                     |
 | --------------------- | ------------------------ | --------------------------------------------------------------- |
-| `.NET Tests`          | all                      | Build, then run all 166 tests with a Postgres service container |
+| `.NET Tests`          | all                      | Build, then run all 229 tests with a Postgres service container |
 | `Docker Build`        | all                      | Build the production Docker image (not pushed)                  |
 | `k6 Load Tests`       | all                      | Run all four k6 scripts against a local Compose stack           |
 | `Benchmarks`          | push to `main`/`develop` | Run BenchmarkDotNet; upload results as artifacts                |

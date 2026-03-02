@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="8.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -26,6 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Chronith.Domain\Chronith.Domain.csproj" />
     <ProjectReference Include="..\..\src\Chronith.Application\Chronith.Application.csproj" />
+    <ProjectReference Include="..\..\src\Chronith.Infrastructure\Chronith.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

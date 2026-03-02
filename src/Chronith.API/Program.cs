@@ -2,6 +2,7 @@ using Chronith.API.HealthChecks;
 using Chronith.API.Middleware;
 using Chronith.Application;
 using Chronith.Infrastructure;
+using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Persistence;
 using FastEndpoints;
 using FastEndpoints.Security;
@@ -19,6 +20,11 @@ builder.Services
     .AddFastEndpoints()
     .AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database");
+
+builder.Services.AddAuthentication()
+    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
+        ApiKeyAuthenticationOptions.SchemeLabel,
+        _ => { });
 
 builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
 
