@@ -238,3 +238,43 @@ jobs:
       - name: Tear down stack
         if: always()
         run: docker compose down
+
+  benchmarks:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore Chronith.slnx
+
+      - name: Run benchmarks
+        run: |
+          dotnet run -c Release --project tests/Chronith.Tests.Performance \
+            -- --filter "*" --exporters json markdown
+
+      - name: Write benchmark summary
+        if: always()
+        run: |
+          echo "## BenchmarkDotNet Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for f in BenchmarkDotNet.Artifacts/results/*.md; do
+            if [ -f "$f" ]; then
+              cat "$f" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Upload BenchmarkDotNet artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-results
+          path: BenchmarkDotNet.Artifacts/
+          retention-days: 30
