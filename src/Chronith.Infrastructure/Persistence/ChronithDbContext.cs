@@ -22,6 +22,9 @@ public sealed class ChronithDbContext : DbContext
     public DbSet<WebhookEntity> Webhooks => Set<WebhookEntity>();
     public DbSet<AvailabilityWindowEntity> AvailabilityWindows => Set<AvailabilityWindowEntity>();
     public DbSet<BookingStatusChangeEntity> BookingStatusChanges => Set<BookingStatusChangeEntity>();
+    // No global query filter: webhook_outbox_entries is accessed by the
+    // WebhookDispatcherService background worker, which requires cross-tenant access.
+    public DbSet<WebhookOutboxEntryEntity> WebhookOutboxEntries => Set<WebhookOutboxEntryEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
