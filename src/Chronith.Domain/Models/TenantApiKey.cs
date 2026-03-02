@@ -12,7 +12,12 @@ public sealed class TenantApiKey
     public DateTimeOffset? LastUsedAt { get; private set; }
 
     public void Revoke() => IsRevoked = true;
-    public void UpdateLastUsed(DateTimeOffset now) => LastUsedAt = now;
+
+    public void UpdateLastUsed(DateTimeOffset now)
+    {
+        if (LastUsedAt is null || now > LastUsedAt)
+            LastUsedAt = now;
+    }
 
     /// <summary>
     /// Generates a new raw API key and returns both the key and its hash.

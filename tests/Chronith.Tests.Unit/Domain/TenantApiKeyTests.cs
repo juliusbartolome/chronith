@@ -51,4 +51,24 @@ public sealed class TenantApiKeyTests
         var hash2 = TenantApiKey.ComputeHash("cth_test2");
         hash1.Should().NotBe(hash2);
     }
+
+    [Fact]
+    public void UpdateLastUsed_SetsLastUsedAt()
+    {
+        var key = new TenantApiKey();
+        var now = DateTimeOffset.UtcNow;
+        key.UpdateLastUsed(now);
+        key.LastUsedAt.Should().Be(now);
+    }
+
+    [Fact]
+    public void UpdateLastUsed_OlderTimestamp_DoesNotRewind()
+    {
+        var key = new TenantApiKey();
+        var now = DateTimeOffset.UtcNow;
+        key.UpdateLastUsed(now);
+        var older = now.AddMinutes(-10);
+        key.UpdateLastUsed(older);
+        key.LastUsedAt.Should().Be(now); // not rewound
+    }
 }
