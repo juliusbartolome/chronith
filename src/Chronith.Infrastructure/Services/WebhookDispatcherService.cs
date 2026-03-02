@@ -73,7 +73,7 @@ public sealed class WebhookDispatcherService(
         try
         {
             var signature = ComputeHmacSignature(entry.Payload, secret);
-            var request = new HttpRequestMessage(HttpMethod.Post, url)
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = new StringContent(entry.Payload, Encoding.UTF8, "application/json")
             };
