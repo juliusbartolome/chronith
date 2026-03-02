@@ -18,7 +18,7 @@ public sealed class WebhookOutboxEntry
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 
     // Back-off schedule: 30s, 2m, 10m, 1h, 4h
-    public static readonly TimeSpan[] BackOffSchedule =
+    private static readonly TimeSpan[] BackOffSchedule =
     [
         TimeSpan.FromSeconds(30),
         TimeSpan.FromMinutes(2),
@@ -26,6 +26,12 @@ public sealed class WebhookOutboxEntry
         TimeSpan.FromHours(1),
         TimeSpan.FromHours(4)
     ];
+
+    /// <summary>
+    /// Returns the back-off delay for the given attempt number (1-indexed).
+    /// Attempt 1 → 30s, 2 → 2m, 3 → 10m, 4 → 1h, 5 → 4h.
+    /// </summary>
+    public static TimeSpan GetBackOffDelay(int attempt) => BackOffSchedule[attempt - 1];
 
     public const int MaxAttempts = 6;
 
@@ -50,7 +56,7 @@ public sealed class WebhookOutboxEntry
         }
         else
         {
-            NextRetryAt = now.Add(BackOffSchedule[AttemptCount - 1]);
+            NextRetryAt = now.Add(GetBackOffDelay(AttemptCount));
         }
     }
 }

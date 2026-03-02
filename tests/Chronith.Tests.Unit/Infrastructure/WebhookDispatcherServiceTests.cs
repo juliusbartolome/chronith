@@ -127,7 +127,7 @@ public sealed class WebhookDispatcherServiceTests
     public async Task DispatchBatchAsync_OnAttempt5_SetsNextRetryAt_AndNotFinal()
     {
         // Attempt 5 → newAttemptCount = 5 → isFinal = false (MaxAttempts = 6)
-        // BackOffSchedule[4] = 4 hours
+        // GetBackOffDelay(5) = 4 hours
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
         var entry = new PendingOutboxEntry(entryId, webhookId, "booking.confirmed", "{}", AttemptCount: 4);

@@ -119,7 +119,7 @@ public sealed class WebhookDispatcherService(
         var isFinal = newAttemptCount >= WebhookOutboxEntry.MaxAttempts;
         DateTimeOffset? nextRetryAt = isFinal
             ? null
-            : now.Add(WebhookOutboxEntry.BackOffSchedule[newAttemptCount - 1]);
+            : now.Add(WebhookOutboxEntry.GetBackOffDelay(newAttemptCount));
 
         await outboxRepo.MarkFailedAttemptAsync(entry.Id, newAttemptCount, now, nextRetryAt, isFinal, ct);
     }
