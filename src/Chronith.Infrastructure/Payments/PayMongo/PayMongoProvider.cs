@@ -40,7 +40,7 @@ public sealed class PayMongoProvider(
         var json = JsonSerializer.Serialize(requestBody, JsonOptions);
         var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{options.Value.SecretKey}:"));
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/v1/links")
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/v1/links")
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
