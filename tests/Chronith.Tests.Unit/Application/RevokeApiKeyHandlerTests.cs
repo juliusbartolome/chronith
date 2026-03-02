@@ -75,7 +75,7 @@ public sealed class RevokeApiKeyHandlerTests
 
         apiKeyRepo
             .GetByIdAsync(KeyId, TenantId, Arg.Any<CancellationToken>())
-            .Returns(null);
+            .Returns(default(TenantApiKey));
 
         // Act
         var act = async () => await handler.Handle(cmd, CancellationToken.None);

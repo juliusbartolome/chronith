@@ -4,6 +4,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
 
+# Pin SDK version to match global.json (prevents MSBuild glob expansion
+# issues caused by backslash path separators on Linux in newer SDK patches)
+COPY global.json .
+
 # Copy MSBuild configuration first (must be present during restore)
 COPY src/Directory.Build.props src/
 
@@ -18,9 +22,14 @@ RUN dotnet restore src/Chronith.API/Chronith.API.csproj
 # Copy all source (excluding tests via .dockerignore)
 COPY src/ src/
 
+# Build first so bin/Release exists before publish runs incremental glob expansion
+RUN dotnet build src/Chronith.API/Chronith.API.csproj \
+    -c Release \
+    --no-restore
+
 RUN dotnet publish src/Chronith.API/Chronith.API.csproj \
     -c Release \
-    --no-restore \
+    --no-build \
     -o /app/out
 
 # ── Stage 2: runtime ──────────────────────────────────────────────────────────

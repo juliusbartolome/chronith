@@ -116,7 +116,7 @@ public sealed class ApiKeyAuthenticationHandlerTests
 
         var repo = Substitute.For<IApiKeyRepository>();
         // GetByHashAsync returns null for revoked/unknown keys
-        repo.GetByHashAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(null);
+        repo.GetByHashAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(default(TenantApiKey));
 
         var handler = await BuildHandlerAsync(repo, headerValue: rawKey);
 

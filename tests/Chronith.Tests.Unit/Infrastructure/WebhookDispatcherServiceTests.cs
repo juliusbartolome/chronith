@@ -11,9 +11,14 @@ using System.Net;
 
 namespace Chronith.Tests.Unit.Infrastructure;
 
-public sealed class WebhookDispatcherServiceTests
+public sealed class WebhookDispatcherServiceTests : IDisposable
 {
-    private static (
+    // HttpClient is kept alive for the test class lifetime and disposed in Dispose().
+    private HttpClient? _httpClient;
+
+    public void Dispose() => _httpClient?.Dispose();
+
+    private (
         WebhookDispatcherService Service,
         IWebhookOutboxRepository OutboxRepo,
         IWebhookRepository WebhookRepo,
@@ -39,10 +44,9 @@ public sealed class WebhookDispatcherServiceTests
         scopeFactory.CreateScope().Returns(scope);
 
         var httpHandler = new FakeHttpMessageHandler(HttpStatusCode.OK);
-        var httpClient = new HttpClient(httpHandler);
-        httpHandler.Client = httpClient;
+        _httpClient = new HttpClient(httpHandler);
         var httpClientFactory = Substitute.For<IHttpClientFactory>();
-        httpClientFactory.CreateClient("WebhookDispatcher").Returns(httpClient);
+        httpClientFactory.CreateClient("WebhookDispatcher").Returns(_httpClient);
 
         var options = Options.Create(new WebhookDispatcherOptions { DispatchIntervalSeconds = 1, HttpTimeoutSeconds = 5 });
         var logger = Substitute.For<ILogger<WebhookDispatcherService>>();
@@ -108,8 +112,8 @@ public sealed class WebhookDispatcherServiceTests
         var webhookId = Guid.NewGuid();
         var entry = new PendingOutboxEntry(entryId, webhookId, "booking.confirmed", "{}", AttemptCount: 0);
 
-        webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns(null);
-        webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns((Webhook?)null);
+        var (sut, outboxRepo, webhookRepo, _) = BuildSut(pending: [entry]);
+        webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns(default(Webhook));
 
         await sut.DispatchBatchAsync(CancellationToken.None);
 
@@ -181,20 +185,11 @@ internal sealed class FakeHttpMessageHandler(HttpStatusCode statusCode) : HttpMe
 {
     public HttpStatusCode StatusCode { get; set; } = statusCode;
 
-    public HttpClient? Client { get; set; }
-
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
-        => Task.FromResult(new HttpResponseMessage(StatusCode));
-
-    protected override void Dispose(bool disposing)
     {
-        if (disposing)
-        {
-            Client?.Dispose();
-            Client = null;
-        }
-
-        base.Dispose(disposing);
+        // Ownership of HttpResponseMessage transfers to HttpClient, which disposes it.
+        var response = new HttpResponseMessage(StatusCode);
+        return Task.FromResult(response);
     }
 }

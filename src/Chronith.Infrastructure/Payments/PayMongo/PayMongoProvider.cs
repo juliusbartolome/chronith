@@ -86,7 +86,7 @@ public sealed class PayMongoProvider(
                 Encoding.UTF8.GetBytes(expectedHex),
                 Encoding.UTF8.GetBytes(signature));
         }
-        catch
+        catch (Exception ex) when (ex is InvalidOperationException or FormatException or OverflowException or ArgumentException)
         {
             return false;
         }

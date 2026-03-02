@@ -60,7 +60,7 @@ public sealed class ApiKeyAuthenticationHandler(
             var repo = scope.ServiceProvider.GetRequiredService<IApiKeyRepository>();
             await repo.UpdateLastUsedAtAsync(id, DateTimeOffset.UtcNow, CancellationToken.None);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogWarning(ex, "Failed to update LastUsedAt for key {Id}", id);
         }
