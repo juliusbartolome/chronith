@@ -40,6 +40,7 @@ public sealed class WebhookDispatcherServiceTests
 
         var httpHandler = new FakeHttpMessageHandler(HttpStatusCode.OK);
         var httpClient = new HttpClient(httpHandler);
+        httpHandler.Client = httpClient;
         var httpClientFactory = Substitute.For<IHttpClientFactory>();
         httpClientFactory.CreateClient("WebhookDispatcher").Returns(httpClient);
 
@@ -180,7 +181,20 @@ internal sealed class FakeHttpMessageHandler(HttpStatusCode statusCode) : HttpMe
 {
     public HttpStatusCode StatusCode { get; set; } = statusCode;
 
+    public HttpClient? Client { get; set; }
+
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
         => Task.FromResult(new HttpResponseMessage(StatusCode));
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            Client?.Dispose();
+            Client = null;
+        }
+
+        base.Dispose(disposing);
+    }
 }
