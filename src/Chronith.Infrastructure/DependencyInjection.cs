@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<IWebhookRepository, WebhookRepository>();
         services.AddScoped<IWebhookOutboxRepository, WebhookOutboxRepository>();
+        services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
         services.AddHostedService<WebhookDispatcherService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
