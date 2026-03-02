@@ -23,6 +23,10 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
         builder.Property(b => b.PaymentReference)
             .HasMaxLength(200);
 
+        builder.Property(b => b.CheckoutUrl)
+            .HasColumnName("checkout_url")
+            .HasMaxLength(2048);
+
         builder.Property(b => b.Status)
             .HasConversion<string>()
             .HasMaxLength(30);

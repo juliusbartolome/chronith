@@ -105,7 +105,8 @@ public sealed class BookingRepository : IBookingRepository
             .ExecuteUpdateAsync(s => s
                 .SetProperty(b => b.Status, booking.Status)
                 .SetProperty(b => b.IsDeleted, booking.IsDeleted)
-                .SetProperty(b => b.PaymentReference, booking.PaymentReference),
+                .SetProperty(b => b.PaymentReference, booking.PaymentReference)
+                .SetProperty(b => b.CheckoutUrl, booking.CheckoutUrl),
                 ct);
 
         // Insert any new status change records

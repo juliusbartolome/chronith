@@ -100,10 +100,12 @@ public sealed class CreateBookingHandler(
             booking.SetPaymentReference(result.ExternalId);
             booking.SetCheckoutUrl(result.CheckoutUrl);
 
-            // Persist the PaymentReference. The booking was committed inside the
-            // advisory-lock transaction above, so a second SaveChangesAsync is
-            // required to write the updated field to the database.
-            await unitOfWork.SaveChangesAsync(ct);
+            // Persist the updated PaymentReference and CheckoutUrl. The booking was
+            // committed inside the advisory-lock transaction above, so the tracked entity
+            // in the DbContext does not reflect these in-memory changes. Using UpdateAsync
+            // (which issues an ExecuteUpdateAsync SQL statement directly) ensures both
+            // fields are written to the database in a second round-trip.
+            await bookingRepo.UpdateAsync(booking, ct);
         }
 
         await publisher.Publish(

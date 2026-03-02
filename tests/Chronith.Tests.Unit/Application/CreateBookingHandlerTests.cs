@@ -45,11 +45,13 @@ public sealed class CreateBookingHandlerTests
 
     /// <summary>
     /// Builds a fully-wired handler with all collaborators substituted.
-    /// Returns the handler, the IUnitOfWork mock, and the IPaymentProvider mock.
+    /// Returns the handler, the IUnitOfWork mock, the IBookingRepository mock,
+    /// and the IPaymentProvider mock.
     /// </summary>
     private static (
         CreateBookingHandler Handler,
         IUnitOfWork UnitOfWork,
+        IBookingRepository BookingRepo,
         IPaymentProvider Provider)
         Build(BookingType bookingType)
     {
@@ -101,7 +103,7 @@ public sealed class CreateBookingHandlerTests
             publisher,
             providerFactory);
 
-        return (handler, unitOfWork, provider);
+        return (handler, unitOfWork, bookingRepo, provider);
     }
 
     private static CreateBookingCommand MakeCommand() => new()
@@ -114,20 +116,20 @@ public sealed class CreateBookingHandlerTests
     // ── Tests ─────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Handle_AutomaticPaymentMode_CallsSaveChangesAsyncAfterPaymentIntentCreation()
+    public async Task Handle_AutomaticPaymentMode_CallsUpdateAsyncAfterPaymentIntentCreation()
     {
         // Arrange
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
-        var (handler, unitOfWork, _) = Build(bookingType);
+        var (handler, _, bookingRepo, _) = Build(bookingType);
 
         // Act
         await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        // Assert — SaveChangesAsync must be called so that the PaymentReference
-        // is persisted to the database after SetPaymentReference() updates the
-        // in-memory object. The transaction is committed before the payment call,
-        // so a second save is required.
-        await unitOfWork.Received().SaveChangesAsync(Arg.Any<CancellationToken>());
+        // Assert — UpdateAsync must be called so that PaymentReference and CheckoutUrl
+        // are persisted. The transaction commits before the payment call, so the tracked
+        // EF entity does not reflect in-memory changes; ExecuteUpdateAsync (via UpdateAsync)
+        // writes the updated fields directly to the database.
+        await bookingRepo.Received().UpdateAsync(Arg.Any<Booking>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -135,7 +137,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
-        var (handler, _, _) = Build(bookingType);
+        var (handler, _, _, _) = Build(bookingType);
 
         // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
@@ -149,7 +151,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
-        var (handler, _, _) = Build(bookingType);
+        var (handler, _, _, _) = Build(bookingType);
 
         // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
@@ -163,7 +165,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange — Manual mode
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Manual);
-        var (handler, _, provider) = Build(bookingType);
+        var (handler, _, _, provider) = Build(bookingType);
 
         // Act
         await handler.Handle(MakeCommand(), CancellationToken.None);
@@ -178,7 +180,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange — Manual mode never calls payment provider
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Manual);
-        var (handler, _, _) = Build(bookingType);
+        var (handler, _, _, _) = Build(bookingType);
 
         // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
