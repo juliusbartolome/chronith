@@ -59,8 +59,7 @@ public static class DependencyInjection
             client.BaseAddress = new Uri("https://api.paymongo.com");
         });
         services.Configure<PayMongoOptions>(configuration.GetSection("Payments:PayMongo"));
-        services.AddTransient<PayMongoProvider>();
-        services.AddTransient<IPaymentProvider>(sp => sp.GetRequiredService<PayMongoProvider>());
+        services.AddSingleton<IPaymentProvider, PayMongoProvider>();
         services.AddSingleton<IPaymentProviderFactory, PaymentProviderFactory>();
 
         return services;
