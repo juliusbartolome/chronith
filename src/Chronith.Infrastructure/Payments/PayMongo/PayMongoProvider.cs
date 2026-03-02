@@ -68,6 +68,15 @@ public sealed class PayMongoProvider(
             var timestamp = parts.First(p => p.StartsWith("t=")).Substring(2);
             var signature = parts.First(p => p.StartsWith("te=")).Substring(3);
 
+            // Replay protection: reject webhooks with timestamps outside the tolerance window
+            if (!long.TryParse(timestamp, out var unixTimestamp))
+                return false;
+
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var tolerance = options.Value.WebhookTimestampToleranceSeconds;
+            if (Math.Abs(now - unixTimestamp) > tolerance)
+                return false;
+
             var toSign = $"{timestamp}.{rawBody}";
             var key = Encoding.UTF8.GetBytes(options.Value.WebhookSecret);
             var expected = HMACSHA256.HashData(key, Encoding.UTF8.GetBytes(toSign));

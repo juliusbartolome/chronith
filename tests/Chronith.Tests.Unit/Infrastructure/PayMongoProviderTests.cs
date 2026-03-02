@@ -24,14 +24,9 @@ public sealed class PayMongoProviderTests
     public void ValidateWebhookSignature_ValidSignature_ReturnsTrue()
     {
         const string rawBody = """{"data":{"attributes":{"status":"paid","reference_number":"ref-123"}}}""";
-        const string timestamp = "1700000000";
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
 
-        var toSign = $"{timestamp}.{rawBody}";
-        var key = Encoding.UTF8.GetBytes(WebhookSecret);
-        var hash = HMACSHA256.HashData(key, Encoding.UTF8.GetBytes(toSign));
-        var hexSignature = Convert.ToHexStringLower(hash);
-
-        var signatureHeader = $"t={timestamp},te={hexSignature}";
+        var signatureHeader = BuildSignatureHeader(rawBody, WebhookSecret, timestamp);
 
         _provider.ValidateWebhookSignature(rawBody, signatureHeader).Should().BeTrue();
     }
@@ -41,14 +36,9 @@ public sealed class PayMongoProviderTests
     {
         const string originalBody = """{"data":{"attributes":{"status":"paid","reference_number":"ref-123"}}}""";
         const string tamperedBody = """{"data":{"attributes":{"status":"paid","reference_number":"ref-999"}}}""";
-        const string timestamp = "1700000000";
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
 
-        var toSign = $"{timestamp}.{originalBody}";
-        var key = Encoding.UTF8.GetBytes(WebhookSecret);
-        var hash = HMACSHA256.HashData(key, Encoding.UTF8.GetBytes(toSign));
-        var hexSignature = Convert.ToHexStringLower(hash);
-
-        var signatureHeader = $"t={timestamp},te={hexSignature}";
+        var signatureHeader = BuildSignatureHeader(originalBody, WebhookSecret, timestamp);
 
         _provider.ValidateWebhookSignature(tamperedBody, signatureHeader).Should().BeFalse();
     }
@@ -60,6 +50,48 @@ public sealed class PayMongoProviderTests
         const string malformedHeader = "not-a-valid-header";
 
         _provider.ValidateWebhookSignature(rawBody, malformedHeader).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ValidateWebhookSignature_ExpiredTimestamp_ReturnsFalse()
+    {
+        const string rawBody = """{"data":{"attributes":{"status":"paid","reference_number":"ref-123"}}}""";
+        var expiredTimestamp = DateTimeOffset.UtcNow.AddMinutes(-10).ToUnixTimeSeconds().ToString();
+
+        var signatureHeader = BuildSignatureHeader(rawBody, WebhookSecret, expiredTimestamp);
+
+        _provider.ValidateWebhookSignature(rawBody, signatureHeader).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ValidateWebhookSignature_FutureTimestampBeyondTolerance_ReturnsFalse()
+    {
+        const string rawBody = """{"data":{"attributes":{"status":"paid","reference_number":"ref-123"}}}""";
+        var futureTimestamp = DateTimeOffset.UtcNow.AddMinutes(10).ToUnixTimeSeconds().ToString();
+
+        var signatureHeader = BuildSignatureHeader(rawBody, WebhookSecret, futureTimestamp);
+
+        _provider.ValidateWebhookSignature(rawBody, signatureHeader).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ValidateWebhookSignature_ValidTimestampWithinTolerance_ReturnsTrue()
+    {
+        const string rawBody = """{"data":{"attributes":{"status":"paid","reference_number":"ref-123"}}}""";
+        var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+
+        var signatureHeader = BuildSignatureHeader(rawBody, WebhookSecret, currentTimestamp);
+
+        _provider.ValidateWebhookSignature(rawBody, signatureHeader).Should().BeTrue();
+    }
+
+    private static string BuildSignatureHeader(string rawBody, string secret, string timestamp)
+    {
+        var toSign = $"{timestamp}.{rawBody}";
+        var key = Encoding.UTF8.GetBytes(secret);
+        var hash = HMACSHA256.HashData(key, Encoding.UTF8.GetBytes(toSign));
+        var hexSignature = Convert.ToHexStringLower(hash);
+        return $"t={timestamp},te={hexSignature}";
     }
 
     [Fact]
