@@ -1,5 +1,4 @@
 using Chronith.Application.DTOs;
-using Chronith.Application.Exceptions;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
 using Chronith.Domain.Enums;
@@ -50,8 +49,6 @@ public sealed class CreateBookingHandler(
         BookingStatus.Confirmed
     ];
 
-    private const int MaxRetries = 3;
-
     public async Task<BookingDto> Handle(CreateBookingCommand cmd, CancellationToken ct)
     {
         var bookingType = await bookingTypeRepo.GetBySlugAsync(tenantContext.TenantId, cmd.BookingTypeSlug, ct)
@@ -69,42 +66,35 @@ public sealed class CreateBookingHandler(
             ? Guid.NewGuid().ToString()
             : null;
 
-        Booking? booking = null;
-        for (int attempt = 0; attempt < MaxRetries; attempt++)
-        {
-            try
-            {
-                // COUNT conflict query runs as SQL
-                var conflictCount = await bookingRepo.CountConflictsAsync(
-                    bookingType.Id, effStart, effEnd, ConflictStatuses, ct);
+        // Use the lower 64 bits of the booking type ID as a stable advisory lock key.
+        // This serializes all concurrent create attempts for the same booking type,
+        // eliminating the TOCTOU race between CountConflictsAsync and AddAsync.
+        var lockKey = BitConverter.ToInt64(bookingType.Id.ToByteArray(), 0);
 
-                if (conflictCount >= bookingType.Capacity)
-                    throw new SlotConflictException();
+        await using var tx = await unitOfWork.BeginTransactionAsync(ct);
 
-                var customerId = cmd.CustomerId ?? tenantContext.UserId;
+        await tx.AcquireAdvisoryLockAsync(lockKey, ct);
 
-                booking = Booking.Create(
-                    tenantContext.TenantId,
-                    bookingType.Id,
-                    start,
-                    end,
-                    customerId,
-                    cmd.CustomerEmail,
-                    paymentRef);
+        // COUNT conflict query runs as SQL — now protected by advisory lock
+        var conflictCount = await bookingRepo.CountConflictsAsync(
+            bookingType.Id, effStart, effEnd, ConflictStatuses, ct);
 
-                await bookingRepo.AddAsync(booking, ct);
-                await unitOfWork.SaveChangesAsync(ct);
-                break; // success
-            }
-            catch (ConcurrencyException) when (attempt < MaxRetries - 1)
-            {
-                // Retry on optimistic concurrency conflict
-                continue;
-            }
-        }
-
-        if (booking is null)
+        if (conflictCount >= bookingType.Capacity)
             throw new SlotConflictException();
+
+        var customerId = cmd.CustomerId ?? tenantContext.UserId;
+
+        var booking = Booking.Create(
+            tenantContext.TenantId,
+            bookingType.Id,
+            start,
+            end,
+            customerId,
+            cmd.CustomerEmail,
+            paymentRef);
+
+        await bookingRepo.AddAsync(booking, ct);
+        await tx.CommitAsync(ct);
 
         await publisher.Publish(
             new Notifications.BookingStatusChangedNotification(booking.Id, null, BookingStatus.PendingPayment),
