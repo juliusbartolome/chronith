@@ -2,6 +2,7 @@ using Chronith.Application.Interfaces;
 using Chronith.Infrastructure.Persistence;
 using Chronith.Infrastructure.Persistence.Repositories;
 using Chronith.Infrastructure.Providers;
+using Chronith.Infrastructure.Services;
 using Chronith.Infrastructure.TenantContext;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,10 @@ public static class DependencyInjection
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<IWebhookRepository, WebhookRepository>();
+        services.AddScoped<IWebhookOutboxRepository, WebhookOutboxRepository>();
+        services.AddHostedService<WebhookDispatcherService>();
+        services.AddHttpClient("WebhookDispatcher");
+        services.Configure<WebhookDispatcherOptions>(configuration.GetSection("Webhooks"));
 
         return services;
     }

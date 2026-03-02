@@ -32,6 +32,20 @@ public sealed class WebhookRepository : IWebhookRepository
         return entity is null ? null : MapToDomain(entity);
     }
 
+    /// <summary>
+    /// Retrieves a webhook by ID only, ignoring tenant filter.
+    /// Used by the cross-tenant WebhookDispatcherService background worker.
+    /// </summary>
+    public async Task<Webhook?> GetByIdAsync(Guid webhookId, CancellationToken ct = default)
+    {
+        var entity = await _db.Webhooks
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(w => w.Id == webhookId, ct);
+
+        return entity is null ? null : MapToDomain(entity);
+    }
+
     public async Task AddAsync(Webhook webhook, CancellationToken ct = default)
     {
         var entity = new WebhookEntity
