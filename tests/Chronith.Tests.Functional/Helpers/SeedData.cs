@@ -134,4 +134,52 @@ public static class SeedData
         await db.SaveChangesAsync();
         return id;
     }
+
+    public static async Task<IReadOnlyList<Guid>> SeedOutboxEntriesAsync(
+        ChronithDbContext db,
+        Guid webhookId,
+        int count = 3)
+    {
+        var ids = new List<Guid>();
+        for (int i = 0; i < count; i++)
+        {
+            var id = Guid.NewGuid();
+            db.WebhookOutboxEntries.Add(new WebhookOutboxEntryEntity
+            {
+                Id = id,
+                TenantId = TestConstants.TenantId,
+                WebhookId = webhookId,
+                BookingId = Guid.NewGuid(),
+                EventType = "booking.confirmed",
+                Payload = "{}",
+                Status = OutboxStatus.Pending,
+                AttemptCount = 0,
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-i),
+            });
+            ids.Add(id);
+        }
+        await db.SaveChangesAsync();
+        return ids;
+    }
+
+    public static async Task<Guid> SeedFailedOutboxEntryAsync(
+        ChronithDbContext db,
+        Guid webhookId)
+    {
+        var id = Guid.NewGuid();
+        db.WebhookOutboxEntries.Add(new WebhookOutboxEntryEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            WebhookId = webhookId,
+            BookingId = Guid.NewGuid(),
+            EventType = "booking.confirmed",
+            Payload = "{}",
+            Status = OutboxStatus.Failed,
+            AttemptCount = 6,
+            CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
 }
