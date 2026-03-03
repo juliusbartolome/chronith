@@ -23,6 +23,7 @@ public sealed class CreateBookingEndpoint(ISender sender)
     {
         Post("/booking-types/{slug}/bookings");
         Roles("TenantAdmin", "TenantStaff", "Customer");
+        Options(x => x.WithTags("Bookings"));
     }
 
     public override async Task HandleAsync(CreateBookingRequest req, CancellationToken ct)

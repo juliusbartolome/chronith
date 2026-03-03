@@ -13,6 +13,7 @@ public sealed class ListApiKeysEndpoint(ISender sender)
         Get("/tenant/api-keys");
         Roles("TenantAdmin");
         AuthSchemes("Bearer", "ApiKey");
+        Options(x => x.WithTags("ApiKeys"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

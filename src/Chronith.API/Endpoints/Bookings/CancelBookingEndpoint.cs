@@ -18,6 +18,7 @@ public sealed class CancelBookingEndpoint(ISender sender)
     {
         Post("/bookings/{bookingId}/cancel");
         Roles("TenantAdmin", "TenantStaff", "Customer");
+        Options(x => x.WithTags("Bookings"));
     }
 
     public override async Task HandleAsync(CancelBookingRequest req, CancellationToken ct)

@@ -17,6 +17,7 @@ public sealed class RetryWebhookDeliveryEndpoint(ISender sender)
     {
         Post("/webhooks/{webhookId}/deliveries/{deliveryId}/retry");
         Roles("TenantAdmin");
+        Options(x => x.WithTags("Webhooks"));
         Summary(s =>
         {
             s.Summary = "Manually retry a failed webhook delivery";

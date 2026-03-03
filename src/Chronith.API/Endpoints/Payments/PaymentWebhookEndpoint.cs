@@ -18,6 +18,7 @@ public sealed class PaymentWebhookEndpoint(ISender sender)
     {
         Post("/webhooks/payment");
         Roles("TenantPaymentService");
+        Options(x => x.WithTags("Payments"));
     }
 
     public override async Task HandleAsync(PaymentWebhookRequest req, CancellationToken ct)

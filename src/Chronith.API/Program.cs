@@ -8,10 +8,12 @@ using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Persistence;
 using FastEndpoints;
 using FastEndpoints.Security;
+using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using NSwag;
 using Serilog;
 using System.Globalization;
 using System.Threading.RateLimiting;
@@ -26,6 +28,31 @@ builder.Services
     .AddFastEndpoints()
     .AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database");
+
+builder.Services.SwaggerDocument(o =>
+{
+    o.DocumentSettings = s =>
+    {
+        s.Title = "Chronith API";
+        s.Version = "v0.3";
+        s.Description = "Multi-tenant booking engine REST API";
+        s.AddAuth("BearerAuth", new NSwag.OpenApiSecurityScheme
+        {
+            Type = NSwag.OpenApiSecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Enter your JWT token.",
+        });
+        s.AddAuth("ApiKeyAuth", new NSwag.OpenApiSecurityScheme
+        {
+            Type = NSwag.OpenApiSecuritySchemeType.ApiKey,
+            Name = "X-Api-Key",
+            In = NSwag.OpenApiSecurityApiKeyLocation.Header,
+            Description = "Enter your API key.",
+        });
+    };
+    o.EnableJWTBearerAuth = true;
+});
 
 builder.Services.AddAuthentication()
     .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
@@ -87,6 +114,9 @@ app.UseAuthentication()
    .UseAuthorization();
 
 app.UseRateLimiter();
+
+if (!app.Environment.IsProduction())
+    app.UseSwaggerGen();
 
 // Append X-RateLimit-* informational headers on successful responses
 app.Use(async (ctx, next) =>
