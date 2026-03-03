@@ -18,6 +18,7 @@ public sealed class WebhookOutboxEntryConfiguration : IEntityTypeConfiguration<W
             .HasConversion<string>()
             .HasMaxLength(20)
             .IsRequired();
+        builder.Property(e => e.RetryRequestedAt).IsRequired(false);
 
         // Dispatcher poll index
         builder.HasIndex(e => new { e.Status, e.NextRetryAt })

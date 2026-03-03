@@ -1,4 +1,5 @@
 using Chronith.Domain.Enums;
+using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using FluentAssertions;
 
@@ -82,5 +83,35 @@ public sealed class WebhookOutboxEntryTests
         entry.Status.Should().Be(OutboxStatus.Failed);
         entry.AttemptCount.Should().Be(WebhookOutboxEntry.MaxAttempts);
         entry.NextRetryAt.Should().BeNull();
+    }
+
+    [Fact]
+    public void ResetForRetry_WhenStatusIsFailed_SetsStatusPendingAndClearsAttemptCount()
+    {
+        var entry = CreateEntry();
+        var now = DateTimeOffset.UtcNow;
+        for (var i = 0; i < WebhookOutboxEntry.MaxAttempts; i++)
+            entry.RecordFailure(now);
+        entry.Status.Should().Be(OutboxStatus.Failed);
+
+        var before = DateTimeOffset.UtcNow;
+        entry.ResetForRetry();
+
+        entry.Status.Should().Be(OutboxStatus.Pending);
+        entry.AttemptCount.Should().Be(0);
+        entry.RetryRequestedAt.Should().NotBeNull();
+        entry.RetryRequestedAt.Should().BeOnOrAfter(before);
+        entry.NextRetryAt.Should().BeOnOrAfter(before);
+    }
+
+    [Fact]
+    public void ResetForRetry_WhenStatusIsNotFailed_ThrowsInvalidStateTransitionException()
+    {
+        var entry = CreateEntry();
+        // entry starts as Pending
+
+        var act = () => entry.ResetForRetry();
+
+        act.Should().Throw<InvalidStateTransitionException>();
     }
 }
