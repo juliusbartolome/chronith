@@ -17,4 +17,6 @@ public interface IWebhookOutboxRepository
 
     /// <summary>Used by retry command — returns tracked entity for mutation.</summary>
     Task<(Guid WebhookId, bool CanRetry)> ResetForRetryAsync(Guid deliveryId, CancellationToken ct = default);
+
+    Task<DeliveryMetrics> GetDeliveryMetricsAsync(Guid tenantId, CancellationToken ct = default);
 }

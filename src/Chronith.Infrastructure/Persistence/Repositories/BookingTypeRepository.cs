@@ -1,3 +1,4 @@
+using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
@@ -55,6 +56,22 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
         => await _db.BookingTypes
             .AsNoTracking()
             .AnyAsync(bt => bt.TenantId == tenantId && bt.Slug == slug, ct);
+
+    public async Task<BookingTypeMetrics> GetTypeMetricsAsync(Guid tenantId, CancellationToken ct = default)
+    {
+        var counts = await _db.BookingTypes
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(bt => bt.TenantId == tenantId)
+            .GroupBy(bt => bt.IsDeleted)
+            .Select(g => new { IsDeleted = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        var active = counts.FirstOrDefault(c => !c.IsDeleted)?.Count ?? 0;
+        var archived = counts.FirstOrDefault(c => c.IsDeleted)?.Count ?? 0;
+
+        return new BookingTypeMetrics(active, archived);
+    }
 
     public async Task UpdateAsync(BookingType bookingType, CancellationToken ct = default)
     {

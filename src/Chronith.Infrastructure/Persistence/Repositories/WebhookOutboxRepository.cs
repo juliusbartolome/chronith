@@ -122,6 +122,19 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
         return (entity.WebhookId, true);
     }
 
+    public async Task<DeliveryMetrics> GetDeliveryMetricsAsync(Guid tenantId, CancellationToken ct = default)
+    {
+        var delivered = await db.WebhookOutboxEntries
+            .AsNoTracking()
+            .CountAsync(e => e.TenantId == tenantId && e.Status == OutboxStatus.Delivered, ct);
+
+        var failed = await db.WebhookOutboxEntries
+            .AsNoTracking()
+            .CountAsync(e => e.TenantId == tenantId && e.Status == OutboxStatus.Failed, ct);
+
+        return new DeliveryMetrics(delivered, failed);
+    }
+
     private static WebhookOutboxEntryEntity MapToEntity(WebhookOutboxEntry d) => new()
     {
         Id = d.Id,
