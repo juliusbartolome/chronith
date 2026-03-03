@@ -5,6 +5,7 @@ using Chronith.Infrastructure.Payments.PayMongo;
 using Chronith.Infrastructure.Persistence;
 using Chronith.Infrastructure.Persistence.Repositories;
 using Chronith.Infrastructure.Providers;
+using Chronith.Infrastructure.RateLimiting;
 using Chronith.Infrastructure.Services;
 using Chronith.Infrastructure.TenantContext;
 using Microsoft.AspNetCore.Http;
@@ -63,6 +64,10 @@ public static class DependencyInjection
         services.Configure<PayMongoOptions>(configuration.GetSection("Payments:PayMongo"));
         services.AddSingleton<IPaymentProvider, PayMongoProvider>();
         services.AddSingleton<IPaymentProviderFactory, PaymentProviderFactory>();
+
+        // Rate limiting
+        services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
+        services.AddSingleton<IRateLimitStore, InMemoryRateLimitStore>();
 
         return services;
     }
