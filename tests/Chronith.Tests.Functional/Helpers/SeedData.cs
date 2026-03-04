@@ -32,16 +32,13 @@ public static class SeedData
     public static async Task<Guid> SeedTenantAsync(ChronithDbContext db, Guid? id = null, string slug = "test-tenant")
     {
         var tenantId = id ?? TestConstants.TenantId;
-        if (await db.Tenants.FindAsync(tenantId) is not null) return tenantId;
-        db.Tenants.Add(new TenantEntity
-        {
-            Id = tenantId,
-            Slug = slug,
-            Name = "Test Tenant",
-            TimeZoneId = "UTC",
-            IsDeleted = false
-        });
-        await db.SaveChangesAsync();
+        // Use INSERT ... ON CONFLICT DO NOTHING to avoid race conditions when
+        // multiple test classes seed the shared tenant concurrently.
+        await db.Database.ExecuteSqlRawAsync("""
+            INSERT INTO "Tenants" ("Id","Slug","Name","TimeZoneId","IsDeleted")
+            VALUES ({0},{1},{2},{3},{4})
+            ON CONFLICT ("Id") DO NOTHING
+            """, tenantId, slug, "Test Tenant", "UTC", false);
         return tenantId;
     }
 

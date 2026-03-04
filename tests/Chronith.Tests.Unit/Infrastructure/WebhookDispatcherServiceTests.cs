@@ -189,7 +189,7 @@ internal sealed class FakeHttpMessageHandler(HttpStatusCode statusCode) : HttpMe
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
         // Ownership of HttpResponseMessage transfers to HttpClient, which disposes it.
-        var response = new HttpResponseMessage(StatusCode);
+        var response = new HttpResponseMessage(StatusCode); // lgtm[cs/local-not-disposed]
         return Task.FromResult(response);
     }
 }

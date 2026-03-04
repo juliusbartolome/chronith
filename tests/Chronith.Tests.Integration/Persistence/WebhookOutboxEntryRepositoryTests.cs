@@ -49,7 +49,7 @@ public sealed class WebhookOutboxEntryRepositoryTests(PostgresFixture postgres)
         await using var db = await DbContextFactory.CreateAsync(
             postgres.ConnectionString, tenantId, applyMigrations: true);
 
-        var (bookingTypeId, webhookId) = await SeedWebhookAsync(db, tenantId);
+        var (_, webhookId) = await SeedWebhookAsync(db, tenantId);
 
         for (int i = 0; i < 25; i++)
         {

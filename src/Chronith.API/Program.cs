@@ -81,11 +81,15 @@ builder.Services.AddRateLimiter(options =>
     {
         context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
 
-        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-        {
-            context.HttpContext.Response.Headers.RetryAfter =
-                ((int)retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
-        }
+        // SlidingWindowRateLimiter does not populate RetryAfter on the rejected lease;
+        // fall back to the configured window duration so the header is always present.
+        var windowSeconds = context.HttpContext.RequestServices
+            .GetRequiredService<IOptions<RateLimitingOptions>>().Value.DefaultWindowSeconds;
+        var retryAfterSeconds = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
+            ? (int)retryAfter.TotalSeconds
+            : windowSeconds;
+        context.HttpContext.Response.Headers.RetryAfter =
+            retryAfterSeconds.ToString(CultureInfo.InvariantCulture);
 
         context.HttpContext.Response.ContentType = "application/problem+json";
         await context.HttpContext.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
