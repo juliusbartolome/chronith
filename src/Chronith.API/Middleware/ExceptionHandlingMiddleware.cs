@@ -29,6 +29,18 @@ public static class ExceptionHandlingMiddleware
                     Title = "Not found",
                     Detail = ex.Message
                 },
+                Chronith.Domain.Exceptions.UnauthorizedException => new ProblemDetails
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Title = "Unauthorized",
+                    Detail = ex.Message
+                },
+                Chronith.Domain.Exceptions.ConflictException => new ProblemDetails
+                {
+                    Status = StatusCodes.Status409Conflict,
+                    Title = "Conflict",
+                    Detail = ex.Message
+                },
                 Chronith.Domain.Exceptions.SlotConflictException => new ProblemDetails
                 {
                     Status = StatusCodes.Status409Conflict,

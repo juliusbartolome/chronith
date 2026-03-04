@@ -34,11 +34,11 @@ builder.Services.SwaggerDocument(o =>
     o.DocumentSettings = s =>
     {
         s.Title = "Chronith API";
-        s.Version = "v0.3";
+        s.Version = "v0.4";
         s.Description = "Multi-tenant booking engine REST API";
         s.PostProcess = doc =>
         {
-            foreach (var tag in new[] { "Bookings", "BookingTypes", "Availability", "Webhooks", "Tenant", "Payments" })
+            foreach (var tag in new[] { "Auth", "Bookings", "BookingTypes", "Availability", "Webhooks", "Tenant", "Payments" })
                 doc.Tags.Add(new NSwag.OpenApiTag { Name = tag });
         };
         s.AddAuth("BearerAuth", new NSwag.OpenApiSecurityScheme

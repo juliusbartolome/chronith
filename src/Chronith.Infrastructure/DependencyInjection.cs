@@ -1,5 +1,6 @@
 using Chronith.Application.Interfaces;
 using Chronith.Application.Options;
+using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Payments;
 using Chronith.Infrastructure.Payments.PayMongo;
 using Chronith.Infrastructure.Persistence;
@@ -46,6 +47,9 @@ public static class DependencyInjection
         services.AddScoped<IWebhookRepository, WebhookRepository>();
         services.AddScoped<IWebhookOutboxRepository, WebhookOutboxRepository>();
         services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
+        services.AddScoped<ITenantUserRepository, TenantUserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<ITokenService, JwtTokenService>();
         services.AddHostedService<WebhookDispatcherService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
