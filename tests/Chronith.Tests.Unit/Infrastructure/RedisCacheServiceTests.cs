@@ -40,7 +40,7 @@ public class RedisCacheServiceTests
         var value = new TestPayload("world");
 
         _cache.GetAsync(key, Arg.Any<CancellationToken>())
-              .Returns((byte[]?)null);
+              .Returns(default(byte[]));
 
         var result = await _sut.GetOrSetAsync<TestPayload>(
             key,
