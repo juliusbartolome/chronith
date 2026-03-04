@@ -23,7 +23,8 @@ public sealed class GetAvailabilityHandler(
     IBookingTypeRepository bookingTypeRepo,
     IBookingRepository bookingRepo,
     ITenantRepository tenantRepo,
-    ISlotGeneratorService slotGenerator)
+    ISlotGeneratorService slotGenerator,
+    IRedisCacheService? cacheService = null)
     : IRequestHandler<GetAvailabilityQuery, AvailabilityDto>
 {
     private static readonly BookingStatus[] ConflictStatuses =
@@ -33,7 +34,25 @@ public sealed class GetAvailabilityHandler(
         BookingStatus.Confirmed
     ];
 
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(2);
+
     public async Task<AvailabilityDto> Handle(GetAvailabilityQuery query, CancellationToken ct)
+    {
+        if (cacheService is not null)
+        {
+            var cacheKey = $"avail:{tenantContext.TenantId}:{query.BookingTypeSlug}:{query.From:yyyyMMddHHmm}:{query.To:yyyyMMddHHmm}";
+            return (await cacheService.GetOrSetAsync<AvailabilityDto>(
+                cacheKey,
+                () => FetchAvailabilityInternalAsync(query, ct),
+                CacheTtl,
+                ct))!;
+        }
+
+        return await FetchAvailabilityInternalAsync(query, ct);
+    }
+
+    private async Task<AvailabilityDto> FetchAvailabilityInternalAsync(
+        GetAvailabilityQuery query, CancellationToken ct)
     {
         // 1. Load BookingType (AsNoTracking)
         var bookingType = await bookingTypeRepo.GetBySlugAsync(tenantContext.TenantId, query.BookingTypeSlug, ct)
