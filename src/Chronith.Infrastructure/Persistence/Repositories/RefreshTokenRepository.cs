@@ -16,6 +16,7 @@ public sealed class RefreshTokenRepository(ChronithDbContext context) : IRefresh
     public async Task<TenantUserRefreshToken?> GetByHashAsync(string tokenHash, CancellationToken ct = default)
     {
         var entity = await context.TenantUserRefreshTokens
+            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
         return entity?.ToDomain();
     }
