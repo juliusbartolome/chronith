@@ -1,3 +1,4 @@
+using Chronith.Application.DTOs;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 
@@ -42,4 +43,7 @@ public interface IBookingRepository
     Task AddAsync(Booking booking, CancellationToken ct = default);
 
     Task UpdateAsync(Booking booking, CancellationToken ct = default);
+
+    Task<BookingMetrics> GetMetricsAsync(
+        Guid tenantId, DateTimeOffset monthStartUtc, CancellationToken ct = default);
 }

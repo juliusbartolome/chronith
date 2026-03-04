@@ -1,3 +1,4 @@
+using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
@@ -90,6 +91,26 @@ public sealed class BookingRepository : IBookingRepository
         return results.Select(r => (r.Start, r.End)).ToList();
     }
 
+    public async Task<BookingMetrics> GetMetricsAsync(
+        Guid tenantId, DateTimeOffset monthStartUtc, CancellationToken ct = default)
+    {
+        var grouped = await _db.Bookings
+            .AsNoTracking()
+            .Where(b => b.TenantId == tenantId && !b.IsDeleted)
+            .GroupBy(b => b.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        var total = grouped.Sum(g => g.Count);
+        var byStatus = grouped.ToDictionary(g => g.Status, g => g.Count);
+
+        var thisMonth = await _db.Bookings
+            .AsNoTracking()
+            .CountAsync(b => b.TenantId == tenantId && !b.IsDeleted && b.Start >= monthStartUtc, ct);
+
+        return new BookingMetrics(total, byStatus, thisMonth);
+    }
+
     public async Task AddAsync(Booking booking, CancellationToken ct = default)
     {
         var entity = BookingEntityMapper.ToEntity(booking);
@@ -105,7 +126,8 @@ public sealed class BookingRepository : IBookingRepository
             .ExecuteUpdateAsync(s => s
                 .SetProperty(b => b.Status, booking.Status)
                 .SetProperty(b => b.IsDeleted, booking.IsDeleted)
-                .SetProperty(b => b.PaymentReference, booking.PaymentReference),
+                .SetProperty(b => b.PaymentReference, booking.PaymentReference)
+                .SetProperty(b => b.CheckoutUrl, booking.CheckoutUrl),
                 ct);
 
         // Insert any new status change records

@@ -16,6 +16,7 @@ public sealed class DeleteBookingTypeEndpoint(ISender sender)
     {
         Delete("/booking-types/{slug}");
         Roles("TenantAdmin");
+        Options(x => x.WithTags("BookingTypes"));
     }
 
     public override async Task HandleAsync(DeleteBookingTypeRequest req, CancellationToken ct)

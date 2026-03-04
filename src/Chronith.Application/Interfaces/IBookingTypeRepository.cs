@@ -1,3 +1,4 @@
+using Chronith.Application.DTOs;
 using Chronith.Domain.Models;
 
 namespace Chronith.Application.Interfaces;
@@ -13,4 +14,6 @@ public interface IBookingTypeRepository
     Task<IReadOnlyList<BookingType>> ListAsync(Guid tenantId, CancellationToken ct = default);
     Task AddAsync(BookingType bookingType, CancellationToken ct = default);
     Task<bool> SlugExistsAsync(Guid tenantId, string slug, CancellationToken ct = default);
+
+    Task<BookingTypeMetrics> GetTypeMetricsAsync(Guid tenantId, CancellationToken ct = default);
 }

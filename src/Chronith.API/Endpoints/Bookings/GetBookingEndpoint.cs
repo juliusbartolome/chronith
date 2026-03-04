@@ -17,6 +17,7 @@ public sealed class GetBookingEndpoint(ISender sender)
     {
         Get("/bookings/{bookingId}");
         Roles("TenantAdmin", "TenantStaff", "Customer");
+        Options(x => x.WithTags("Bookings"));
     }
 
     public override async Task HandleAsync(GetBookingRequest req, CancellationToken ct)

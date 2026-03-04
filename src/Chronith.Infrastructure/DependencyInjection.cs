@@ -1,7 +1,12 @@
 using Chronith.Application.Interfaces;
+using Chronith.Application.Options;
+using Chronith.Infrastructure.Payments;
+using Chronith.Infrastructure.Payments.PayMongo;
 using Chronith.Infrastructure.Persistence;
 using Chronith.Infrastructure.Persistence.Repositories;
 using Chronith.Infrastructure.Providers;
+using Chronith.Infrastructure.RateLimiting;
+using Chronith.Infrastructure.Services;
 using Chronith.Infrastructure.TenantContext;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +44,30 @@ public static class DependencyInjection
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<IWebhookRepository, WebhookRepository>();
+        services.AddScoped<IWebhookOutboxRepository, WebhookOutboxRepository>();
+        services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
+        services.AddHostedService<WebhookDispatcherService>();
+        var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
+        services.AddHttpClient("WebhookDispatcher", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(httpTimeoutSeconds);
+        });
+        services.Configure<WebhookDispatcherOptions>(configuration.GetSection("Webhooks"));
+
+        // Payment providers
+        services.Configure<PaymentsOptions>(configuration.GetSection("Payments"));
+        services.AddSingleton<IPaymentProvider, StubPaymentProvider>();
+        services.AddHttpClient("PayMongo", client =>
+        {
+            client.BaseAddress = new Uri("https://api.paymongo.com");
+        });
+        services.Configure<PayMongoOptions>(configuration.GetSection("Payments:PayMongo"));
+        services.AddSingleton<IPaymentProvider, PayMongoProvider>();
+        services.AddSingleton<IPaymentProviderFactory, PaymentProviderFactory>();
+
+        // Rate limiting
+        services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
+        services.AddSingleton<IRateLimitStore, InMemoryRateLimitStore>();
 
         return services;
     }

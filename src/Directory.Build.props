@@ -3,5 +3,10 @@
     <!-- Suppress the default **/*.resx glob — no .resx files exist in this project. -->
     <!-- Without this, MSBuild 10 raises MSB3552 when the glob matches zero files.   -->
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <!-- Prevent MSBuild glob traversal failure when bin/ or obj/ don't exist yet     -->
+    <!-- (e.g. fresh CI checkout). Without this, **/*.cs expansion traverses bin/     -->
+    <!-- subdirs; if they're missing MSBuild falls back to passing the literal glob   -->
+    <!-- string to csc, which rejects it with CS2021/CS2001.                          -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/bin/**;**/obj/**</DefaultItemExcludes>
   </PropertyGroup>
 </Project>

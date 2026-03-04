@@ -23,6 +23,10 @@ services:
       Database__ConnectionString: "Host=postgres;Port=5432;Database=chronith;Username=chronith;Password=chronith"
       Jwt__SigningKey: "change-me-in-production-at-least-32-chars"
       ASPNETCORE_URLS: "http://+:8080"
+      Payments__Provider: "Stub"
+      Payments__Currency: "PHP"
+      Webhooks__DispatchIntervalSeconds: "10"
+      Webhooks__HttpTimeoutSeconds: "10"
 
 volumes:
   postgres_data:

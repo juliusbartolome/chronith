@@ -1,4 +1,7 @@
-using FastEndpoints.Security;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Chronith.Tests.Functional.Fixtures;
 
@@ -7,13 +10,21 @@ public static class TestJwtFactory
     public static string CreateToken(string role, string userId, Guid? tenantId = null)
     {
         var tid = (tenantId ?? TestConstants.TenantId).ToString();
-        return JwtBearer.CreateToken(o =>
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestConstants.JwtSigningKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
         {
-            o.SigningKey = TestConstants.JwtSigningKey;
-            o.ExpireAt = DateTime.UtcNow.AddHours(1);
-            o.User.Claims.Add(("tenant_id", tid));
-            o.User.Claims.Add(("sub", userId));
-            o.User.Roles.Add(role);
-        });
+            new Claim("tenant_id", tid),
+            new Claim("sub", userId),
+            new Claim("role", role),
+        };
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
