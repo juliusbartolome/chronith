@@ -12,14 +12,33 @@ public sealed class GetTenantMetricsQueryHandler(
     IBookingRepository bookingRepository,
     IWebhookOutboxRepository outboxRepository,
     IBookingTypeRepository bookingTypeRepository,
-    ITenantRepository tenantRepository)
+    ITenantRepository tenantRepository,
+    IRedisCacheService? cacheService = null)
     : IRequestHandler<GetTenantMetricsQuery, TenantMetricsDto>
 {
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
+
     public async Task<TenantMetricsDto> Handle(
         GetTenantMetricsQuery request, CancellationToken cancellationToken)
     {
         var tenantId = tenantContext.TenantId;
+        var cacheKey = $"metrics:{tenantId}";
 
+        if (cacheService is not null)
+        {
+            return (await cacheService.GetOrSetAsync<TenantMetricsDto>(
+                cacheKey,
+                () => FetchMetricsAsync(tenantId, cancellationToken),
+                CacheTtl,
+                cancellationToken))!;
+        }
+
+        return await FetchMetricsAsync(tenantId, cancellationToken);
+    }
+
+    private async Task<TenantMetricsDto> FetchMetricsAsync(
+        Guid tenantId, CancellationToken cancellationToken)
+    {
         // Resolve month start in tenant's timezone
         var tenant = await tenantRepository.GetByIdAsync(tenantId, cancellationToken)
             ?? throw new NotFoundException(nameof(Tenant), tenantId);
