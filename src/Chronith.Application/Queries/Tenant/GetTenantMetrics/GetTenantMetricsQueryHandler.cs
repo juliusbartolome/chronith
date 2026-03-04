@@ -31,16 +31,11 @@ public sealed class GetTenantMetricsQueryHandler(
             tenantNow.Year, tenantNow.Month, 1, 0, 0, 0, tenantNow.Offset);
         var monthStartUtc = monthStart.ToUniversalTime();
 
-        // Run all three aggregate queries in parallel
-        var bookingTask = bookingRepository.GetMetricsAsync(tenantId, monthStartUtc, cancellationToken);
-        var deliveryTask = outboxRepository.GetDeliveryMetricsAsync(tenantId, cancellationToken);
-        var typeTask = bookingTypeRepository.GetTypeMetricsAsync(tenantId, cancellationToken);
-
-        await Task.WhenAll(bookingTask, deliveryTask, typeTask);
-
-        var bookings = bookingTask.Result;
-        var deliveries = deliveryTask.Result;
-        var types = typeTask.Result;
+        // Run aggregate queries sequentially — repositories share a single DbContext
+        // which does not support concurrent operations on the same instance.
+        var bookings = await bookingRepository.GetMetricsAsync(tenantId, monthStartUtc, cancellationToken);
+        var deliveries = await outboxRepository.GetDeliveryMetricsAsync(tenantId, cancellationToken);
+        var types = await bookingTypeRepository.GetTypeMetricsAsync(tenantId, cancellationToken);
 
         var totalDeliveries = deliveries.Delivered + deliveries.Failed;
         decimal? deliveryRatePct = totalDeliveries > 0

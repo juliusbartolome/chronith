@@ -36,6 +36,11 @@ builder.Services.SwaggerDocument(o =>
         s.Title = "Chronith API";
         s.Version = "v0.3";
         s.Description = "Multi-tenant booking engine REST API";
+        s.PostProcess = doc =>
+        {
+            foreach (var tag in new[] { "Bookings", "BookingTypes", "Availability", "Webhooks", "Tenant", "Payments" })
+                doc.Tags.Add(new NSwag.OpenApiTag { Name = tag });
+        };
         s.AddAuth("BearerAuth", new NSwag.OpenApiSecurityScheme
         {
             Type = NSwag.OpenApiSecuritySchemeType.Http,
@@ -119,8 +124,7 @@ app.UseAuthentication()
 
 app.UseRateLimiter();
 
-if (!app.Environment.IsProduction())
-    app.UseSwaggerGen();
+app.UseSwaggerGen(c => c.Path = "/openapi.json");
 
 // Append X-RateLimit-* informational headers on successful responses
 app.Use(async (ctx, next) =>

@@ -32,9 +32,11 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
         Factory = new WebApplicationFactory<Program>() // lgtm[cs/local-not-disposed]
             .WithWebHostBuilder(builder =>
             {
+                builder.UseEnvironment("Development");
                 builder.UseSetting("Database:Provider", "PostgreSQL");
                 builder.UseSetting("Database:ConnectionString", connectionString);
                 builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
+                builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
             });
 
         // Run migrations

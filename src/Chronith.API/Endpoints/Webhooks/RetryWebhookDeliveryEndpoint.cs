@@ -4,14 +4,8 @@ using MediatR;
 
 namespace Chronith.API.Endpoints.Webhooks;
 
-public sealed class RetryWebhookDeliveryRequest
-{
-    public Guid WebhookId { get; set; }
-    public Guid DeliveryId { get; set; }
-}
-
 public sealed class RetryWebhookDeliveryEndpoint(ISender sender)
-    : Endpoint<RetryWebhookDeliveryRequest>
+    : EndpointWithoutRequest
 {
     public override void Configure()
     {
@@ -25,9 +19,11 @@ public sealed class RetryWebhookDeliveryEndpoint(ISender sender)
         });
     }
 
-    public override async Task HandleAsync(RetryWebhookDeliveryRequest req, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
-        await sender.Send(new RetryWebhookDeliveryCommand(req.WebhookId, req.DeliveryId), ct);
+        var webhookId = Route<Guid>("webhookId");
+        var deliveryId = Route<Guid>("deliveryId");
+        await sender.Send(new RetryWebhookDeliveryCommand(webhookId, deliveryId), ct);
         await Send.NoContentAsync(ct);
     }
 }

@@ -34,10 +34,12 @@ public static class SeedData
         var tenantId = id ?? TestConstants.TenantId;
         // Use INSERT ... ON CONFLICT DO NOTHING to avoid race conditions when
         // multiple test classes seed the shared tenant concurrently.
+        // No conflict target is specified so PostgreSQL suppresses violations
+        // on any unique constraint ("Id" PK and "Slug" unique index).
         await db.Database.ExecuteSqlRawAsync("""
             INSERT INTO chronith.tenants ("Id","Slug","Name","TimeZoneId","IsDeleted","CreatedAt")
             VALUES ({0},{1},{2},{3},{4},{5})
-            ON CONFLICT ("Id") DO NOTHING
+            ON CONFLICT DO NOTHING
             """, tenantId, slug, "Test Tenant", "UTC", false, DateTimeOffset.UtcNow);
         return tenantId;
     }
