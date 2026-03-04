@@ -12,6 +12,7 @@ public sealed class GetTenantEndpoint(ISender sender)
     {
         Get("/tenant");
         Roles("TenantAdmin");
+        Options(x => x.WithTags("Tenant"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

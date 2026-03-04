@@ -15,5 +15,6 @@ public sealed class WebhookOutboxEntryEntity
     public DateTimeOffset? NextRetryAt { get; set; }
     public DateTimeOffset? LastAttemptAt { get; set; }
     public DateTimeOffset? DeliveredAt { get; set; }
+    public DateTimeOffset? RetryRequestedAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }

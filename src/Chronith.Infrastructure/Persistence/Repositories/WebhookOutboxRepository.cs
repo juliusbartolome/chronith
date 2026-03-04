@@ -56,6 +56,85 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
         await db.SaveChangesAsync(ct);
     }
 
+    public async Task<(IReadOnlyList<WebhookDeliveryDto> Items, int Total)> ListByWebhookAsync(
+        Guid webhookId, int page, int pageSize, CancellationToken ct = default)
+    {
+        // Verify webhook belongs to current tenant (global filter on db.Webhooks enforces this)
+        var webhookExists = await db.Webhooks
+            .AsNoTracking()
+            .AnyAsync(w => w.Id == webhookId, ct);
+
+        if (!webhookExists)
+            return ([], 0);
+
+        var query = db.WebhookOutboxEntries
+            .AsNoTracking()
+            .Where(e => e.WebhookId == webhookId)
+            .OrderByDescending(e => e.CreatedAt);
+
+        var total = await query.CountAsync(ct);
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(e => new WebhookDeliveryDto(
+                e.Id, e.WebhookId, e.BookingId, e.EventType, e.Status,
+                e.AttemptCount, e.NextRetryAt, e.LastAttemptAt, e.DeliveredAt,
+                e.RetryRequestedAt, e.CreatedAt))
+            .ToListAsync(ct);
+
+        return (items, total);
+    }
+
+    public async Task<WebhookDeliveryDto?> GetByIdAsync(Guid deliveryId, CancellationToken ct = default)
+    {
+        // Join through Webhooks so the global TenantId filter applies
+        return await db.WebhookOutboxEntries
+            .AsNoTracking()
+            .Where(e => e.Id == deliveryId)
+            .Where(e => db.Webhooks.Any(w => w.Id == e.WebhookId))
+            .Select(e => new WebhookDeliveryDto(
+                e.Id, e.WebhookId, e.BookingId, e.EventType, e.Status,
+                e.AttemptCount, e.NextRetryAt, e.LastAttemptAt, e.DeliveredAt,
+                e.RetryRequestedAt, e.CreatedAt))
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public async Task<(Guid WebhookId, bool CanRetry)> ResetForRetryAsync(
+        Guid deliveryId, CancellationToken ct = default)
+    {
+        // Load tracked entity — join through Webhooks for tenant isolation
+        var entity = await db.WebhookOutboxEntries
+            .Where(e => e.Id == deliveryId)
+            .Where(e => db.Webhooks.Any(w => w.Id == e.WebhookId))
+            .FirstOrDefaultAsync(ct);
+
+        if (entity is null)
+            return (Guid.Empty, false);
+
+        if (entity.Status != OutboxStatus.Failed)
+            return (entity.WebhookId, false);
+
+        entity.Status = OutboxStatus.Pending;
+        entity.AttemptCount = 0;
+        entity.NextRetryAt = DateTimeOffset.UtcNow;
+        entity.RetryRequestedAt = DateTimeOffset.UtcNow;
+
+        return (entity.WebhookId, true);
+    }
+
+    public async Task<DeliveryMetrics> GetDeliveryMetricsAsync(Guid tenantId, CancellationToken ct = default)
+    {
+        var delivered = await db.WebhookOutboxEntries
+            .AsNoTracking()
+            .CountAsync(e => e.TenantId == tenantId && e.Status == OutboxStatus.Delivered, ct);
+
+        var failed = await db.WebhookOutboxEntries
+            .AsNoTracking()
+            .CountAsync(e => e.TenantId == tenantId && e.Status == OutboxStatus.Failed, ct);
+
+        return new DeliveryMetrics(delivered, failed);
+    }
+
     private static WebhookOutboxEntryEntity MapToEntity(WebhookOutboxEntry d) => new()
     {
         Id = d.Id,
@@ -72,3 +151,4 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
         CreatedAt = d.CreatedAt,
     };
 }
+

@@ -18,6 +18,7 @@ public sealed class ConfirmBookingEndpoint(ISender sender)
     {
         Post("/bookings/{bookingId}/confirm");
         Roles("TenantAdmin", "TenantStaff");
+        Options(x => x.WithTags("Bookings"));
     }
 
     public override async Task HandleAsync(ConfirmBookingRequest req, CancellationToken ct)

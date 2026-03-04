@@ -19,4 +19,22 @@ public sealed class TenantRepository : ITenantRepository
 
         return entity is null ? null : TenantEntityMapper.ToDomain(entity);
     }
+
+    public async Task<Tenant?> GetBySlugAsync(string slug, CancellationToken ct = default)
+    {
+        var entity = await _db.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Slug == slug, ct);
+
+        return entity is null ? null : TenantEntityMapper.ToDomain(entity);
+    }
+
+    public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default)
+        => await _db.Tenants.AnyAsync(t => t.Slug == slug, ct);
+
+    public async Task AddAsync(Tenant tenant, CancellationToken ct = default)
+    {
+        var entity = TenantEntityMapper.ToEntity(tenant);
+        await _db.Tenants.AddAsync(entity, ct);
+    }
 }

@@ -1,0 +1,44 @@
+using Chronith.Application.DTOs;
+using Chronith.Application.Interfaces;
+using Chronith.Domain.Exceptions;
+using Chronith.Domain.Models;
+using MediatR;
+
+namespace Chronith.Application.Commands.Auth.Login;
+
+public sealed class LoginCommandHandler(
+    ITenantRepository tenantRepository,
+    ITenantUserRepository userRepository,
+    IRefreshTokenRepository refreshTokenRepository,
+    ITokenService tokenService,
+    IUnitOfWork unitOfWork)
+    : IRequestHandler<LoginCommand, AuthTokenDto>
+{
+    private static readonly TimeSpan RefreshTokenTtl = TimeSpan.FromDays(30);
+
+    public async Task<AuthTokenDto> Handle(LoginCommand request, CancellationToken cancellationToken)
+    {
+        // Intentionally vague error message to avoid email enumeration
+        const string invalidCredentials = "Invalid credentials.";
+
+        var tenant = await tenantRepository.GetBySlugAsync(request.TenantSlug, cancellationToken)
+            ?? throw new UnauthorizedException(invalidCredentials);
+
+        var user = await userRepository.GetByEmailAsync(tenant.Id, request.Email, cancellationToken)
+            ?? throw new UnauthorizedException(invalidCredentials);
+
+        if (!user.IsActive)
+            throw new UnauthorizedException(invalidCredentials);
+
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            throw new UnauthorizedException(invalidCredentials);
+
+        var (rawToken, tokenHash) = tokenService.CreateRefreshToken();
+        var refreshToken = TenantUserRefreshToken.Create(user.Id, tokenHash, RefreshTokenTtl);
+        await refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var accessToken = tokenService.CreateAccessToken(user);
+        return new AuthTokenDto(accessToken, rawToken);
+    }
+}

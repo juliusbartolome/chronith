@@ -307,6 +307,22 @@ jobs:
           path: BenchmarkDotNet.Artifacts/
           retention-days: 30
 
+  check-target-branch:
+    name: Enforce PR target branch policy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    steps:
+      - name: Fail if source branch is not develop
+        run: |
+          if [ "${{ github.head_ref }}" != "develop" ]; then
+            echo "❌ Direct PRs to 'main' are not allowed."
+            echo "   Source branch: '${{ github.head_ref }}'"
+            echo "   Only 'develop' may be merged into 'main'."
+            echo "   Please open your PR against 'develop' instead."
+            exit 1
+          fi
+          echo "✅ Source branch is 'develop' — merge to main is allowed."
+
   codeql:
     name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-latest

@@ -29,6 +29,7 @@ public sealed class UpdateBookingTypeEndpoint(ISender sender)
     {
         Put("/booking-types/{slug}");
         Roles("TenantAdmin");
+        Options(x => x.WithTags("BookingTypes"));
     }
 
     public override async Task HandleAsync(UpdateBookingTypeRequest req, CancellationToken ct)

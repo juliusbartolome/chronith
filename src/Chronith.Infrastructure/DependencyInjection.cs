@@ -1,10 +1,12 @@
 using Chronith.Application.Interfaces;
 using Chronith.Application.Options;
+using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Payments;
 using Chronith.Infrastructure.Payments.PayMongo;
 using Chronith.Infrastructure.Persistence;
 using Chronith.Infrastructure.Persistence.Repositories;
 using Chronith.Infrastructure.Providers;
+using Chronith.Infrastructure.RateLimiting;
 using Chronith.Infrastructure.Services;
 using Chronith.Infrastructure.TenantContext;
 using Microsoft.AspNetCore.Http;
@@ -45,6 +47,9 @@ public static class DependencyInjection
         services.AddScoped<IWebhookRepository, WebhookRepository>();
         services.AddScoped<IWebhookOutboxRepository, WebhookOutboxRepository>();
         services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
+        services.AddScoped<ITenantUserRepository, TenantUserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<ITokenService, JwtTokenService>();
         services.AddHostedService<WebhookDispatcherService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
@@ -63,6 +68,10 @@ public static class DependencyInjection
         services.Configure<PayMongoOptions>(configuration.GetSection("Payments:PayMongo"));
         services.AddSingleton<IPaymentProvider, PayMongoProvider>();
         services.AddSingleton<IPaymentProviderFactory, PaymentProviderFactory>();
+
+        // Rate limiting
+        services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
+        services.AddSingleton<IRateLimitStore, InMemoryRateLimitStore>();
 
         return services;
     }

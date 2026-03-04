@@ -1,4 +1,5 @@
 using Chronith.Domain.Enums;
+using Chronith.Domain.Exceptions;
 
 namespace Chronith.Domain.Models;
 
@@ -15,6 +16,7 @@ public sealed class WebhookOutboxEntry
     public DateTimeOffset? NextRetryAt { get; private set; }
     public DateTimeOffset? LastAttemptAt { get; private set; }
     public DateTimeOffset? DeliveredAt { get; private set; }
+    public DateTimeOffset? RetryRequestedAt { get; private set; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
 
     // Back-off schedule: 30s, 2m, 10m, 1h, 4h
@@ -58,5 +60,21 @@ public sealed class WebhookOutboxEntry
         {
             NextRetryAt = now.Add(GetBackOffDelay(AttemptCount));
         }
+    }
+
+    /// <summary>
+    /// Resets a Failed entry back to Pending for manual retry.
+    /// Throws <see cref="InvalidStateTransitionException"/> if the entry is not in Failed status.
+    /// </summary>
+    public void ResetForRetry()
+    {
+        if (Status != OutboxStatus.Failed)
+            throw new InvalidStateTransitionException(
+                $"Cannot retry a delivery with status '{Status}'. Only Failed entries can be retried.");
+
+        Status = OutboxStatus.Pending;
+        AttemptCount = 0;
+        NextRetryAt = DateTimeOffset.UtcNow;
+        RetryRequestedAt = DateTimeOffset.UtcNow;
     }
 }
