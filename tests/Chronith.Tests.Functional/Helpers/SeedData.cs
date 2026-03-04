@@ -35,10 +35,10 @@ public static class SeedData
         // Use INSERT ... ON CONFLICT DO NOTHING to avoid race conditions when
         // multiple test classes seed the shared tenant concurrently.
         await db.Database.ExecuteSqlRawAsync("""
-            INSERT INTO "Tenants" ("Id","Slug","Name","TimeZoneId","IsDeleted")
-            VALUES ({0},{1},{2},{3},{4})
+            INSERT INTO chronith.tenants ("Id","Slug","Name","TimeZoneId","IsDeleted","CreatedAt")
+            VALUES ({0},{1},{2},{3},{4},{5})
             ON CONFLICT ("Id") DO NOTHING
-            """, tenantId, slug, "Test Tenant", "UTC", false);
+            """, tenantId, slug, "Test Tenant", "UTC", false, DateTimeOffset.UtcNow);
         return tenantId;
     }
 
