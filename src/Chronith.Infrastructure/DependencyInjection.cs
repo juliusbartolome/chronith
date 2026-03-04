@@ -1,6 +1,7 @@
 using Chronith.Application.Interfaces;
 using Chronith.Application.Options;
 using Chronith.Infrastructure.Auth;
+using Chronith.Infrastructure.Caching;
 using Chronith.Infrastructure.Payments;
 using Chronith.Infrastructure.Payments.PayMongo;
 using Chronith.Infrastructure.Persistence;
@@ -71,7 +72,24 @@ public static class DependencyInjection
 
         // Rate limiting
         services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
-        services.AddSingleton<IRateLimitStore, InMemoryRateLimitStore>();
+
+        // Redis (optional)
+        var redisEnabled = configuration.GetValue<bool>("Redis:Enabled");
+        if (redisEnabled)
+        {
+            var redisConnectionString = configuration["Redis:ConnectionString"]!;
+            services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnectionString;
+            });
+            services.AddSingleton<IRedisCacheService, RedisCacheService>();
+            services.AddSingleton<IRateLimitStore, RedisRateLimitStore>();
+        }
+        else
+        {
+            services.AddSingleton<IRateLimitStore, InMemoryRateLimitStore>();
+        }
 
         return services;
     }
