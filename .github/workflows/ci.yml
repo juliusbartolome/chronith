@@ -31,6 +31,15 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -49,6 +58,7 @@ jobs:
         env:
           CI_INTEGRATION_CONNECTION_STRING: "Host=localhost;Port=5432;Database=chronith_test;Username=test;Password=test"
           CI_FUNCTIONAL_CONNECTION_STRING: "Host=localhost;Port=5432;Database=chronith_test;Username=test;Password=test"
+          CI_REDIS_CONNECTION_STRING: "localhost:6379"
         run: |
           dotnet test tests/Chronith.Tests.Unit --no-build -c Release \
             --logger "trx;LogFileName=unit.trx" \
