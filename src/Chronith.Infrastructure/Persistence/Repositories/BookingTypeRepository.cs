@@ -87,14 +87,12 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
 
     public async Task UpdateAsync(BookingType bookingType, CancellationToken ct = default)
     {
+        // Load without Include so the change tracker only tracks the parent row,
+        // avoiding xmin concurrency conflicts caused by navigation collection mutations.
         var entity = await _db.BookingTypes
-            .Include(bt => bt.AvailabilityWindows)
             .FirstOrDefaultAsync(bt => bt.Id == bookingType.Id, ct);
 
         if (entity is null) return;
-
-        // Remove old windows
-        _db.AvailabilityWindows.RemoveRange(entity.AvailabilityWindows);
 
         var updated = BookingTypeEntityMapper.ToEntity(bookingType);
         entity.Name = updated.Name;
@@ -109,9 +107,14 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
         entity.CustomerCallbackUrl = updated.CustomerCallbackUrl;
         entity.CustomerCallbackSecret = updated.CustomerCallbackSecret;
 
-        foreach (var w in updated.AvailabilityWindows)
+        // Replace windows: delete all existing, queue new ones for insert via SaveChanges.
+        await _db.AvailabilityWindows
+            .Where(w => w.BookingTypeId == bookingType.Id)
+            .ExecuteDeleteAsync(ct);
+
+        if (updated.AvailabilityWindows.Count > 0)
         {
-            entity.AvailabilityWindows.Add(w);
+            await _db.AvailabilityWindows.AddRangeAsync(updated.AvailabilityWindows, ct);
         }
     }
 }

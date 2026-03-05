@@ -17,6 +17,7 @@ public interface IBookingTypeRepository
 
     Task<IReadOnlyList<BookingType>> ListAsync(Guid tenantId, CancellationToken ct = default);
     Task AddAsync(BookingType bookingType, CancellationToken ct = default);
+    Task UpdateAsync(BookingType bookingType, CancellationToken ct = default);
     Task<bool> SlugExistsAsync(Guid tenantId, string slug, CancellationToken ct = default);
 
     Task<BookingTypeMetrics> GetTypeMetricsAsync(Guid tenantId, CancellationToken ct = default);

@@ -79,6 +79,7 @@ public sealed class UpdateBookingTypeHandler(
         // Update customer callback — always called (null clears the URL)
         bt.SetCustomerCallback(cmd.CustomerCallbackUrl);
 
+        await repository.UpdateAsync(bt, ct);
         await unitOfWork.SaveChangesAsync(ct);
         return bt.ToDto();
     }
