@@ -31,5 +31,20 @@ public sealed class WebhookOutboxEntryConfiguration : IEntityTypeConfiguration<W
         // Trace by booking
         builder.HasIndex(e => e.BookingId)
             .HasDatabaseName("IX_webhook_outbox_entries_BookingId");
+
+        // WebhookId is nullable — null for CustomerCallback entries
+        builder.Property(e => e.WebhookId).IsRequired(false);
+
+        // BookingTypeId is nullable — set for CustomerCallback entries only
+        builder.Property(e => e.BookingTypeId).IsRequired(false);
+
+        // Category: 0 = TenantWebhook, 1 = CustomerCallback
+        builder.Property(e => e.Category)
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        // Index for customer callback lookup by booking type
+        builder.HasIndex(e => e.BookingTypeId)
+            .HasDatabaseName("IX_webhook_outbox_entries_BookingTypeId");
     }
 }

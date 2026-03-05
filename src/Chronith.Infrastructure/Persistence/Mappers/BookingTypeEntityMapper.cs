@@ -66,6 +66,8 @@ public static class BookingTypeEntityMapper
         SetProperty(domain, nameof(BookingType.PaymentMode), e.PaymentMode);
         SetProperty(domain, nameof(BookingType.PaymentProvider), e.PaymentProvider);
         SetProperty(domain, nameof(BookingType.IsDeleted), e.IsDeleted);
+        SetProperty(domain, nameof(BookingType.CustomerCallbackUrl), e.CustomerCallbackUrl);
+        SetProperty(domain, nameof(BookingType.CustomerCallbackSecret), e.CustomerCallbackSecret);
     }
 
     private static void SetProperty<T>(object target, string propertyName, T value)
@@ -105,7 +107,9 @@ public static class BookingTypeEntityMapper
             Capacity = domain.Capacity,
             PaymentMode = domain.PaymentMode,
             PaymentProvider = domain.PaymentProvider,
-            IsDeleted = domain.IsDeleted
+            IsDeleted = domain.IsDeleted,
+            CustomerCallbackUrl = domain.CustomerCallbackUrl,
+            CustomerCallbackSecret = domain.CustomerCallbackSecret
         };
 
         switch (domain)

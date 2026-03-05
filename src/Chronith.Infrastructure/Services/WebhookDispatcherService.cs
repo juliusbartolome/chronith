@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -39,25 +40,57 @@ public sealed class WebhookDispatcherService(
         using var scope = scopeFactory.CreateScope();
         var outboxRepo = scope.ServiceProvider.GetRequiredService<IWebhookOutboxRepository>();
         var webhookRepo = scope.ServiceProvider.GetRequiredService<IWebhookRepository>();
+        var bookingTypeRepo = scope.ServiceProvider.GetRequiredService<IBookingTypeRepository>();
 
         var pending = await outboxRepo.GetPendingAsync(50, ct);
         if (pending.Count == 0) return;
 
         foreach (var entry in pending)
         {
-            var webhook = await webhookRepo.GetByIdCrossTenantAsync(entry.WebhookId, ct);
-            if (webhook is null)
+            if (entry.Category == OutboxCategory.CustomerCallback)
             {
-                logger.LogWarning(
-                    "Webhook {WebhookId} not found for outbox entry {EntryId} — marking as permanently failed",
-                    entry.WebhookId, entry.Id);
-                await outboxRepo.MarkFailedAttemptAsync(
-                    entry.Id, WebhookOutboxEntry.MaxAttempts, DateTimeOffset.UtcNow, null, true, ct);
-                continue;
+                await DispatchCustomerCallbackAsync(entry, bookingTypeRepo, outboxRepo, ct);
             }
+            else
+            {
+                // TenantWebhook — existing behaviour
+                var webhook = await webhookRepo.GetByIdCrossTenantAsync(entry.WebhookId!.Value, ct);
+                if (webhook is null)
+                {
+                    logger.LogWarning(
+                        "Webhook {WebhookId} not found for outbox entry {EntryId} — marking as permanently failed",
+                        entry.WebhookId, entry.Id);
+                    await outboxRepo.MarkFailedAttemptAsync(
+                        entry.Id, WebhookOutboxEntry.MaxAttempts, DateTimeOffset.UtcNow, null, true, ct);
+                    continue;
+                }
 
-            await DispatchAsync(entry, webhook.Url, webhook.Secret, outboxRepo, ct);
+                await DispatchAsync(entry, webhook.Url, webhook.Secret, outboxRepo, ct);
+            }
         }
+    }
+
+    private async Task DispatchCustomerCallbackAsync(
+        PendingOutboxEntry entry,
+        IBookingTypeRepository bookingTypeRepo,
+        IWebhookOutboxRepository outboxRepo,
+        CancellationToken ct)
+    {
+        var bookingType = entry.BookingTypeId.HasValue
+            ? await bookingTypeRepo.GetByIdAsync(entry.BookingTypeId.Value, ct)
+            : null;
+
+        if (bookingType?.CustomerCallbackUrl is null)
+        {
+            logger.LogWarning(
+                "CustomerCallback URL not found for BookingType {BookingTypeId} on entry {EntryId} — marking as abandoned",
+                entry.BookingTypeId, entry.Id);
+            await outboxRepo.MarkAbandonedAsync(entry.Id, ct);
+            return;
+        }
+
+        var secret = bookingType.CustomerCallbackSecret ?? string.Empty;
+        await DispatchAsync(entry, bookingType.CustomerCallbackUrl, secret, outboxRepo, ct);
     }
 
     private async Task DispatchAsync(

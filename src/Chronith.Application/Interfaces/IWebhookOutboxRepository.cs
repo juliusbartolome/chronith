@@ -16,7 +16,13 @@ public interface IWebhookOutboxRepository
     Task<WebhookDeliveryDto?> GetByIdAsync(Guid deliveryId, CancellationToken ct = default);
 
     /// <summary>Used by retry command — returns tracked entity for mutation.</summary>
-    Task<(Guid WebhookId, bool CanRetry)> ResetForRetryAsync(Guid deliveryId, CancellationToken ct = default);
+    Task<(Guid? WebhookId, bool CanRetry)> ResetForRetryAsync(Guid deliveryId, CancellationToken ct = default);
 
     Task<DeliveryMetrics> GetDeliveryMetricsAsync(Guid tenantId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Marks an outbox entry as Abandoned — used when a CustomerCallback URL has been
+    /// removed after the entry was written.
+    /// </summary>
+    Task MarkAbandonedAsync(Guid entryId, CancellationToken ct = default);
 }

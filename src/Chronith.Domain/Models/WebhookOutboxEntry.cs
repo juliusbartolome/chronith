@@ -7,10 +7,21 @@ public sealed class WebhookOutboxEntry
 {
     public Guid Id { get; init; } = Guid.NewGuid();
     public Guid TenantId { get; init; }
-    public Guid WebhookId { get; init; }
+
+    /// <summary>
+    /// Set for TenantWebhook entries; null for CustomerCallback entries.
+    /// </summary>
+    public Guid? WebhookId { get; init; }
+
+    /// <summary>
+    /// Set for CustomerCallback entries; null for TenantWebhook entries.
+    /// </summary>
+    public Guid? BookingTypeId { get; init; }
+
     public Guid BookingId { get; init; }
     public string EventType { get; init; } = string.Empty;
     public string Payload { get; init; } = string.Empty;
+    public OutboxCategory Category { get; init; } = OutboxCategory.TenantWebhook;
     public OutboxStatus Status { get; private set; } = OutboxStatus.Pending;
     public int AttemptCount { get; private set; }
     public DateTimeOffset? NextRetryAt { get; private set; }

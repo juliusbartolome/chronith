@@ -29,6 +29,10 @@ public sealed class BookingTypeEntity
     // Optimistic concurrency
     public uint RowVersion { get; set; }
 
+    // Customer callback
+    public string? CustomerCallbackUrl { get; set; }
+    public string? CustomerCallbackSecret { get; set; }
+
     // Navigation
     public List<AvailabilityWindowEntity> AvailabilityWindows { get; set; } = new();
     public List<BookingEntity> Bookings { get; set; } = new();

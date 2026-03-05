@@ -26,7 +26,14 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
                      && (e.NextRetryAt == null || e.NextRetryAt <= now))
             .OrderBy(e => e.CreatedAt)
             .Take(batchSize)
-            .Select(e => new PendingOutboxEntry(e.Id, e.WebhookId, e.EventType, e.Payload, e.AttemptCount))
+            .Select(e => new PendingOutboxEntry(
+                e.Id,
+                e.WebhookId,
+                e.BookingTypeId,
+                e.EventType,
+                e.Payload,
+                e.AttemptCount,
+                (OutboxCategory)e.Category))
             .ToListAsync(ct);
     }
 
@@ -99,7 +106,7 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<(Guid WebhookId, bool CanRetry)> ResetForRetryAsync(
+    public async Task<(Guid? WebhookId, bool CanRetry)> ResetForRetryAsync(
         Guid deliveryId, CancellationToken ct = default)
     {
         // Load tracked entity — join through Webhooks for tenant isolation
@@ -109,7 +116,7 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
             .FirstOrDefaultAsync(ct);
 
         if (entity is null)
-            return (Guid.Empty, false);
+            return (null, false);
 
         if (entity.Status != OutboxStatus.Failed)
             return (entity.WebhookId, false);
@@ -135,11 +142,21 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
         return new DeliveryMetrics(delivered, failed);
     }
 
+    public async Task MarkAbandonedAsync(Guid entryId, CancellationToken ct = default)
+    {
+        var entity = await db.WebhookOutboxEntries.FindAsync([entryId], ct)
+            ?? throw new InvalidOperationException($"WebhookOutboxEntry {entryId} not found");
+
+        entity.Status = OutboxStatus.Abandoned;
+        await db.SaveChangesAsync(ct);
+    }
+
     private static WebhookOutboxEntryEntity MapToEntity(WebhookOutboxEntry d) => new()
     {
         Id = d.Id,
         TenantId = d.TenantId,
         WebhookId = d.WebhookId,
+        BookingTypeId = d.BookingTypeId,
         BookingId = d.BookingId,
         EventType = d.EventType,
         Payload = d.Payload,
@@ -149,6 +166,7 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
         LastAttemptAt = d.LastAttemptAt,
         DeliveredAt = d.DeliveredAt,
         CreatedAt = d.CreatedAt,
+        Category = (int)d.Category,
     };
 }
 

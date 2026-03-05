@@ -114,4 +114,30 @@ public sealed class WebhookOutboxEntryTests
 
         act.Should().Throw<InvalidStateTransitionException>();
     }
+
+    [Fact]
+    public void NewEntry_DefaultCategory_IsTenantWebhook()
+    {
+        var entry = CreateEntry();
+        entry.Category.Should().Be(OutboxCategory.TenantWebhook);
+    }
+
+    [Fact]
+    public void CustomerCallback_Entry_HasNullWebhookId_AndBookingTypeId()
+    {
+        var bookingTypeId = Guid.NewGuid();
+        var entry = new WebhookOutboxEntry
+        {
+            TenantId = Guid.NewGuid(),
+            WebhookId = null,
+            BookingTypeId = bookingTypeId,
+            BookingId = Guid.NewGuid(),
+            EventType = "customer.booking.confirmed",
+            Payload = "{}",
+            Category = OutboxCategory.CustomerCallback
+        };
+        entry.WebhookId.Should().BeNull();
+        entry.BookingTypeId.Should().Be(bookingTypeId);
+        entry.Category.Should().Be(OutboxCategory.CustomerCallback);
+    }
 }

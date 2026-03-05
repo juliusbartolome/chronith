@@ -16,7 +16,8 @@ public sealed record BookingTypeDto(
     int? BufferAfterMinutes,
     IReadOnlyList<TimeSlotWindowDto>? AvailabilityWindows,
     // Calendar fields (null for TimeSlot)
-    IReadOnlyList<DayOfWeek>? AvailableDays
+    IReadOnlyList<DayOfWeek>? AvailableDays,
+    string? CustomerCallbackUrl
 );
 
 public sealed record TimeSlotWindowDto(
