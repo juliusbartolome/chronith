@@ -4,7 +4,7 @@ namespace Chronith.Application.DTOs;
 
 public sealed record WebhookDeliveryDto(
     Guid Id,
-    Guid WebhookId,
+    Guid? WebhookId,
     Guid BookingId,
     string EventType,
     OutboxStatus Status,

@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Services;
 using FluentAssertions;
@@ -27,6 +28,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
     {
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
         var webhookRepo = Substitute.For<IWebhookRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
 
         outboxRepo.GetPendingAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns((pending ?? []).ToList().AsReadOnly() as IReadOnlyList<PendingOutboxEntry>
@@ -36,6 +38,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
         var serviceProvider = Substitute.For<IServiceProvider>();
         serviceProvider.GetService(typeof(IWebhookOutboxRepository)).Returns(outboxRepo);
         serviceProvider.GetService(typeof(IWebhookRepository)).Returns(webhookRepo);
+        serviceProvider.GetService(typeof(IBookingTypeRepository)).Returns(bookingTypeRepo);
 
         var scope = Substitute.For<IServiceScope>();
         scope.ServiceProvider.Returns(serviceProvider);
@@ -71,7 +74,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
     {
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
-        var entry = new PendingOutboxEntry(entryId, webhookId, "booking.confirmed", "{}", AttemptCount: 0);
+        var entry = new PendingOutboxEntry(entryId, webhookId, null, "booking.confirmed", "{}", 0, OutboxCategory.TenantWebhook);
         var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
@@ -90,7 +93,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
     {
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
-        var entry = new PendingOutboxEntry(entryId, webhookId, "booking.confirmed", "{}", AttemptCount: 0);
+        var entry = new PendingOutboxEntry(entryId, webhookId, null, "booking.confirmed", "{}", 0, OutboxCategory.TenantWebhook);
         var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
@@ -110,7 +113,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
     {
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
-        var entry = new PendingOutboxEntry(entryId, webhookId, "booking.confirmed", "{}", AttemptCount: 0);
+        var entry = new PendingOutboxEntry(entryId, webhookId, null, "booking.confirmed", "{}", 0, OutboxCategory.TenantWebhook);
 
         var (sut, outboxRepo, webhookRepo, _) = BuildSut(pending: [entry]);
         webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns(default(Webhook));
@@ -135,7 +138,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
         // GetBackOffDelay(5) = 4 hours
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
-        var entry = new PendingOutboxEntry(entryId, webhookId, "booking.confirmed", "{}", AttemptCount: 4);
+        var entry = new PendingOutboxEntry(entryId, webhookId, null, "booking.confirmed", "{}", 4, OutboxCategory.TenantWebhook);
         var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
@@ -159,7 +162,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
         // AttemptCount = 5 → newAttemptCount = 6 → isFinal = true (MaxAttempts = 6)
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
-        var entry = new PendingOutboxEntry(entryId, webhookId, "booking.confirmed", "{}", AttemptCount: 5);
+        var entry = new PendingOutboxEntry(entryId, webhookId, null, "booking.confirmed", "{}", 5, OutboxCategory.TenantWebhook);
         var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
@@ -189,7 +192,7 @@ internal sealed class FakeHttpMessageHandler(HttpStatusCode statusCode) : HttpMe
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
         // Ownership of HttpResponseMessage transfers to HttpClient, which disposes it.
-        var response = new HttpResponseMessage(StatusCode); // lgtm[cs/local-not-disposed]
+        var response = new HttpResponseMessage(StatusCode); // lgtm[cs/local-not-disposed] // codeql[cs/local-not-disposed]
         return Task.FromResult(response);
     }
 }

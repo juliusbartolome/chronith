@@ -26,6 +26,8 @@ public sealed class ChronithDbContext : DbContext
     // WebhookDispatcherService background worker, which requires cross-tenant access.
     public DbSet<WebhookOutboxEntryEntity> WebhookOutboxEntries => Set<WebhookOutboxEntryEntity>();
     public DbSet<TenantApiKeyEntity> TenantApiKeys => Set<TenantApiKeyEntity>();
+    public DbSet<TenantUserEntity> TenantUsers => Set<TenantUserEntity>();
+    public DbSet<TenantUserRefreshTokenEntity> TenantUserRefreshTokens => Set<TenantUserRefreshTokenEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

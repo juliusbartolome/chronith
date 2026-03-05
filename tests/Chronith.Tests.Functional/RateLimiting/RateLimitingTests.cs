@@ -44,7 +44,7 @@ public class RateLimitingTests : IAsyncLifetime
         var tenantOverrideKey =
             $"RateLimiting:TenantOverrides:{TestConstants.TenantId}:PermitLimit";
 
-        _defaultFactory = new WebApplicationFactory<Program>() // lgtm[cs/local-not-disposed]
+        _defaultFactory = new WebApplicationFactory<Program>() // lgtm[cs/local-not-disposed] // codeql[cs/local-not-disposed]
             .WithWebHostBuilder(b =>
             {
                 b.UseSetting("Database:Provider", "PostgreSQL");
@@ -52,7 +52,7 @@ public class RateLimitingTests : IAsyncLifetime
                 b.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
             });
 
-        _lowLimitFactory = new WebApplicationFactory<Program>() // lgtm[cs/local-not-disposed]
+        _lowLimitFactory = new WebApplicationFactory<Program>() // lgtm[cs/local-not-disposed] // codeql[cs/local-not-disposed]
             .WithWebHostBuilder(b =>
             {
                 b.UseSetting("Database:Provider", "PostgreSQL");

@@ -31,6 +31,15 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -49,6 +58,7 @@ jobs:
         env:
           CI_INTEGRATION_CONNECTION_STRING: "Host=localhost;Port=5432;Database=chronith_test;Username=test;Password=test"
           CI_FUNCTIONAL_CONNECTION_STRING: "Host=localhost;Port=5432;Database=chronith_test;Username=test;Password=test"
+          CI_REDIS_CONNECTION_STRING: "localhost:6379"
         run: |
           dotnet test tests/Chronith.Tests.Unit --no-build -c Release \
             --logger "trx;LogFileName=unit.trx" \
@@ -306,6 +316,22 @@ jobs:
           name: benchmark-results
           path: BenchmarkDotNet.Artifacts/
           retention-days: 30
+
+  check-target-branch:
+    name: Enforce PR target branch policy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    steps:
+      - name: Fail if source branch is not develop
+        run: |
+          if [ "${{ github.head_ref }}" != "develop" ]; then
+            echo "❌ Direct PRs to 'main' are not allowed."
+            echo "   Source branch: '${{ github.head_ref }}'"
+            echo "   Only 'develop' may be merged into 'main'."
+            echo "   Please open your PR against 'develop' instead."
+            exit 1
+          fi
+          echo "✅ Source branch is 'develop' — merge to main is allowed."
 
   codeql:
     name: CodeQL (${{ matrix.language }})
