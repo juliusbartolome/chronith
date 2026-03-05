@@ -142,6 +142,15 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
         return new DeliveryMetrics(delivered, failed);
     }
 
+    public async Task MarkAbandonedAsync(Guid entryId, CancellationToken ct = default)
+    {
+        var entity = await db.WebhookOutboxEntries.FindAsync([entryId], ct)
+            ?? throw new InvalidOperationException($"WebhookOutboxEntry {entryId} not found");
+
+        entity.Status = OutboxStatus.Abandoned;
+        await db.SaveChangesAsync(ct);
+    }
+
     private static WebhookOutboxEntryEntity MapToEntity(WebhookOutboxEntry d) => new()
     {
         Id = d.Id,

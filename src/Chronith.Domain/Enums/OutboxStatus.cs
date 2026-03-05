@@ -4,5 +4,6 @@ public enum OutboxStatus
 {
     Pending,
     Delivered,
-    Failed
+    Failed,
+    Abandoned   // CustomerCallback URL was removed; entry will not be retried
 }

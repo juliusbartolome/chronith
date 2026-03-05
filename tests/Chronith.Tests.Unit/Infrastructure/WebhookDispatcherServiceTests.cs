@@ -28,6 +28,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
     {
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
         var webhookRepo = Substitute.For<IWebhookRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
 
         outboxRepo.GetPendingAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns((pending ?? []).ToList().AsReadOnly() as IReadOnlyList<PendingOutboxEntry>
@@ -37,6 +38,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
         var serviceProvider = Substitute.For<IServiceProvider>();
         serviceProvider.GetService(typeof(IWebhookOutboxRepository)).Returns(outboxRepo);
         serviceProvider.GetService(typeof(IWebhookRepository)).Returns(webhookRepo);
+        serviceProvider.GetService(typeof(IBookingTypeRepository)).Returns(bookingTypeRepo);
 
         var scope = Substitute.For<IServiceScope>();
         scope.ServiceProvider.Returns(serviceProvider);
