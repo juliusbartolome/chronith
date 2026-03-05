@@ -45,7 +45,7 @@ public sealed class WebhookDispatcherService(
 
         foreach (var entry in pending)
         {
-            var webhook = await webhookRepo.GetByIdCrossTenantAsync(entry.WebhookId, ct);
+            var webhook = await webhookRepo.GetByIdCrossTenantAsync(entry.WebhookId!.Value, ct);
             if (webhook is null)
             {
                 logger.LogWarning(

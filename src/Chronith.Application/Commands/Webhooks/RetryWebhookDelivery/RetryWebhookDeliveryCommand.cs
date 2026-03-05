@@ -40,7 +40,7 @@ public sealed class RetryWebhookDeliveryCommandHandler(
         var (foundWebhookId, canRetry) = await outboxRepository.ResetForRetryAsync(
             request.DeliveryId, cancellationToken);
 
-        if (foundWebhookId == Guid.Empty)
+        if (foundWebhookId is null)
             throw new NotFoundException("WebhookOutboxEntry", request.DeliveryId);
 
         if (foundWebhookId != request.WebhookId)
