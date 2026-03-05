@@ -35,7 +35,7 @@ public sealed class WebhookOutboxEntryRepositoryTests(PostgresFixture postgres)
         await db.SaveChangesAsync();
 
         var found = await db.WebhookOutboxEntries
-            .Where(e => e.Status == OutboxStatus.Pending && e.NextRetryAt == null)
+            .Where(e => e.Id == entry.Id && e.Status == OutboxStatus.Pending && e.NextRetryAt == null)
             .FirstOrDefaultAsync();
 
         found.Should().NotBeNull();
