@@ -35,6 +35,7 @@ public sealed class WebhookOutboxHandlerTests
 
         var webhookRepo = Substitute.For<IWebhookRepository>();
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
         webhookRepo.ListAsync(tenantId, bookingTypeId, Arg.Any<CancellationToken>())
             .Returns(webhooks);
 
@@ -43,7 +44,7 @@ public sealed class WebhookOutboxHandlerTests
             Arg.Do<IEnumerable<WebhookOutboxEntry>>(e => capturedEntries.AddRange(e)),
             Arg.Any<CancellationToken>());
 
-        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo);
+        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
         var notification = MakeNotification(bookingTypeId, tenantId);
 
         await handler.Handle(notification, CancellationToken.None);
@@ -69,13 +70,14 @@ public sealed class WebhookOutboxHandlerTests
 
         var webhookRepo = Substitute.For<IWebhookRepository>();
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
         var unitOfWork = Substitute.For<IUnitOfWork>();
         webhookRepo.ListAsync(tenantId, bookingTypeId, Arg.Any<CancellationToken>())
             .Returns(webhooks);
 
         // WebhookOutboxHandler no longer accepts IUnitOfWork — this test verifies
         // outbox entries are added without a separate save.
-        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo);
+        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
         var notification = MakeNotification(bookingTypeId, tenantId);
 
         await handler.Handle(notification, CancellationToken.None);
@@ -90,10 +92,11 @@ public sealed class WebhookOutboxHandlerTests
     {
         var webhookRepo = Substitute.For<IWebhookRepository>();
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
         webhookRepo.ListAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(new List<Webhook>());
 
-        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo);
+        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
         var act = () => handler.Handle(
             MakeNotification(Guid.NewGuid(), Guid.NewGuid()),
             CancellationToken.None);
@@ -106,10 +109,11 @@ public sealed class WebhookOutboxHandlerTests
     {
         var webhookRepo = Substitute.For<IWebhookRepository>();
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
         webhookRepo.ListAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(new List<Webhook>());
 
-        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo);
+        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
         await handler.Handle(MakeNotification(Guid.NewGuid(), Guid.NewGuid()), CancellationToken.None);
 
         await outboxRepo.DidNotReceive().AddRangeAsync(Arg.Any<IEnumerable<WebhookOutboxEntry>>(), Arg.Any<CancellationToken>());
@@ -129,6 +133,7 @@ public sealed class WebhookOutboxHandlerTests
         };
         var webhookRepo = Substitute.For<IWebhookRepository>();
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
         webhookRepo.ListAsync(tenantId, bookingTypeId, Arg.Any<CancellationToken>()).Returns(webhooks);
 
         var capturedEntries = new List<WebhookOutboxEntry>();
@@ -136,7 +141,7 @@ public sealed class WebhookOutboxHandlerTests
             Arg.Do<IEnumerable<WebhookOutboxEntry>>(e => capturedEntries.AddRange(e)),
             Arg.Any<CancellationToken>());
 
-        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo);
+        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
         var notification = new BookingStatusChangedNotification(
             BookingId: Guid.NewGuid(),
             TenantId: tenantId,
@@ -163,10 +168,11 @@ public sealed class WebhookOutboxHandlerTests
         var bookingTypeId = Guid.NewGuid();
         var webhookRepo = Substitute.For<IWebhookRepository>();
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
         webhookRepo.ListAsync(tenantId, bookingTypeId, Arg.Any<CancellationToken>())
             .Returns(new List<Webhook> { Webhook.Create(tenantId, bookingTypeId, "https://h.co", "s") });
 
-        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo);
+        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
         var notification = new BookingStatusChangedNotification(
             BookingId: Guid.NewGuid(),
             TenantId: tenantId,
