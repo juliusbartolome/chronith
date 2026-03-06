@@ -15,6 +15,8 @@ public sealed class BookingTypeEntity
     public int Capacity { get; set; }
     public PaymentMode PaymentMode { get; set; }
     public string? PaymentProvider { get; set; }
+    public long PriceInCentavos { get; set; }
+    public string Currency { get; set; } = "PHP";
     public BookingKind Kind { get; set; }
     public bool IsDeleted { get; set; }
 
