@@ -84,7 +84,9 @@ public sealed class CreateBookingTypeHandler(
                 cmd.DurationMinutes,
                 cmd.BufferBeforeMinutes,
                 cmd.BufferAfterMinutes,
-                windows);
+                windows,
+                priceInCentavos: 0,
+                currency: "PHP");
         }
         else
         {
@@ -95,7 +97,9 @@ public sealed class CreateBookingTypeHandler(
                 cmd.Capacity,
                 cmd.PaymentMode,
                 cmd.PaymentProvider,
-                cmd.AvailableDays ?? []);
+                cmd.AvailableDays ?? [],
+                priceInCentavos: 0,
+                currency: "PHP");
         }
 
         await repository.AddAsync(bookingType, ct);

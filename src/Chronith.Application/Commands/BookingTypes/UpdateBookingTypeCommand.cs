@@ -65,7 +65,9 @@ public sealed class UpdateBookingTypeHandler(
             (cmd.AvailabilityWindows ?? [])
                 .Select(w => new TimeSlotWindow(w.DayOfWeek, w.StartTime, w.EndTime))
                 .ToList(),
-            cmd.AvailableDays);
+            cmd.AvailableDays,
+            priceInCentavos: 0,
+            currency: "PHP");
 
         await unitOfWork.SaveChangesAsync(ct);
         return bt.ToDto();
