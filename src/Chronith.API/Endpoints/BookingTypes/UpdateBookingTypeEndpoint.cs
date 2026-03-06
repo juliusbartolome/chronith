@@ -22,6 +22,7 @@ public sealed class UpdateBookingTypeRequest
     public int BufferAfterMinutes { get; set; }
     public IReadOnlyList<TimeSlotWindowDto>? AvailabilityWindows { get; set; }
     public IReadOnlyList<DayOfWeek>? AvailableDays { get; set; }
+    public string? CustomerCallbackUrl { get; set; }
 }
 
 public sealed class UpdateBookingTypeEndpoint(ISender sender)
@@ -31,6 +32,7 @@ public sealed class UpdateBookingTypeEndpoint(ISender sender)
     {
         Put("/booking-types/{slug}");
         Roles("TenantAdmin");
+        Options(x => x.WithTags("BookingTypes"));
     }
 
     public override async Task HandleAsync(UpdateBookingTypeRequest req, CancellationToken ct)
@@ -48,7 +50,8 @@ public sealed class UpdateBookingTypeEndpoint(ISender sender)
             BufferBeforeMinutes = req.BufferBeforeMinutes,
             BufferAfterMinutes = req.BufferAfterMinutes,
             AvailabilityWindows = req.AvailabilityWindows,
-            AvailableDays = req.AvailableDays
+            AvailableDays = req.AvailableDays,
+            CustomerCallbackUrl = req.CustomerCallbackUrl
         };
 
         var result = await sender.Send(command, ct);

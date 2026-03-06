@@ -1,11 +1,13 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
+using Chronith.Application.Options;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 namespace Chronith.Application.Commands.Bookings;
 
@@ -39,7 +41,9 @@ public sealed class CreateBookingHandler(
     IBookingRepository bookingRepo,
     ITenantRepository tenantRepo,
     IUnitOfWork unitOfWork,
-    IPublisher publisher)
+    IPublisher publisher,
+    IPaymentProviderFactory paymentProviderFactory,
+    IOptions<PaymentsOptions> paymentsOptions)
     : IRequestHandler<CreateBookingCommand, BookingDto>
 {
     private static readonly BookingStatus[] ConflictStatuses =
@@ -61,6 +65,8 @@ public sealed class CreateBookingHandler(
         var (start, end) = bookingType.ResolveSlot(cmd.StartTime, tz);
         var (effStart, effEnd) = bookingType.GetEffectiveRange(start, end);
 
+        var customerId = cmd.CustomerId ?? tenantContext.UserId;
+
         // Use the lower 64 bits of the booking type ID as a stable advisory lock key.
         // This serializes all concurrent create attempts for the same booking type,
         // eliminating the TOCTOU race between CountConflictsAsync and AddAsync.
@@ -77,8 +83,6 @@ public sealed class CreateBookingHandler(
         if (conflictCount >= bookingType.Capacity)
             throw new SlotConflictException();
 
-        var customerId = cmd.CustomerId ?? tenantContext.UserId;
-
         var booking = Booking.Create(
             tenantContext.TenantId,
             bookingType.Id,
@@ -86,14 +90,41 @@ public sealed class CreateBookingHandler(
             end,
             customerId,
             cmd.CustomerEmail,
-            amountInCentavos: 0,
-            currency: "PHP");
+            amountInCentavos: bookingType.PriceInCentavos,
+            currency: bookingType.Currency);
 
         await bookingRepo.AddAsync(booking, ct);
         await tx.CommitAsync(ct);
 
+        // For Automatic payment mode, call the payment provider after saving
+        if (bookingType.PaymentMode == PaymentMode.Automatic)
+        {
+            var providerName = bookingType.PaymentProvider ?? "Stub";
+            var provider = paymentProviderFactory.GetProvider(providerName);
+            var result = await provider.CreatePaymentIntentAsync(booking, paymentsOptions.Value.Currency, ct);
+            booking.SetPaymentReference(result.ExternalId);
+            booking.SetCheckoutUrl(result.CheckoutUrl);
+
+            // Persist the updated PaymentReference and CheckoutUrl. The booking was
+            // committed inside the advisory-lock transaction above, so the tracked entity
+            // in the DbContext does not reflect these in-memory changes. Using UpdateAsync
+            // (which issues an ExecuteUpdateAsync SQL statement directly) ensures both
+            // fields are written to the database in a second round-trip.
+            await bookingRepo.UpdateAsync(booking, ct);
+        }
+
         await publisher.Publish(
-            new Notifications.BookingStatusChangedNotification(booking.Id, null, booking.Status),
+            new Notifications.BookingStatusChangedNotification(
+                BookingId: booking.Id,
+                TenantId: booking.TenantId,
+                BookingTypeId: booking.BookingTypeId,
+                BookingTypeSlug: cmd.BookingTypeSlug,
+                FromStatus: null,
+                ToStatus: booking.Status,
+                Start: booking.Start,
+                End: booking.End,
+                CustomerId: booking.CustomerId,
+                CustomerEmail: booking.CustomerEmail),
             ct);
 
         return booking.ToDto();

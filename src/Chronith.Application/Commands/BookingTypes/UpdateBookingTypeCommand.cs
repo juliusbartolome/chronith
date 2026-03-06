@@ -28,6 +28,9 @@ public sealed record UpdateBookingTypeCommand : IRequest<BookingTypeDto>
 
     // Calendar fields (ignored for TimeSlot)
     public IReadOnlyList<DayOfWeek>? AvailableDays { get; init; }
+
+    /// <summary>Nullable HTTPS URL. Null removes the existing callback.</summary>
+    public string? CustomerCallbackUrl { get; init; }
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -41,6 +44,12 @@ public sealed class UpdateBookingTypeValidator : AbstractValidator<UpdateBooking
         RuleFor(x => x.Capacity).GreaterThan(0);
         RuleFor(x => x.PriceInCentavos).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Currency).NotEmpty().MaximumLength(3);
+        When(x => x.CustomerCallbackUrl is not null, () =>
+        {
+            RuleFor(x => x.CustomerCallbackUrl!)
+                .Must(url => Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps)
+                .WithMessage("CustomerCallbackUrl must be a valid HTTPS URL.");
+        });
     }
 }
 
@@ -73,6 +82,10 @@ public sealed class UpdateBookingTypeHandler(
             cmd.PriceInCentavos,
             cmd.Currency);
 
+        // Update customer callback — always called (null clears the URL)
+        bt.SetCustomerCallback(cmd.CustomerCallbackUrl);
+
+        await repository.UpdateAsync(bt, ct);
         await unitOfWork.SaveChangesAsync(ct);
         return bt.ToDto();
     }

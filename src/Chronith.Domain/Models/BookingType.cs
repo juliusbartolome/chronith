@@ -1,5 +1,6 @@
 namespace Chronith.Domain.Models;
 using Chronith.Domain.Enums;
+using System.Security.Cryptography;
 
 public abstract class BookingType
 {
@@ -13,6 +14,30 @@ public abstract class BookingType
     public long PriceInCentavos { get; protected set; }
     public string Currency { get; protected set; } = "PHP";
     public bool IsDeleted { get; protected set; }
+
+    /// <summary>HTTPS URL to POST customer-facing booking events to. Null means disabled.</summary>
+    public string? CustomerCallbackUrl { get; protected set; }
+
+    /// <summary>Auto-generated 32-byte hex secret for HMAC-SHA256 signing. Null when URL is null.</summary>
+    public string? CustomerCallbackSecret { get; protected set; }
+
+    /// <summary>
+    /// Sets or clears the customer callback URL. When <paramref name="url"/> is non-null,
+    /// a new random secret is generated. When null, both fields are cleared.
+    /// </summary>
+    public void SetCustomerCallback(string? url)
+    {
+        if (url is null)
+        {
+            CustomerCallbackUrl = null;
+            CustomerCallbackSecret = null;
+        }
+        else
+        {
+            CustomerCallbackUrl = url;
+            CustomerCallbackSecret = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
+        }
+    }
 
     /// <summary>
     /// Given a requested UTC start time, validates it falls within an availability window

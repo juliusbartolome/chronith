@@ -31,7 +31,8 @@ public static class BookingTypeMapper
             AvailabilityWindows: ts.AvailabilityWindows
                 .Select(w => new TimeSlotWindowDto(w.DayOfWeek, w.StartTime, w.EndTime))
                 .ToList(),
-            AvailableDays: null
+            AvailableDays: null,
+            CustomerCallbackUrl: ts.CustomerCallbackUrl
         );
 
     private static BookingTypeDto ToDto(this CalendarBookingType cal) =>
@@ -49,6 +50,7 @@ public static class BookingTypeMapper
             BufferBeforeMinutes: null,
             BufferAfterMinutes: null,
             AvailabilityWindows: null,
-            AvailableDays: cal.AvailableDays.ToList()
+            AvailableDays: cal.AvailableDays.ToList(),
+            CustomerCallbackUrl: cal.CustomerCallbackUrl
         );
 }

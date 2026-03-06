@@ -32,16 +32,15 @@ public static class SeedData
     public static async Task<Guid> SeedTenantAsync(ChronithDbContext db, Guid? id = null, string slug = "test-tenant")
     {
         var tenantId = id ?? TestConstants.TenantId;
-        if (await db.Tenants.FindAsync(tenantId) is not null) return tenantId;
-        db.Tenants.Add(new TenantEntity
-        {
-            Id = tenantId,
-            Slug = slug,
-            Name = "Test Tenant",
-            TimeZoneId = "UTC",
-            IsDeleted = false
-        });
-        await db.SaveChangesAsync();
+        // Use INSERT ... ON CONFLICT DO NOTHING to avoid race conditions when
+        // multiple test classes seed the shared tenant concurrently.
+        // No conflict target is specified so PostgreSQL suppresses violations
+        // on any unique constraint ("Id" PK and "Slug" unique index).
+        await db.Database.ExecuteSqlRawAsync("""
+            INSERT INTO chronith.tenants ("Id","Slug","Name","TimeZoneId","IsDeleted","CreatedAt")
+            VALUES ({0},{1},{2},{3},{4},{5})
+            ON CONFLICT DO NOTHING
+            """, tenantId, slug, "Test Tenant", "UTC", false, DateTimeOffset.UtcNow);
         return tenantId;
     }
 
@@ -110,6 +109,74 @@ public static class SeedData
             CustomerId = customerId,
             CustomerEmail = $"{customerId}@example.com",
             IsDeleted = false
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    public static async Task<Guid> SeedWebhookAsync(
+        ChronithDbContext db,
+        Guid bookingTypeId,
+        string url = "https://example.com/webhook",
+        string secret = "webhook-secret-at-least-16chars")
+    {
+        var id = Guid.NewGuid();
+        db.Webhooks.Add(new WebhookEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            BookingTypeId = bookingTypeId,
+            Url = url,
+            Secret = secret,
+            IsDeleted = false
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    public static async Task<IReadOnlyList<Guid>> SeedOutboxEntriesAsync(
+        ChronithDbContext db,
+        Guid webhookId,
+        int count = 3)
+    {
+        var ids = new List<Guid>();
+        for (int i = 0; i < count; i++)
+        {
+            var id = Guid.NewGuid();
+            db.WebhookOutboxEntries.Add(new WebhookOutboxEntryEntity
+            {
+                Id = id,
+                TenantId = TestConstants.TenantId,
+                WebhookId = webhookId,
+                BookingId = Guid.NewGuid(),
+                EventType = "booking.confirmed",
+                Payload = "{}",
+                Status = OutboxStatus.Pending,
+                AttemptCount = 0,
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-i),
+            });
+            ids.Add(id);
+        }
+        await db.SaveChangesAsync();
+        return ids;
+    }
+
+    public static async Task<Guid> SeedFailedOutboxEntryAsync(
+        ChronithDbContext db,
+        Guid webhookId)
+    {
+        var id = Guid.NewGuid();
+        db.WebhookOutboxEntries.Add(new WebhookOutboxEntryEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            WebhookId = webhookId,
+            BookingId = Guid.NewGuid(),
+            EventType = "booking.confirmed",
+            Payload = "{}",
+            Status = OutboxStatus.Failed,
+            AttemptCount = 6,
+            CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
         });
         await db.SaveChangesAsync();
         return id;

@@ -29,12 +29,14 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
 
         var connectionString = CiConnectionString ?? _postgres!.GetConnectionString();
 
-        Factory = new WebApplicationFactory<Program>()
+        Factory = new WebApplicationFactory<Program>() // lgtm[cs/local-not-disposed] // codeql[cs/local-not-disposed]
             .WithWebHostBuilder(builder =>
             {
+                builder.UseEnvironment("Development");
                 builder.UseSetting("Database:Provider", "PostgreSQL");
                 builder.UseSetting("Database:ConnectionString", connectionString);
                 builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
+                builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
             });
 
         // Run migrations

@@ -33,7 +33,8 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
             .HasDefaultValue("PHP");
 
         builder.Property(b => b.CheckoutUrl)
-            .HasMaxLength(2000);
+            .HasColumnName("checkout_url")
+            .HasMaxLength(2048);
 
         builder.Property(b => b.Status)
             .HasConversion<string>()

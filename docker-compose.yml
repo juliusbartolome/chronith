@@ -13,16 +13,32 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:8-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   chronith-api:
     build: .
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       Database__Provider: PostgreSQL
       Database__ConnectionString: "Host=postgres;Port=5432;Database=chronith;Username=chronith;Password=chronith"
       Jwt__SigningKey: "change-me-in-production-at-least-32-chars"
       ASPNETCORE_URLS: "http://+:8080"
+      Payments__Provider: "Stub"
+      Payments__Currency: "PHP"
+      Webhooks__DispatchIntervalSeconds: "10"
+      Webhooks__HttpTimeoutSeconds: "10"
+      Redis__Enabled: "true"
+      Redis__ConnectionString: "redis:6379"
 
 volumes:
   postgres_data:

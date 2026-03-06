@@ -63,8 +63,9 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .HasColumnType("uuid");
 
                     b.Property<string>("CheckoutUrl")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("checkout_url");
 
                     b.Property<string>("Currency")
                         .IsRequired()
@@ -187,6 +188,14 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .HasColumnType("character varying(3)")
                         .HasDefaultValue("PHP");
 
+                    b.Property<string>("CustomerCallbackSecret")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("CustomerCallbackUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
                     b.Property<int?>("DurationMinutes")
                         .HasColumnType("integer");
 
@@ -242,6 +251,51 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                     b.ToTable("booking_types", "chronith");
                 });
 
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.TenantApiKeyEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeyHash")
+                        .IsUnique()
+                        .HasDatabaseName("IX_tenant_api_keys_key_hash");
+
+                    b.HasIndex("TenantId", "IsRevoked")
+                        .HasDatabaseName("IX_tenant_api_keys_tenant_id_is_revoked");
+
+                    b.ToTable("tenant_api_keys", "chronith");
+                });
+
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.TenantEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -275,6 +329,74 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .IsUnique();
 
                     b.ToTable("tenants", "chronith");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.TenantUserEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Email")
+                        .IsUnique();
+
+                    b.ToTable("TenantUsers", "chronith");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.TenantUserRefreshTokenEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantUserId");
+
+                    b.HasIndex("TokenHash");
+
+                    b.ToTable("TenantUserRefreshTokens", "chronith");
                 });
 
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.WebhookEntity", b =>
@@ -313,6 +435,78 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                     b.ToTable("webhooks", "chronith");
                 });
 
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.WebhookOutboxEntryEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BookingTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Category")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeliveredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("LastAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("NextRetryAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("RetryRequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("WebhookId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId")
+                        .HasDatabaseName("IX_webhook_outbox_entries_BookingId");
+
+                    b.HasIndex("BookingTypeId")
+                        .HasDatabaseName("IX_webhook_outbox_entries_BookingTypeId");
+
+                    b.HasIndex("WebhookId")
+                        .HasDatabaseName("IX_webhook_outbox_entries_WebhookId");
+
+                    b.HasIndex("Status", "NextRetryAt")
+                        .HasDatabaseName("IX_webhook_outbox_entries_Status_NextRetryAt");
+
+                    b.ToTable("webhook_outbox_entries", "chronith");
+                });
+
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.AvailabilityWindowEntity", b =>
                 {
                     b.HasOne("Chronith.Infrastructure.Persistence.Entities.BookingTypeEntity", "BookingType")
@@ -344,6 +538,17 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .IsRequired();
 
                     b.Navigation("Booking");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.TenantUserRefreshTokenEntity", b =>
+                {
+                    b.HasOne("Chronith.Infrastructure.Persistence.Entities.TenantUserEntity", "TenantUser")
+                        .WithMany()
+                        .HasForeignKey("TenantUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TenantUser");
                 });
 
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.WebhookEntity", b =>

@@ -65,5 +65,13 @@ public sealed class BookingTypeConfiguration : IEntityTypeConfiguration<BookingT
             .WithOne(w => w.BookingType)
             .HasForeignKey(w => w.BookingTypeId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Property(bt => bt.CustomerCallbackUrl)
+            .HasMaxLength(2048)
+            .IsRequired(false);
+
+        builder.Property(bt => bt.CustomerCallbackSecret)
+            .HasMaxLength(128)
+            .IsRequired(false);
     }
 }

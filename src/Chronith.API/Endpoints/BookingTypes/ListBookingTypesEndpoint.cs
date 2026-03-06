@@ -12,6 +12,7 @@ public sealed class ListBookingTypesEndpoint(ISender sender)
     {
         Get("/booking-types");
         Roles("TenantAdmin", "TenantStaff", "Customer");
+        Options(x => x.WithTags("BookingTypes"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

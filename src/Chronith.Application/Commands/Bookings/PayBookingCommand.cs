@@ -44,11 +44,22 @@ public sealed class PayBookingHandler(
         var from = booking.Status;
         booking.Pay(tenantContext.UserId, tenantContext.Role);
         await bookingRepo.UpdateAsync(booking, ct);
-        await unitOfWork.SaveChangesAsync(ct);
 
         await publisher.Publish(
-            new Notifications.BookingStatusChangedNotification(booking.Id, from, BookingStatus.PendingVerification),
+            new Notifications.BookingStatusChangedNotification(
+                BookingId: booking.Id,
+                TenantId: booking.TenantId,
+                BookingTypeId: booking.BookingTypeId,
+                BookingTypeSlug: cmd.BookingTypeSlug,
+                FromStatus: from,
+                ToStatus: BookingStatus.PendingVerification,
+                Start: booking.Start,
+                End: booking.End,
+                CustomerId: booking.CustomerId,
+                CustomerEmail: booking.CustomerEmail),
             ct);
+
+        await unitOfWork.SaveChangesAsync(ct);
 
         return booking.ToDto();
     }

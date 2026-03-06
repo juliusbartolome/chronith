@@ -1,3 +1,4 @@
+using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
@@ -33,6 +34,18 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
         return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
     }
 
+    /// <inheritdoc cref="IBookingTypeRepository.GetByIdAsync(Guid, CancellationToken)"/>
+    public async Task<BookingType?> GetByIdAsync(Guid bookingTypeId, CancellationToken ct = default)
+    {
+        var entity = await _db.BookingTypes
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Include(bt => bt.AvailabilityWindows)
+            .FirstOrDefaultAsync(bt => bt.Id == bookingTypeId, ct);
+
+        return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
+    }
+
     public async Task<IReadOnlyList<BookingType>> ListAsync(Guid tenantId, CancellationToken ct = default)
     {
         var entities = await _db.BookingTypes
@@ -56,16 +69,30 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
             .AsNoTracking()
             .AnyAsync(bt => bt.TenantId == tenantId && bt.Slug == slug, ct);
 
+    public async Task<BookingTypeMetrics> GetTypeMetricsAsync(Guid tenantId, CancellationToken ct = default)
+    {
+        var counts = await _db.BookingTypes
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(bt => bt.TenantId == tenantId)
+            .GroupBy(bt => bt.IsDeleted)
+            .Select(g => new { IsDeleted = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        var active = counts.FirstOrDefault(c => !c.IsDeleted)?.Count ?? 0;
+        var archived = counts.FirstOrDefault(c => c.IsDeleted)?.Count ?? 0;
+
+        return new BookingTypeMetrics(active, archived);
+    }
+
     public async Task UpdateAsync(BookingType bookingType, CancellationToken ct = default)
     {
+        // Load without Include so the change tracker only tracks the parent row,
+        // avoiding xmin concurrency conflicts caused by navigation collection mutations.
         var entity = await _db.BookingTypes
-            .Include(bt => bt.AvailabilityWindows)
             .FirstOrDefaultAsync(bt => bt.Id == bookingType.Id, ct);
 
         if (entity is null) return;
-
-        // Remove old windows
-        _db.AvailabilityWindows.RemoveRange(entity.AvailabilityWindows);
 
         var updated = BookingTypeEntityMapper.ToEntity(bookingType);
         entity.Name = updated.Name;
@@ -77,10 +104,17 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
         entity.BufferBeforeMinutes = updated.BufferBeforeMinutes;
         entity.BufferAfterMinutes = updated.BufferAfterMinutes;
         entity.AvailableDays = updated.AvailableDays;
+        entity.CustomerCallbackUrl = updated.CustomerCallbackUrl;
+        entity.CustomerCallbackSecret = updated.CustomerCallbackSecret;
 
-        foreach (var w in updated.AvailabilityWindows)
+        // Replace windows: delete all existing, queue new ones for insert via SaveChanges.
+        await _db.AvailabilityWindows
+            .Where(w => w.BookingTypeId == bookingType.Id)
+            .ExecuteDeleteAsync(ct);
+
+        if (updated.AvailabilityWindows.Count > 0)
         {
-            entity.AvailabilityWindows.Add(w);
+            await _db.AvailabilityWindows.AddRangeAsync(updated.AvailabilityWindows, ct);
         }
     }
 }
