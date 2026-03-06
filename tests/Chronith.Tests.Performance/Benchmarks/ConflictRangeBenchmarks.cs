@@ -48,7 +48,9 @@ public class ConflictRangeBenchmarks
             durationMinutes: 30,
             bufferBeforeMinutes: 0,
             bufferAfterMinutes: 0,
-            availabilityWindows: windows);
+            availabilityWindows: windows,
+            priceInCentavos: 0,
+            currency: "PHP");
 
         // Benchmark window: Monday 2026-03-02, one week
         var monday = new DateTimeOffset(2026, 3, 2, 0, 0, 0, TimeSpan.Zero);
