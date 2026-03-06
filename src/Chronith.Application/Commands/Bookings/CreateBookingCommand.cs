@@ -61,11 +61,6 @@ public sealed class CreateBookingHandler(
         var (start, end) = bookingType.ResolveSlot(cmd.StartTime, tz);
         var (effStart, effEnd) = bookingType.GetEffectiveRange(start, end);
 
-        // Stub payment reference for Automatic payment mode
-        string? paymentRef = bookingType.PaymentMode == PaymentMode.Automatic
-            ? Guid.NewGuid().ToString()
-            : null;
-
         // Use the lower 64 bits of the booking type ID as a stable advisory lock key.
         // This serializes all concurrent create attempts for the same booking type,
         // eliminating the TOCTOU race between CountConflictsAsync and AddAsync.
@@ -91,13 +86,14 @@ public sealed class CreateBookingHandler(
             end,
             customerId,
             cmd.CustomerEmail,
-            paymentRef);
+            amountInCentavos: 0,
+            currency: "PHP");
 
         await bookingRepo.AddAsync(booking, ct);
         await tx.CommitAsync(ct);
 
         await publisher.Publish(
-            new Notifications.BookingStatusChangedNotification(booking.Id, null, BookingStatus.PendingPayment),
+            new Notifications.BookingStatusChangedNotification(booking.Id, null, booking.Status),
             ct);
 
         return booking.ToDto();
