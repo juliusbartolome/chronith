@@ -53,7 +53,7 @@ public sealed class PayMongoProvider(
             }
         };
 
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post,
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post,
             $"{options.Value.BaseUrl}/checkout_sessions");
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue(
             "Basic", authHeader);
