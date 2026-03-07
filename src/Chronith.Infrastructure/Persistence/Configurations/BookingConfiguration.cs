@@ -54,5 +54,10 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
             .WithOne(sc => sc.Booking)
             .HasForeignKey(sc => sc.BookingId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Property(b => b.StaffMemberId)
+            .IsRequired(false);
+
+        builder.HasIndex(b => b.StaffMemberId);
     }
 }

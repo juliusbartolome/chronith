@@ -28,6 +28,9 @@ public sealed class ChronithDbContext : DbContext
     public DbSet<TenantApiKeyEntity> TenantApiKeys => Set<TenantApiKeyEntity>();
     public DbSet<TenantUserEntity> TenantUsers => Set<TenantUserEntity>();
     public DbSet<TenantUserRefreshTokenEntity> TenantUserRefreshTokens => Set<TenantUserRefreshTokenEntity>();
+    public DbSet<StaffMemberEntity> StaffMembers => Set<StaffMemberEntity>();
+    public DbSet<StaffAvailabilityWindowEntity> StaffAvailabilityWindows => Set<StaffAvailabilityWindowEntity>();
+    public DbSet<BookingTypeStaffAssignmentEntity> BookingTypeStaffAssignments => Set<BookingTypeStaffAssignmentEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -43,5 +46,8 @@ public sealed class ChronithDbContext : DbContext
 
         modelBuilder.Entity<WebhookEntity>()
             .HasQueryFilter(w => !w.IsDeleted && w.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<StaffMemberEntity>()
+            .HasQueryFilter(s => !s.IsDeleted && s.TenantId == _tenantContext.TenantId);
     }
 }
