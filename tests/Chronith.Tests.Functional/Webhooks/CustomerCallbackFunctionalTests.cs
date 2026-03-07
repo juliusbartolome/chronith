@@ -29,6 +29,8 @@ public sealed class CustomerCallbackFunctionalTests(FunctionalTestFixture fixtur
             durationMinutes = 60,
             bufferBeforeMinutes = 0,
             bufferAfterMinutes = 0,
+            priceInCentavos = 10_000L,
+            currency = "PHP",
             customerCallbackUrl = "https://customer.example.com/callback",
             availabilityWindows = Enumerable.Range(0, 7).Select(d => new
             {
