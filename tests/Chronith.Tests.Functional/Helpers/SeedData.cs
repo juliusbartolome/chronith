@@ -208,4 +208,34 @@ public static class SeedData
         await db.SaveChangesAsync();
         return id;
     }
+
+    public static async Task<Guid> SeedWaitlistEntryAsync(
+        ChronithDbContext db,
+        Guid bookingTypeId,
+        DateTimeOffset desiredStart,
+        DateTimeOffset desiredEnd,
+        WaitlistStatus status = WaitlistStatus.Waiting,
+        string customerId = "cust-waitlist-1",
+        DateTimeOffset? offeredAt = null,
+        DateTimeOffset? expiresAt = null)
+    {
+        var id = Guid.NewGuid();
+        db.WaitlistEntries.Add(new WaitlistEntryEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            BookingTypeId = bookingTypeId,
+            CustomerId = customerId,
+            CustomerEmail = $"{customerId}@example.com",
+            DesiredStart = desiredStart,
+            DesiredEnd = desiredEnd,
+            Status = status,
+            OfferedAt = offeredAt,
+            ExpiresAt = expiresAt,
+            CreatedAt = DateTimeOffset.UtcNow,
+            IsDeleted = false
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
 }
