@@ -50,12 +50,13 @@ public sealed class CalendarBookingType : BookingType
         IReadOnlyList<DayOfWeek>? availableDays,
         long priceInCentavos,
         string currency,
-        bool requiresStaffAssignment = false)
+        bool requiresStaffAssignment = false,
+        string? customFieldSchema = null)
     {
         base.Update(name, capacity, paymentMode, paymentProvider,
             durationMinutes, bufferBeforeMinutes, bufferAfterMinutes,
             availabilityWindows, availableDays, priceInCentavos, currency,
-            requiresStaffAssignment);
+            requiresStaffAssignment, customFieldSchema);
         AvailableDays = availableDays ?? Array.Empty<DayOfWeek>();
     }
 

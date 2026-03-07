@@ -14,6 +14,7 @@ public abstract class BookingType
     public long PriceInCentavos { get; protected set; }
     public string Currency { get; protected set; } = "PHP";
     public bool RequiresStaffAssignment { get; protected set; }
+    public string? CustomFieldSchema { get; protected set; }
     public bool IsDeleted { get; protected set; }
 
     /// <summary>HTTPS URL to POST customer-facing booking events to. Null means disabled.</summary>
@@ -67,7 +68,8 @@ public abstract class BookingType
         IReadOnlyList<DayOfWeek>? availableDays,
         long priceInCentavos,
         string currency,
-        bool requiresStaffAssignment = false)
+        bool requiresStaffAssignment = false,
+        string? customFieldSchema = null)
     {
         Name = name;
         Capacity = capacity;
@@ -76,6 +78,7 @@ public abstract class BookingType
         PriceInCentavos = priceInCentavos;
         Currency = currency;
         RequiresStaffAssignment = requiresStaffAssignment;
+        CustomFieldSchema = customFieldSchema;
     }
 
     public void SoftDelete() => IsDeleted = true;
