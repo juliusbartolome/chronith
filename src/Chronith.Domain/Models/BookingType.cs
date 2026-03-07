@@ -66,7 +66,8 @@ public abstract class BookingType
         IReadOnlyList<TimeSlotWindow>? availabilityWindows,
         IReadOnlyList<DayOfWeek>? availableDays,
         long priceInCentavos,
-        string currency)
+        string currency,
+        bool requiresStaffAssignment = false)
     {
         Name = name;
         Capacity = capacity;
@@ -74,6 +75,7 @@ public abstract class BookingType
         PaymentProvider = paymentProvider;
         PriceInCentavos = priceInCentavos;
         Currency = currency;
+        RequiresStaffAssignment = requiresStaffAssignment;
     }
 
     public void SoftDelete() => IsDeleted = true;
