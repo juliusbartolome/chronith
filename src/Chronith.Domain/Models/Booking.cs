@@ -16,6 +16,7 @@ public sealed class Booking
     public long AmountInCentavos { get; private set; }
     public string Currency { get; private set; } = "PHP";
     public string? CheckoutUrl { get; private set; }
+    public Guid? StaffMemberId { get; private set; }
     public bool IsDeleted { get; private set; }
     public uint RowVersion { get; private set; }
 
@@ -78,6 +79,18 @@ public sealed class Booking
         if (Status == BookingStatus.Cancelled)
             throw new InvalidStateTransitionException(Status, "cancel");
         Transition(BookingStatus.Cancelled, changedById, changedByRole);
+    }
+
+    public void AssignStaff(Guid staffMemberId, string changedById, string changedByRole)
+    {
+        if (Status == BookingStatus.Cancelled)
+            throw new InvalidStateTransitionException(Status, "assign staff");
+        StaffMemberId = staffMemberId;
+    }
+
+    public void UnassignStaff(string changedById, string changedByRole)
+    {
+        StaffMemberId = null;
     }
 
     public void SoftDelete() => IsDeleted = true;
