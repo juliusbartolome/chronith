@@ -32,6 +32,7 @@ public static class BookingTypeMapper
                 .Select(w => new TimeSlotWindowDto(w.DayOfWeek, w.StartTime, w.EndTime))
                 .ToList(),
             AvailableDays: null,
+            RequiresStaffAssignment: ts.RequiresStaffAssignment,
             CustomerCallbackUrl: ts.CustomerCallbackUrl
         );
 
@@ -51,6 +52,7 @@ public static class BookingTypeMapper
             BufferAfterMinutes: null,
             AvailabilityWindows: null,
             AvailableDays: cal.AvailableDays.ToList(),
+            RequiresStaffAssignment: cal.RequiresStaffAssignment,
             CustomerCallbackUrl: cal.CustomerCallbackUrl
         );
 }

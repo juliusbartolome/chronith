@@ -68,6 +68,7 @@ public static class BookingTypeEntityMapper
         SetProperty(domain, nameof(BookingType.PriceInCentavos), e.PriceInCentavos);
         SetProperty(domain, nameof(BookingType.Currency), e.Currency);
         SetProperty(domain, nameof(BookingType.IsDeleted), e.IsDeleted);
+        SetProperty(domain, nameof(BookingType.RequiresStaffAssignment), e.RequiresStaffAssignment);
         SetProperty(domain, nameof(BookingType.CustomerCallbackUrl), e.CustomerCallbackUrl);
         SetProperty(domain, nameof(BookingType.CustomerCallbackSecret), e.CustomerCallbackSecret);
     }
@@ -112,6 +113,7 @@ public static class BookingTypeEntityMapper
             PriceInCentavos = domain.PriceInCentavos,
             Currency = domain.Currency,
             IsDeleted = domain.IsDeleted,
+            RequiresStaffAssignment = domain.RequiresStaffAssignment,
             CustomerCallbackUrl = domain.CustomerCallbackUrl,
             CustomerCallbackSecret = domain.CustomerCallbackSecret
         };

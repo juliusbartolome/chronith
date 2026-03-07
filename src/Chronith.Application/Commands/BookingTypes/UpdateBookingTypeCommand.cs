@@ -19,6 +19,7 @@ public sealed record UpdateBookingTypeCommand : IRequest<BookingTypeDto>
     public string? PaymentProvider { get; init; }
     public long PriceInCentavos { get; init; }
     public string Currency { get; init; } = "PHP";
+    public bool RequiresStaffAssignment { get; init; }
 
     // TimeSlot fields (ignored for Calendar)
     public int DurationMinutes { get; init; }
@@ -80,7 +81,8 @@ public sealed class UpdateBookingTypeHandler(
                 .ToList(),
             cmd.AvailableDays,
             cmd.PriceInCentavos,
-            cmd.Currency);
+            cmd.Currency,
+            cmd.RequiresStaffAssignment);
 
         // Update customer callback — always called (null clears the URL)
         bt.SetCustomerCallback(cmd.CustomerCallbackUrl);

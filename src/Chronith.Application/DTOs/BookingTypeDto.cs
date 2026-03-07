@@ -19,6 +19,7 @@ public sealed record BookingTypeDto(
     IReadOnlyList<TimeSlotWindowDto>? AvailabilityWindows,
     // Calendar fields (null for TimeSlot)
     IReadOnlyList<DayOfWeek>? AvailableDays,
+    bool RequiresStaffAssignment,
     string? CustomerCallbackUrl
 );
 
