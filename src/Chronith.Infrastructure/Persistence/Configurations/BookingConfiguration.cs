@@ -59,5 +59,9 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
             .IsRequired(false);
 
         builder.HasIndex(b => b.StaffMemberId);
+
+        builder.Property(b => b.CustomFields)
+            .HasColumnType("jsonb")
+            .IsRequired(false);
     }
 }

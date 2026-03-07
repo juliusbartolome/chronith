@@ -77,5 +77,9 @@ public sealed class BookingTypeConfiguration : IEntityTypeConfiguration<BookingT
         builder.Property(bt => bt.RequiresStaffAssignment)
             .IsRequired()
             .HasDefaultValue(false);
+
+        builder.Property(bt => bt.CustomFieldSchema)
+            .HasColumnType("jsonb")
+            .IsRequired(false);
     }
 }
