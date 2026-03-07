@@ -48,7 +48,9 @@ public static class SeedData
         ChronithDbContext db,
         string slug = "test-type",
         int capacity = 5,
-        int durationMinutes = 60)
+        int durationMinutes = 60,
+        long priceInCentavos = 10_000,
+        string currency = "PHP")
     {
         // Idempotent — return existing id if slug already seeded
         var existing = db.BookingTypes.IgnoreQueryFilters()
@@ -68,7 +70,9 @@ public static class SeedData
             IsDeleted = false,
             DurationMinutes = durationMinutes,
             BufferBeforeMinutes = 0,
-            BufferAfterMinutes = 0
+            BufferAfterMinutes = 0,
+            PriceInCentavos = priceInCentavos,
+            Currency = currency
         });
 
         // Seed availability windows for all 7 days of the week (08:00–18:00)

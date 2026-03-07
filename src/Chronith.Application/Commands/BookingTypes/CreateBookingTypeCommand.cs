@@ -18,6 +18,8 @@ public sealed record CreateBookingTypeCommand : IRequest<BookingTypeDto>
     public int Capacity { get; init; } = 1;
     public required Domain.Enums.PaymentMode PaymentMode { get; init; }
     public string? PaymentProvider { get; init; }
+    public long PriceInCentavos { get; init; }
+    public string Currency { get; init; } = "PHP";
 
     // TimeSlot fields
     public int DurationMinutes { get; init; }
@@ -39,6 +41,8 @@ public sealed class CreateBookingTypeValidator : AbstractValidator<CreateBooking
             .Matches("^[a-z0-9-]+$").WithMessage("Slug must be lowercase alphanumeric with hyphens.");
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Capacity).GreaterThan(0);
+        RuleFor(x => x.PriceInCentavos).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.Currency).NotEmpty().MaximumLength(3);
 
         When(x => x.IsTimeSlot, () =>
         {
@@ -84,7 +88,9 @@ public sealed class CreateBookingTypeHandler(
                 cmd.DurationMinutes,
                 cmd.BufferBeforeMinutes,
                 cmd.BufferAfterMinutes,
-                windows);
+                windows,
+                cmd.PriceInCentavos,
+                cmd.Currency);
         }
         else
         {
@@ -95,7 +101,9 @@ public sealed class CreateBookingTypeHandler(
                 cmd.Capacity,
                 cmd.PaymentMode,
                 cmd.PaymentProvider,
-                cmd.AvailableDays ?? []);
+                cmd.AvailableDays ?? [],
+                cmd.PriceInCentavos,
+                cmd.Currency);
         }
 
         await repository.AddAsync(bookingType, ct);

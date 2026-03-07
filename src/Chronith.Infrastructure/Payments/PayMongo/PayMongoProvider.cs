@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Models;
 using Microsoft.Extensions.Options;
@@ -58,6 +59,13 @@ public sealed class PayMongoProvider(
         return new PaymentIntentResult(referenceNumber, checkoutUrl);
     }
 
+    public Task<CreateCheckoutResult> CreateCheckoutSessionAsync(
+        CreateCheckoutRequest request, CancellationToken ct)
+    {
+        // TODO: implement in Task 9 of v0.5 plan
+        throw new NotImplementedException("PayMongo CreateCheckoutSessionAsync will be implemented in v0.5 Task 9");
+    }
+
     public bool ValidateWebhookSignature(string rawBody, string signatureHeader)
     {
         // PayMongo signature format: t=<timestamp>,te=<hmac-sha256-hex>
@@ -92,6 +100,12 @@ public sealed class PayMongoProvider(
         }
     }
 
+    public bool ValidateWebhook(WebhookValidationContext context)
+    {
+        context.Headers.TryGetValue("Paymongo-Signature", out var signature);
+        return signature is not null && ValidateWebhookSignature(context.RawBody, signature);
+    }
+
     public PaymentEvent ParsePaymentEvent(string rawBody)
     {
         using var doc = JsonDocument.Parse(rawBody);
@@ -105,5 +119,13 @@ public sealed class PayMongoProvider(
             : string.Empty;
 
         return new PaymentEvent(ExternalId: referenceNumber, IsPaid: status == "paid");
+    }
+
+    public WebhookPaymentEvent ParseWebhookPayload(string rawBody)
+    {
+        var legacy = ParsePaymentEvent(rawBody);
+        return new WebhookPaymentEvent(
+            ProviderTransactionId: legacy.ExternalId,
+            EventType: legacy.IsPaid ? PaymentEventType.Success : PaymentEventType.Failed);
     }
 }

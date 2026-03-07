@@ -11,6 +11,8 @@ public abstract class BookingType
     public int Capacity { get; protected set; }
     public PaymentMode PaymentMode { get; protected set; }
     public string? PaymentProvider { get; protected set; }
+    public long PriceInCentavos { get; protected set; }
+    public string Currency { get; protected set; } = "PHP";
     public bool IsDeleted { get; protected set; }
 
     /// <summary>HTTPS URL to POST customer-facing booking events to. Null means disabled.</summary>
@@ -61,12 +63,16 @@ public abstract class BookingType
         int bufferBeforeMinutes,
         int bufferAfterMinutes,
         IReadOnlyList<TimeSlotWindow>? availabilityWindows,
-        IReadOnlyList<DayOfWeek>? availableDays)
+        IReadOnlyList<DayOfWeek>? availableDays,
+        long priceInCentavos,
+        string currency)
     {
         Name = name;
         Capacity = capacity;
         PaymentMode = paymentMode;
         PaymentProvider = paymentProvider;
+        PriceInCentavos = priceInCentavos;
+        Currency = currency;
     }
 
     public void SoftDelete() => IsDeleted = true;

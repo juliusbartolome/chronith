@@ -15,6 +15,8 @@ public sealed class UpdateBookingTypeRequest
     public int Capacity { get; set; } = 1;
     public Chronith.Domain.Enums.PaymentMode PaymentMode { get; set; }
     public string? PaymentProvider { get; set; }
+    public long PriceInCentavos { get; set; }
+    public string Currency { get; set; } = "PHP";
     public int DurationMinutes { get; set; }
     public int BufferBeforeMinutes { get; set; }
     public int BufferAfterMinutes { get; set; }
@@ -42,6 +44,8 @@ public sealed class UpdateBookingTypeEndpoint(ISender sender)
             Capacity = req.Capacity,
             PaymentMode = req.PaymentMode,
             PaymentProvider = req.PaymentProvider,
+            PriceInCentavos = req.PriceInCentavos,
+            Currency = req.Currency,
             DurationMinutes = req.DurationMinutes,
             BufferBeforeMinutes = req.BufferBeforeMinutes,
             BufferAfterMinutes = req.BufferAfterMinutes,

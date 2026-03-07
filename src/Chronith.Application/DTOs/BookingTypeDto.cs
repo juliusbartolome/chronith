@@ -10,6 +10,8 @@ public sealed record BookingTypeDto(
     int Capacity,
     PaymentMode PaymentMode,
     string? PaymentProvider,
+    long PriceInCentavos,
+    string Currency,
     // TimeSlot fields (null for Calendar)
     int? DurationMinutes,
     int? BufferBeforeMinutes,

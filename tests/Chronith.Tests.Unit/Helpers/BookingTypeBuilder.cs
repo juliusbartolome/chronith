@@ -17,6 +17,8 @@ public static class BookingTypeBuilder
         int bufferAfterMinutes = 0,
         IReadOnlyList<TimeSlotWindow>? windows = null,
         Guid? tenantId = null,
+        long priceInCentavos = 0,
+        string currency = "PHP",
         PaymentMode paymentMode = PaymentMode.Manual,
         string? paymentProvider = null)
     {
@@ -32,12 +34,16 @@ public static class BookingTypeBuilder
         Set(bt, "BufferBeforeMinutes", bufferBeforeMinutes);
         Set(bt, "BufferAfterMinutes", bufferAfterMinutes);
         Set(bt, "AvailabilityWindows", (IReadOnlyList<TimeSlotWindow>)(windows ?? Array.Empty<TimeSlotWindow>()));
+        Set(bt, "PriceInCentavos", priceInCentavos);
+        Set(bt, "Currency", currency);
         return bt;
     }
 
     public static CalendarBookingType BuildCalendar(
         IReadOnlyList<DayOfWeek>? availableDays = null,
-        Guid? tenantId = null)
+        Guid? tenantId = null,
+        long priceInCentavos = 0,
+        string currency = "PHP")
     {
         var bt = new CalendarBookingType();
         Set(bt, "Id", Guid.NewGuid());
@@ -47,6 +53,8 @@ public static class BookingTypeBuilder
         Set(bt, "Capacity", 1);
         Set(bt, "PaymentMode", PaymentMode.Manual);
         Set(bt, "AvailableDays", (IReadOnlyList<DayOfWeek>)(availableDays ?? Array.Empty<DayOfWeek>()));
+        Set(bt, "PriceInCentavos", priceInCentavos);
+        Set(bt, "Currency", currency);
         return bt;
     }
 

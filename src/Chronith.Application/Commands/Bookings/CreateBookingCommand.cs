@@ -89,7 +89,9 @@ public sealed class CreateBookingHandler(
             start,
             end,
             customerId,
-            cmd.CustomerEmail);
+            cmd.CustomerEmail,
+            amountInCentavos: bookingType.PriceInCentavos,
+            currency: bookingType.Currency);
 
         await bookingRepo.AddAsync(booking, ct);
         await tx.CommitAsync(ct);
@@ -118,7 +120,7 @@ public sealed class CreateBookingHandler(
                 BookingTypeId: booking.BookingTypeId,
                 BookingTypeSlug: cmd.BookingTypeSlug,
                 FromStatus: null,
-                ToStatus: BookingStatus.PendingPayment,
+                ToStatus: booking.Status,
                 Start: booking.Start,
                 End: booking.End,
                 CustomerId: booking.CustomerId,

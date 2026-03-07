@@ -17,6 +17,8 @@ public sealed record UpdateBookingTypeCommand : IRequest<BookingTypeDto>
     public int Capacity { get; init; } = 1;
     public required Domain.Enums.PaymentMode PaymentMode { get; init; }
     public string? PaymentProvider { get; init; }
+    public long PriceInCentavos { get; init; }
+    public string Currency { get; init; } = "PHP";
 
     // TimeSlot fields (ignored for Calendar)
     public int DurationMinutes { get; init; }
@@ -40,6 +42,8 @@ public sealed class UpdateBookingTypeValidator : AbstractValidator<UpdateBooking
         RuleFor(x => x.Slug).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Capacity).GreaterThan(0);
+        RuleFor(x => x.PriceInCentavos).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.Currency).NotEmpty().MaximumLength(3);
         When(x => x.CustomerCallbackUrl is not null, () =>
         {
             RuleFor(x => x.CustomerCallbackUrl!)
@@ -74,7 +78,9 @@ public sealed class UpdateBookingTypeHandler(
             (cmd.AvailabilityWindows ?? [])
                 .Select(w => new TimeSlotWindow(w.DayOfWeek, w.StartTime, w.EndTime))
                 .ToList(),
-            cmd.AvailableDays);
+            cmd.AvailableDays,
+            cmd.PriceInCentavos,
+            cmd.Currency);
 
         // Update customer callback — always called (null clears the URL)
         bt.SetCustomerCallback(cmd.CustomerCallbackUrl);

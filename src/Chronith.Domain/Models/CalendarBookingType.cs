@@ -17,7 +17,9 @@ public sealed class CalendarBookingType : BookingType
         int capacity,
         PaymentMode paymentMode,
         string? paymentProvider,
-        IReadOnlyList<DayOfWeek> availableDays)
+        IReadOnlyList<DayOfWeek> availableDays,
+        long priceInCentavos,
+        string currency)
     {
         return new CalendarBookingType
         {
@@ -28,7 +30,9 @@ public sealed class CalendarBookingType : BookingType
             Capacity = capacity,
             PaymentMode = paymentMode,
             PaymentProvider = paymentProvider,
-            AvailableDays = availableDays
+            AvailableDays = availableDays,
+            PriceInCentavos = priceInCentavos,
+            Currency = currency
         };
     }
 
@@ -41,11 +45,13 @@ public sealed class CalendarBookingType : BookingType
         int bufferBeforeMinutes,
         int bufferAfterMinutes,
         IReadOnlyList<TimeSlotWindow>? availabilityWindows,
-        IReadOnlyList<DayOfWeek>? availableDays)
+        IReadOnlyList<DayOfWeek>? availableDays,
+        long priceInCentavos,
+        string currency)
     {
         base.Update(name, capacity, paymentMode, paymentProvider,
             durationMinutes, bufferBeforeMinutes, bufferAfterMinutes,
-            availabilityWindows, availableDays);
+            availabilityWindows, availableDays, priceInCentavos, currency);
         AvailableDays = availableDays ?? Array.Empty<DayOfWeek>();
     }
 
