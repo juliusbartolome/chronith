@@ -93,6 +93,16 @@ public sealed class Booking
         StaffMemberId = null;
     }
 
+    public void Reschedule(DateTimeOffset newStart, DateTimeOffset newEnd, string changedById, string changedByRole)
+    {
+        if (Status == BookingStatus.Cancelled)
+            throw new InvalidStateTransitionException(Status, "reschedule");
+        Start = newStart;
+        End = newEnd;
+        // Record as a status change for audit trail (same status, captures the reschedule event)
+        _statusChanges.Add(new BookingStatusChange(Id, Status, Status, changedById, changedByRole));
+    }
+
     public void SoftDelete() => IsDeleted = true;
 
     public void SetPaymentReference(string? paymentReference)
