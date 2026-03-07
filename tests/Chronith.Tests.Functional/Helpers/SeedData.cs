@@ -50,7 +50,9 @@ public static class SeedData
         int capacity = 5,
         int durationMinutes = 60,
         long priceInCentavos = 10_000,
-        string currency = "PHP")
+        string currency = "PHP",
+        PaymentMode paymentMode = PaymentMode.Manual,
+        string? paymentProvider = null)
     {
         // Idempotent — return existing id if slug already seeded
         var existing = db.BookingTypes.IgnoreQueryFilters()
@@ -66,7 +68,8 @@ public static class SeedData
             Name = "Test Type",
             Kind = BookingKind.TimeSlot,
             Capacity = capacity,
-            PaymentMode = PaymentMode.Manual,
+            PaymentMode = paymentMode,
+            PaymentProvider = paymentProvider,
             IsDeleted = false,
             DurationMinutes = durationMinutes,
             BufferBeforeMinutes = 0,

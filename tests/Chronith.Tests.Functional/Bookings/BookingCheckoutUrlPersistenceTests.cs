@@ -45,7 +45,9 @@ public sealed class BookingCheckoutUrlPersistenceTests(FunctionalTestFixture fix
             IsDeleted = false,
             DurationMinutes = 60,
             BufferBeforeMinutes = 0,
-            BufferAfterMinutes = 0
+            BufferAfterMinutes = 0,
+            PriceInCentavos = 10_000,
+            Currency = "PHP"
         });
 
         // Availability windows for all days (08:00–18:00) so any test time resolves

@@ -8,7 +8,6 @@ namespace Chronith.API.Endpoints.Bookings;
 public sealed class PayBookingRequest
 {
     public Guid BookingId { get; set; }
-    public string BookingTypeSlug { get; set; } = string.Empty;
 }
 
 public sealed class PayBookingEndpoint(ISender sender)
@@ -26,7 +25,6 @@ public sealed class PayBookingEndpoint(ISender sender)
         var result = await sender.Send(new PayBookingCommand
         {
             BookingId = req.BookingId,
-            BookingTypeSlug = req.BookingTypeSlug
         }, ct);
 
         await Send.OkAsync(result, ct);

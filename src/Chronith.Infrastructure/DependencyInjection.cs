@@ -66,8 +66,11 @@ public static class DependencyInjection
         {
             client.BaseAddress = new Uri("https://api.paymongo.com");
         });
-        services.Configure<PayMongoOptions>(configuration.GetSection("Payments:PayMongo"));
+        services.Configure<PayMongoOptions>(configuration.GetSection("PaymentProviders:PayMongo"));
         services.AddSingleton<IPaymentProvider, PayMongoProvider>();
+        services.AddHttpClient("Maya");
+        services.Configure<MayaOptions>(configuration.GetSection("PaymentProviders:Maya"));
+        services.AddSingleton<IPaymentProvider, MayaProvider>();
         services.AddSingleton<IPaymentProviderFactory, PaymentProviderFactory>();
 
         // Rate limiting

@@ -44,6 +44,12 @@ public interface IBookingRepository
 
     Task UpdateAsync(Booking booking, CancellationToken ct = default);
 
+    /// <summary>
+    /// Looks up a booking by its payment reference (provider transaction ID).
+    /// When tenantId is Guid.Empty, searches across all tenants (for webhook processing).
+    /// </summary>
+    Task<Booking?> GetByPaymentReferenceAsync(Guid tenantId, string paymentReference, CancellationToken ct = default);
+
     Task<BookingMetrics> GetMetricsAsync(
         Guid tenantId, DateTimeOffset monthStartUtc, CancellationToken ct = default);
 }

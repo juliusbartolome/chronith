@@ -111,6 +111,26 @@ public sealed class BookingRepository : IBookingRepository
         return new BookingMetrics(total, byStatus, thisMonth);
     }
 
+    public async Task<Booking?> GetByPaymentReferenceAsync(
+        Guid tenantId, string paymentReference, CancellationToken ct = default)
+    {
+        Persistence.Entities.BookingEntity? entity = await (
+            tenantId == Guid.Empty
+                // Webhook context — search across all tenants, bypass query filters
+                ? _db.Bookings
+                    .AsNoTracking()
+                    .IgnoreQueryFilters()
+                    .Include(b => b.StatusChanges)
+                    .Where(b => !b.IsDeleted && b.PaymentReference == paymentReference)
+                : _db.Bookings
+                    .AsNoTracking()
+                    .Include(b => b.StatusChanges)
+                    .Where(b => b.TenantId == tenantId && b.PaymentReference == paymentReference)
+        ).FirstOrDefaultAsync(ct);
+
+        return entity is null ? null : BookingEntityMapper.ToDomain(entity);
+    }
+
     public async Task AddAsync(Booking booking, CancellationToken ct = default)
     {
         var entity = BookingEntityMapper.ToEntity(booking);

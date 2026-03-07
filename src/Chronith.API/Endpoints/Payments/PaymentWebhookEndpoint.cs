@@ -1,34 +1,42 @@
 using Chronith.Application.Commands.Bookings;
-using Chronith.Application.DTOs;
 using FastEndpoints;
 using MediatR;
 
 namespace Chronith.API.Endpoints.Payments;
 
-public sealed class PaymentWebhookRequest
-{
-    public Guid BookingId { get; set; }
-    public string PaymentReference { get; set; } = string.Empty;
-}
-
 public sealed class PaymentWebhookEndpoint(ISender sender)
-    : Endpoint<PaymentWebhookRequest, BookingDto>
+    : EndpointWithoutRequest
 {
     public override void Configure()
     {
-        Post("/webhooks/payment");
-        Roles("TenantPaymentService");
+        Post("/webhooks/payments/{provider}");
+        AllowAnonymous(); // Webhooks come from external providers, no JWT
         Options(x => x.WithTags("Payments"));
     }
 
-    public override async Task HandleAsync(PaymentWebhookRequest req, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
-        var result = await sender.Send(new PayBookingCommand
+        var provider = Route<string>("provider")!;
+
+        // Read raw body for signature verification
+        HttpContext.Request.EnableBuffering();
+        using var reader = new StreamReader(HttpContext.Request.Body);
+        var rawBody = await reader.ReadToEndAsync(ct);
+
+        // Collect headers (lowercased keys for consistent matching)
+        var headers = HttpContext.Request.Headers
+            .ToDictionary(h => h.Key.ToLowerInvariant(), h => h.Value.ToString());
+
+        var sourceIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        await sender.Send(new ProcessPaymentWebhookCommand
         {
-            BookingId = req.BookingId,
-            BookingTypeSlug = string.Empty
+            ProviderName = provider,
+            RawBody = rawBody,
+            Headers = headers,
+            SourceIpAddress = sourceIp
         }, ct);
 
-        await Send.OkAsync(result, ct);
+        await Send.NoContentAsync(ct);
     }
 }
