@@ -46,6 +46,7 @@ public static class DependencyInjection
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<IWebhookRepository, WebhookRepository>();
+        services.AddScoped<IStaffMemberRepository, StaffMemberRepository>();
         services.AddScoped<IWebhookOutboxRepository, WebhookOutboxRepository>();
         services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
         services.AddScoped<ITenantUserRepository, TenantUserRepository>();
