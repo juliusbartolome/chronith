@@ -16,10 +16,12 @@ public sealed class BookingEntity
     public long AmountInCentavos { get; set; }
     public string Currency { get; set; } = "PHP";
     public string? CheckoutUrl { get; set; }
+    public Guid? StaffMemberId { get; set; }
     public bool IsDeleted { get; set; }
     public uint RowVersion { get; set; }
 
     // Navigation
     public BookingTypeEntity? BookingType { get; set; }
+    public StaffMemberEntity? StaffMember { get; set; }
     public List<BookingStatusChangeEntity> StatusChanges { get; set; } = new();
 }
