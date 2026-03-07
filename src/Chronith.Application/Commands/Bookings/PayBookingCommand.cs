@@ -13,7 +13,7 @@ namespace Chronith.Application.Commands.Bookings;
 public sealed record PayBookingCommand : IRequest<BookingDto>
 {
     public required Guid BookingId { get; init; }
-    public required string BookingTypeSlug { get; init; }
+    public string? PaymentReference { get; init; }
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -23,7 +23,6 @@ public sealed class PayBookingValidator : AbstractValidator<PayBookingCommand>
     public PayBookingValidator()
     {
         RuleFor(x => x.BookingId).NotEmpty();
-        RuleFor(x => x.BookingTypeSlug).NotEmpty();
     }
 }
 
@@ -32,6 +31,7 @@ public sealed class PayBookingValidator : AbstractValidator<PayBookingCommand>
 public sealed class PayBookingHandler(
     ITenantContext tenantContext,
     IBookingRepository bookingRepo,
+    IBookingTypeRepository bookingTypeRepo,
     IUnitOfWork unitOfWork,
     IPublisher publisher)
     : IRequestHandler<PayBookingCommand, BookingDto>
@@ -40,6 +40,12 @@ public sealed class PayBookingHandler(
     {
         var booking = await bookingRepo.GetByIdAsync(tenantContext.TenantId, cmd.BookingId, ct)
             ?? throw new NotFoundException("Booking", cmd.BookingId);
+
+        var bookingType = await bookingTypeRepo.GetByIdAsync(tenantContext.TenantId, booking.BookingTypeId, ct)
+            ?? throw new NotFoundException("BookingType", booking.BookingTypeId);
+
+        if (cmd.PaymentReference is not null)
+            booking.SetPaymentReference(cmd.PaymentReference);
 
         var from = booking.Status;
         booking.Pay(tenantContext.UserId, tenantContext.Role);
@@ -50,7 +56,7 @@ public sealed class PayBookingHandler(
                 BookingId: booking.Id,
                 TenantId: booking.TenantId,
                 BookingTypeId: booking.BookingTypeId,
-                BookingTypeSlug: cmd.BookingTypeSlug,
+                BookingTypeSlug: bookingType.Slug,
                 FromStatus: from,
                 ToStatus: BookingStatus.PendingVerification,
                 Start: booking.Start,

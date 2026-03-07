@@ -26,7 +26,7 @@ public sealed class PaymentWebhookEndpoint(ISender sender)
         var result = await sender.Send(new PayBookingCommand
         {
             BookingId = req.BookingId,
-            BookingTypeSlug = string.Empty
+            PaymentReference = req.PaymentReference
         }, ct);
 
         await Send.OkAsync(result, ct);
