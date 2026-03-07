@@ -55,12 +55,14 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddHostedService<WebhookDispatcherService>();
+        services.AddHostedService<WaitlistPromotionService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
         {
             client.Timeout = TimeSpan.FromSeconds(httpTimeoutSeconds);
         });
         services.Configure<WebhookDispatcherOptions>(configuration.GetSection("Webhooks"));
+        services.Configure<WaitlistPromotionOptions>(configuration.GetSection("WaitlistPromotion"));
 
         // Payment providers
         services.Configure<PaymentsOptions>(configuration.GetSection("Payments"));
