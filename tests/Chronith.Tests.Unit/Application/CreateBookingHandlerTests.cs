@@ -1,12 +1,11 @@
 using Chronith.Application.Commands.Bookings;
+using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
-using Chronith.Application.Options;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Tests.Unit.Helpers;
 using FluentAssertions;
 using MediatR;
-using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace Chronith.Tests.Unit.Application;
@@ -31,7 +30,8 @@ public sealed class CreateBookingHandlerTests
     /// </summary>
     private static TimeSlotBookingType BuildTimeSlotWithAllDayWindows(
         PaymentMode paymentMode = PaymentMode.Manual,
-        string? paymentProvider = null)
+        string? paymentProvider = null,
+        long priceInCentavos = 50000)
     {
         var allDayWindows = Enum.GetValues<DayOfWeek>()
             .Select(d => new TimeSlotWindow(d, new TimeOnly(0, 0), new TimeOnly(23, 0)))
@@ -42,7 +42,8 @@ public sealed class CreateBookingHandlerTests
             windows: allDayWindows,
             tenantId: TenantId,
             paymentMode: paymentMode,
-            paymentProvider: paymentProvider);
+            paymentProvider: paymentProvider,
+            priceInCentavos: priceInCentavos);
     }
 
     /// <summary>
@@ -90,8 +91,8 @@ public sealed class CreateBookingHandlerTests
         var provider = Substitute.For<IPaymentProvider>();
         provider.ProviderName.Returns("Stub");
         provider
-            .CreatePaymentIntentAsync(Arg.Any<Booking>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new PaymentIntentResult("ext-id-123", "https://pay.example.com/checkout/123"));
+            .CreateCheckoutSessionAsync(Arg.Any<CreateCheckoutRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new CreateCheckoutResult("https://pay.example.com/checkout/123", "ext-id-123"));
 
         var providerFactory = Substitute.For<IPaymentProviderFactory>();
         providerFactory.GetProvider(Arg.Any<string>()).Returns(provider);
@@ -103,8 +104,7 @@ public sealed class CreateBookingHandlerTests
             tenantRepo,
             unitOfWork,
             publisher,
-            providerFactory,
-            Options.Create(new PaymentsOptions()));
+            providerFactory);
 
         return (handler, unitOfWork, bookingRepo, provider);
     }
@@ -119,7 +119,22 @@ public sealed class CreateBookingHandlerTests
     // ── Tests ─────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Handle_AutomaticPaymentMode_CallsUpdateAsyncAfterPaymentIntentCreation()
+    public async Task Handle_AutomaticPaymentMode_CallsCreateCheckoutSessionAsync()
+    {
+        // Arrange
+        var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
+        var (handler, _, _, provider) = Build(bookingType);
+
+        // Act
+        await handler.Handle(MakeCommand(), CancellationToken.None);
+
+        // Assert
+        await provider.Received(1)
+            .CreateCheckoutSessionAsync(Arg.Any<CreateCheckoutRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_AutomaticPaymentMode_CallsUpdateAsyncAfterCheckoutSessionCreation()
     {
         // Arrange
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
@@ -129,9 +144,7 @@ public sealed class CreateBookingHandlerTests
         await handler.Handle(MakeCommand(), CancellationToken.None);
 
         // Assert — UpdateAsync must be called so that PaymentReference and CheckoutUrl
-        // are persisted. The transaction commits before the payment call, so the tracked
-        // EF entity does not reflect in-memory changes; ExecuteUpdateAsync (via UpdateAsync)
-        // writes the updated fields directly to the database.
+        // are persisted via ExecuteUpdateAsync.
         await bookingRepo.Received().UpdateAsync(Arg.Any<Booking>(), Arg.Any<CancellationToken>());
     }
 
@@ -145,7 +158,7 @@ public sealed class CreateBookingHandlerTests
         // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        // Assert — the DTO returned to the caller must reflect the ExternalId
+        // Assert — the DTO returned to the caller must reflect the ProviderTransactionId
         result.PaymentReference.Should().Be("ext-id-123");
     }
 
@@ -175,7 +188,7 @@ public sealed class CreateBookingHandlerTests
 
         // Assert
         await provider.DidNotReceive()
-            .CreatePaymentIntentAsync(Arg.Any<Booking>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            .CreateCheckoutSessionAsync(Arg.Any<CreateCheckoutRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -190,5 +203,42 @@ public sealed class CreateBookingHandlerTests
 
         // Assert
         result.CheckoutUrl.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Handle_AutomaticPaymentMode_FreeBooking_DoesNotCallPaymentProvider()
+    {
+        // Arrange — Automatic mode but price is 0 (free)
+        var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub", priceInCentavos: 0);
+        var (handler, _, _, provider) = Build(bookingType);
+
+        // Act
+        var result = await handler.Handle(MakeCommand(), CancellationToken.None);
+
+        // Assert — Free bookings skip the checkout session entirely
+        await provider.DidNotReceive()
+            .CreateCheckoutSessionAsync(Arg.Any<CreateCheckoutRequest>(), Arg.Any<CancellationToken>());
+        result.Status.Should().Be(BookingStatus.PendingVerification);
+        result.CheckoutUrl.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Handle_AutomaticPaymentMode_PassesCorrectCheckoutRequest()
+    {
+        // Arrange
+        var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
+        var (handler, _, _, provider) = Build(bookingType);
+
+        // Act
+        await handler.Handle(MakeCommand(), CancellationToken.None);
+
+        // Assert — verify the request params passed to the provider
+        await provider.Received(1).CreateCheckoutSessionAsync(
+            Arg.Is<CreateCheckoutRequest>(r =>
+                r.AmountInCentavos == bookingType.PriceInCentavos &&
+                r.Currency == bookingType.Currency &&
+                r.TenantId == TenantId &&
+                r.Description.Contains(bookingType.Name)),
+            Arg.Any<CancellationToken>());
     }
 }

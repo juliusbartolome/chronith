@@ -1,13 +1,11 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
-using Chronith.Application.Options;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using FluentValidation;
 using MediatR;
-using Microsoft.Extensions.Options;
 
 namespace Chronith.Application.Commands.Bookings;
 
@@ -42,8 +40,7 @@ public sealed class CreateBookingHandler(
     ITenantRepository tenantRepo,
     IUnitOfWork unitOfWork,
     IPublisher publisher,
-    IPaymentProviderFactory paymentProviderFactory,
-    IOptions<PaymentsOptions> paymentsOptions)
+    IPaymentProviderFactory paymentProviderFactory)
     : IRequestHandler<CreateBookingCommand, BookingDto>
 {
     private static readonly BookingStatus[] ConflictStatuses =
@@ -96,14 +93,21 @@ public sealed class CreateBookingHandler(
         await bookingRepo.AddAsync(booking, ct);
         await tx.CommitAsync(ct);
 
-        // For Automatic payment mode, call the payment provider after saving
-        if (bookingType.PaymentMode == PaymentMode.Automatic)
+        // For Automatic payment mode with a non-free booking, create a checkout session
+        if (bookingType.PaymentMode == PaymentMode.Automatic && bookingType.PriceInCentavos > 0)
         {
             var providerName = bookingType.PaymentProvider ?? "Stub";
             var provider = paymentProviderFactory.GetProvider(providerName);
-            var result = await provider.CreatePaymentIntentAsync(booking, paymentsOptions.Value.Currency, ct);
-            booking.SetPaymentReference(result.ExternalId);
-            booking.SetCheckoutUrl(result.CheckoutUrl);
+            var checkoutResult = await provider.CreateCheckoutSessionAsync(
+                new CreateCheckoutRequest(
+                    AmountInCentavos: bookingType.PriceInCentavos,
+                    Currency: bookingType.Currency,
+                    Description: $"{bookingType.Name} booking",
+                    BookingId: booking.Id,
+                    TenantId: tenantContext.TenantId),
+                ct);
+
+            booking.SetCheckoutDetails(checkoutResult.CheckoutUrl, checkoutResult.ProviderTransactionId);
 
             // Persist the updated PaymentReference and CheckoutUrl. The booking was
             // committed inside the advisory-lock transaction above, so the tracked entity
