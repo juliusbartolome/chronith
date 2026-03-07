@@ -121,6 +121,26 @@ public static class SeedData
         return id;
     }
 
+    public static async Task<Guid> SeedStaffMemberAsync(
+        ChronithDbContext db,
+        string name = "Test Staff",
+        string email = "staff@example.com")
+    {
+        var id = Guid.NewGuid();
+        db.StaffMembers.Add(new StaffMemberEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            Name = name,
+            Email = email,
+            IsActive = true,
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
     public static async Task<Guid> SeedWebhookAsync(
         ChronithDbContext db,
         Guid bookingTypeId,
