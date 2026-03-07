@@ -31,6 +31,8 @@ public sealed class ChronithDbContext : DbContext
     public DbSet<StaffMemberEntity> StaffMembers => Set<StaffMemberEntity>();
     public DbSet<StaffAvailabilityWindowEntity> StaffAvailabilityWindows => Set<StaffAvailabilityWindowEntity>();
     public DbSet<BookingTypeStaffAssignmentEntity> BookingTypeStaffAssignments => Set<BookingTypeStaffAssignmentEntity>();
+    public DbSet<WaitlistEntryEntity> WaitlistEntries => Set<WaitlistEntryEntity>();
+    public DbSet<TimeBlockEntity> TimeBlocks => Set<TimeBlockEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -49,5 +51,11 @@ public sealed class ChronithDbContext : DbContext
 
         modelBuilder.Entity<StaffMemberEntity>()
             .HasQueryFilter(s => !s.IsDeleted && s.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<WaitlistEntryEntity>()
+            .HasQueryFilter(w => !w.IsDeleted && w.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<TimeBlockEntity>()
+            .HasQueryFilter(t => !t.IsDeleted && t.TenantId == _tenantContext.TenantId);
     }
 }

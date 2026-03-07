@@ -17,6 +17,7 @@ public sealed class BookingEntity
     public string Currency { get; set; } = "PHP";
     public string? CheckoutUrl { get; set; }
     public Guid? StaffMemberId { get; set; }
+    public string? CustomFields { get; set; }
     public bool IsDeleted { get; set; }
     public uint RowVersion { get; set; }
 

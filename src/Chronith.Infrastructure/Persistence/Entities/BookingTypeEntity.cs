@@ -20,6 +20,7 @@ public sealed class BookingTypeEntity
     public BookingKind Kind { get; set; }
     public bool IsDeleted { get; set; }
     public bool RequiresStaffAssignment { get; set; }
+    public string? CustomFieldSchema { get; set; }
 
     // TimeSlot-specific (null for Calendar)
     public int? DurationMinutes { get; set; }
