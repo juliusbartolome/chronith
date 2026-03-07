@@ -53,7 +53,7 @@ public sealed class MayaProvider(
             requestReferenceNumber = request.BookingId.ToString()
         };
 
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post,
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post,
             $"{options.Value.BaseUrl}/checkout/v1/checkouts");
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue(
             "Basic", authHeader);
