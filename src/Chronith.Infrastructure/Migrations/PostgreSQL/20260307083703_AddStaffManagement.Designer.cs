@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Chronith.Infrastructure.Migrations.PostgreSQL
 {
     [DbContext(typeof(ChronithDbContext))]
-    [Migration("20260307072606_AddStaffManagement")]
+    [Migration("20260307083703_AddStaffManagement")]
     partial class AddStaffManagement
     {
         /// <inheritdoc />
