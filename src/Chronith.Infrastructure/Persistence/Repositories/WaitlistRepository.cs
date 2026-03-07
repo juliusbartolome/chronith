@@ -57,6 +57,17 @@ public sealed class WaitlistRepository : IWaitlistRepository
         return entity is null ? null : WaitlistEntryEntityMapper.ToDomain(entity);
     }
 
+    public async Task<IReadOnlyList<WaitlistEntry>> GetExpiredOffersAsync(
+        DateTimeOffset now, CancellationToken ct = default)
+    {
+        var entities = await _db.WaitlistEntries
+            .AsNoTracking()
+            .Where(w => w.Status == WaitlistStatus.Offered && w.ExpiresAt <= now)
+            .ToListAsync(ct);
+
+        return entities.Select(WaitlistEntryEntityMapper.ToDomain).ToList();
+    }
+
     public async Task AddAsync(WaitlistEntry entry, CancellationToken ct = default)
     {
         var entity = WaitlistEntryEntityMapper.ToEntity(entry);
