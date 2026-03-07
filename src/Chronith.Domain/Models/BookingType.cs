@@ -15,6 +15,7 @@ public abstract class BookingType
     public string Currency { get; protected set; } = "PHP";
     public bool RequiresStaffAssignment { get; protected set; }
     public string? CustomFieldSchema { get; protected set; }
+    public string? ReminderIntervals { get; protected set; } // JSONB array e.g. [1440, 60]
     public bool IsDeleted { get; protected set; }
 
     /// <summary>HTTPS URL to POST customer-facing booking events to. Null means disabled.</summary>
