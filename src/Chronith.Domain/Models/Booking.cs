@@ -17,6 +17,7 @@ public sealed class Booking
     public string Currency { get; private set; } = "PHP";
     public string? CheckoutUrl { get; private set; }
     public Guid? StaffMemberId { get; private set; }
+    public string? CustomFields { get; private set; }
     public bool IsDeleted { get; private set; }
     public uint RowVersion { get; private set; }
 
@@ -35,7 +36,8 @@ public sealed class Booking
         string customerEmail,
         long amountInCentavos,
         string currency,
-        string? paymentReference = null)
+        string? paymentReference = null,
+        string? customFields = null)
     {
         var isFree = amountInCentavos == 0;
         return new Booking
@@ -50,7 +52,8 @@ public sealed class Booking
             CustomerEmail = customerEmail,
             AmountInCentavos = amountInCentavos,
             Currency = currency,
-            PaymentReference = paymentReference
+            PaymentReference = paymentReference,
+            CustomFields = customFields
         };
     }
 
