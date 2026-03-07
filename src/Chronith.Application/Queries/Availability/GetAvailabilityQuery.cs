@@ -23,6 +23,7 @@ public sealed class GetAvailabilityHandler(
     IBookingTypeRepository bookingTypeRepo,
     IBookingRepository bookingRepo,
     ITenantRepository tenantRepo,
+    ITimeBlockRepository timeBlockRepo,
     ISlotGeneratorService slotGenerator,
     IRedisCacheService? cacheService = null)
     : IRequestHandler<GetAvailabilityQuery, AvailabilityDto>
@@ -68,11 +69,21 @@ public sealed class GetAvailabilityHandler(
         var bookedSlots = await bookingRepo.GetBookedSlotsAsync(
             bookingType.Id, query.From, query.To, ConflictStatuses, ct);
 
-        // 4. Generate available slots in C# (no generate_series, fully portable)
+        // 4. Load time blocks that overlap the range
+        var timeBlocks = await timeBlockRepo.ListInRangeAsync(
+            tenantContext.TenantId, bookingType.Id, staffMemberId: null,
+            query.From, query.To, ct);
+
+        // 5. Generate available slots in C# (no generate_series, fully portable)
         var slots = slotGenerator.GenerateAvailableSlots(
             bookingType, tz, query.From, query.To, bookedSlots);
 
+        // 6. Filter out slots that overlap with time blocks
+        var filtered = slots
+            .Where(s => !timeBlocks.Any(tb => s.Start < tb.End && s.End > tb.Start))
+            .ToList();
+
         return new AvailabilityDto(
-            slots.Select(s => new AvailableSlotDto(s.Start, s.End)).ToList());
+            filtered.Select(s => new AvailableSlotDto(s.Start, s.End)).ToList());
     }
 }
