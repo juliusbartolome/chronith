@@ -18,8 +18,9 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
     {
         var entity = await _db.BookingTypes
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(bt => bt.AvailabilityWindows)
-            .FirstOrDefaultAsync(bt => bt.TenantId == tenantId && bt.Slug == slug, ct);
+            .FirstOrDefaultAsync(bt => bt.TenantId == tenantId && !bt.IsDeleted && bt.Slug == slug, ct);
 
         return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
     }
@@ -46,12 +47,25 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
         return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
     }
 
+    /// <inheritdoc cref="IBookingTypeRepository.GetBySlugAsync(string, CancellationToken)"/>
+    public async Task<BookingType?> GetBySlugAsync(string slug, CancellationToken ct = default)
+    {
+        var entity = await _db.BookingTypes
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Include(bt => bt.AvailabilityWindows)
+            .FirstOrDefaultAsync(bt => bt.Slug == slug && !bt.IsDeleted, ct);
+
+        return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
+    }
+
     public async Task<IReadOnlyList<BookingType>> ListAsync(Guid tenantId, CancellationToken ct = default)
     {
         var entities = await _db.BookingTypes
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(bt => bt.AvailabilityWindows)
-            .Where(bt => bt.TenantId == tenantId)
+            .Where(bt => bt.TenantId == tenantId && !bt.IsDeleted)
             .OrderBy(bt => bt.Name)
             .ToListAsync(ct);
 

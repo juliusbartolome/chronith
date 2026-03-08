@@ -20,6 +20,7 @@ public sealed record CreateBookingTypeCommand : IRequest<BookingTypeDto>
     public string? PaymentProvider { get; init; }
     public long PriceInCentavos { get; init; }
     public string Currency { get; init; } = "PHP";
+    public bool RequiresStaffAssignment { get; init; }
 
     // TimeSlot fields
     public int DurationMinutes { get; init; }
@@ -90,7 +91,8 @@ public sealed class CreateBookingTypeHandler(
                 cmd.BufferAfterMinutes,
                 windows,
                 cmd.PriceInCentavos,
-                cmd.Currency);
+                cmd.Currency,
+                cmd.RequiresStaffAssignment);
         }
         else
         {
@@ -103,7 +105,8 @@ public sealed class CreateBookingTypeHandler(
                 cmd.PaymentProvider,
                 cmd.AvailableDays ?? [],
                 cmd.PriceInCentavos,
-                cmd.Currency);
+                cmd.Currency,
+                cmd.RequiresStaffAssignment);
         }
 
         await repository.AddAsync(bookingType, ct);

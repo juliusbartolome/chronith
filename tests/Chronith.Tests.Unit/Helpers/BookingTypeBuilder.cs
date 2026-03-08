@@ -20,7 +20,8 @@ public static class BookingTypeBuilder
         long priceInCentavos = 0,
         string currency = "PHP",
         PaymentMode paymentMode = PaymentMode.Manual,
-        string? paymentProvider = null)
+        string? paymentProvider = null,
+        bool requiresStaffAssignment = false)
     {
         var bt = new TimeSlotBookingType();
         Set(bt, "Id", Guid.NewGuid());
@@ -36,6 +37,7 @@ public static class BookingTypeBuilder
         Set(bt, "AvailabilityWindows", (IReadOnlyList<TimeSlotWindow>)(windows ?? Array.Empty<TimeSlotWindow>()));
         Set(bt, "PriceInCentavos", priceInCentavos);
         Set(bt, "Currency", currency);
+        Set(bt, "RequiresStaffAssignment", requiresStaffAssignment);
         return bt;
     }
 

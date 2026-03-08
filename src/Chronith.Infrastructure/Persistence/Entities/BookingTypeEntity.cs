@@ -19,6 +19,9 @@ public sealed class BookingTypeEntity
     public string Currency { get; set; } = "PHP";
     public BookingKind Kind { get; set; }
     public bool IsDeleted { get; set; }
+    public bool RequiresStaffAssignment { get; set; }
+    public string? CustomFieldSchema { get; set; }
+    public string? ReminderIntervals { get; set; }
 
     // TimeSlot-specific (null for Calendar)
     public int? DurationMinutes { get; set; }
@@ -39,4 +42,5 @@ public sealed class BookingTypeEntity
     public List<AvailabilityWindowEntity> AvailabilityWindows { get; set; } = new();
     public List<BookingEntity> Bookings { get; set; } = new();
     public List<WebhookEntity> Webhooks { get; set; } = new();
+    public List<BookingTypeStaffAssignmentEntity> StaffAssignments { get; set; } = new();
 }

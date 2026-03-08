@@ -74,6 +74,9 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .HasColumnType("character varying(3)")
                         .HasDefaultValue("PHP");
 
+                    b.Property<string>("CustomFields")
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("CustomerEmail")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -100,6 +103,9 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.Property<Guid?>("StaffMemberId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("Start")
                         .HasColumnType("timestamp with time zone");
 
@@ -115,6 +121,8 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("StaffMemberId");
+
                     b.HasIndex("TenantId", "IsDeleted");
 
                     b.HasIndex("BookingTypeId", "Status", "Start", "End");
@@ -122,6 +130,33 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                     b.HasIndex("TenantId", "BookingTypeId", "Start", "End");
 
                     b.ToTable("bookings", "chronith");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.BookingReminderEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("IntervalMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId")
+                        .HasDatabaseName("IX_booking_reminders_BookingId");
+
+                    b.HasIndex("BookingId", "IntervalMinutes")
+                        .IsUnique()
+                        .HasDatabaseName("IX_booking_reminders_BookingId_IntervalMinutes");
+
+                    b.ToTable("booking_reminders", "chronith");
                 });
 
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.BookingStatusChangeEntity", b =>
@@ -188,6 +223,9 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .HasColumnType("character varying(3)")
                         .HasDefaultValue("PHP");
 
+                    b.Property<string>("CustomFieldSchema")
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("CustomerCallbackSecret")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
@@ -226,6 +264,14 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .HasColumnType("bigint")
                         .HasDefaultValue(0L);
 
+                    b.Property<string>("ReminderIntervals")
+                        .HasColumnType("jsonb");
+
+                    b.Property<bool>("RequiresStaffAssignment")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -249,6 +295,84 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("booking_types", "chronith");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.BookingTypeStaffAssignmentEntity", b =>
+                {
+                    b.Property<Guid>("BookingTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StaffMemberId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("BookingTypeId", "StaffMemberId");
+
+                    b.HasIndex("StaffMemberId");
+
+                    b.ToTable("booking_type_staff_assignments", "chronith");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.StaffAvailabilityWindowEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<Guid>("StaffMemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StaffMemberId");
+
+                    b.ToTable("staff_availability_windows", "chronith");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.StaffMemberEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TenantUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "IsDeleted");
+
+                    b.ToTable("staff_members", "chronith");
                 });
 
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.TenantApiKeyEntity", b =>
@@ -331,6 +455,45 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                     b.ToTable("tenants", "chronith");
                 });
 
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.TenantNotificationConfigEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ChannelType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Settings")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_tenant_notification_configs_TenantId");
+
+                    b.HasIndex("TenantId", "ChannelType")
+                        .IsUnique()
+                        .HasDatabaseName("IX_tenant_notification_configs_TenantId_ChannelType");
+
+                    b.ToTable("tenant_notification_configs", "chronith");
+                });
+
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.TenantUserEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -397,6 +560,103 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                     b.HasIndex("TokenHash");
 
                     b.ToTable("TenantUserRefreshTokens", "chronith");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.TimeBlockEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BookingTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("End")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("StaffMemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Start")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "IsDeleted");
+
+                    b.HasIndex("TenantId", "Start", "End");
+
+                    b.ToTable("time_blocks", "chronith");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.WaitlistEntryEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BookingTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CustomerEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("DesiredEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("DesiredStart")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("OfferedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("StaffMemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "IsDeleted");
+
+                    b.HasIndex("TenantId", "BookingTypeId", "Status");
+
+                    b.ToTable("waitlist_entries", "chronith");
                 });
 
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.WebhookEntity", b =>
@@ -526,7 +786,13 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Chronith.Infrastructure.Persistence.Entities.StaffMemberEntity", "StaffMember")
+                        .WithMany()
+                        .HasForeignKey("StaffMemberId");
+
                     b.Navigation("BookingType");
+
+                    b.Navigation("StaffMember");
                 });
 
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.BookingStatusChangeEntity", b =>
@@ -538,6 +804,36 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .IsRequired();
 
                     b.Navigation("Booking");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.BookingTypeStaffAssignmentEntity", b =>
+                {
+                    b.HasOne("Chronith.Infrastructure.Persistence.Entities.BookingTypeEntity", "BookingType")
+                        .WithMany("StaffAssignments")
+                        .HasForeignKey("BookingTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Chronith.Infrastructure.Persistence.Entities.StaffMemberEntity", "StaffMember")
+                        .WithMany("BookingTypeAssignments")
+                        .HasForeignKey("StaffMemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BookingType");
+
+                    b.Navigation("StaffMember");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.StaffAvailabilityWindowEntity", b =>
+                {
+                    b.HasOne("Chronith.Infrastructure.Persistence.Entities.StaffMemberEntity", "StaffMember")
+                        .WithMany("AvailabilityWindows")
+                        .HasForeignKey("StaffMemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("StaffMember");
                 });
 
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.TenantUserRefreshTokenEntity", b =>
@@ -573,7 +869,16 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
                     b.Navigation("Bookings");
 
+                    b.Navigation("StaffAssignments");
+
                     b.Navigation("Webhooks");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.StaffMemberEntity", b =>
+                {
+                    b.Navigation("AvailabilityWindows");
+
+                    b.Navigation("BookingTypeAssignments");
                 });
 #pragma warning restore 612, 618
         }

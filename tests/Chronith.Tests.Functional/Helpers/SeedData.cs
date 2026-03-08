@@ -102,7 +102,9 @@ public static class SeedData
         DateTimeOffset start,
         DateTimeOffset end,
         BookingStatus status = BookingStatus.PendingPayment,
-        string customerId = "cust-seed-1")
+        string customerId = "cust-seed-1",
+        long amountInCentavos = 0,
+        Guid? staffMemberId = null)
     {
         var id = Guid.NewGuid();
         db.Bookings.Add(new BookingEntity
@@ -115,7 +117,29 @@ public static class SeedData
             Status = status,
             CustomerId = customerId,
             CustomerEmail = $"{customerId}@example.com",
+            AmountInCentavos = amountInCentavos,
+            StaffMemberId = staffMemberId,
             IsDeleted = false
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    public static async Task<Guid> SeedStaffMemberAsync(
+        ChronithDbContext db,
+        string name = "Test Staff",
+        string email = "staff@example.com")
+    {
+        var id = Guid.NewGuid();
+        db.StaffMembers.Add(new StaffMemberEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            Name = name,
+            Email = email,
+            IsActive = true,
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow
         });
         await db.SaveChangesAsync();
         return id;
@@ -184,6 +208,36 @@ public static class SeedData
             Status = OutboxStatus.Failed,
             AttemptCount = 6,
             CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    public static async Task<Guid> SeedWaitlistEntryAsync(
+        ChronithDbContext db,
+        Guid bookingTypeId,
+        DateTimeOffset desiredStart,
+        DateTimeOffset desiredEnd,
+        WaitlistStatus status = WaitlistStatus.Waiting,
+        string customerId = "cust-waitlist-1",
+        DateTimeOffset? offeredAt = null,
+        DateTimeOffset? expiresAt = null)
+    {
+        var id = Guid.NewGuid();
+        db.WaitlistEntries.Add(new WaitlistEntryEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            BookingTypeId = bookingTypeId,
+            CustomerId = customerId,
+            CustomerEmail = $"{customerId}@example.com",
+            DesiredStart = desiredStart,
+            DesiredEnd = desiredEnd,
+            Status = status,
+            OfferedAt = offeredAt,
+            ExpiresAt = expiresAt,
+            CreatedAt = DateTimeOffset.UtcNow,
+            IsDeleted = false
         });
         await db.SaveChangesAsync();
         return id;

@@ -19,7 +19,8 @@ public sealed class CalendarBookingType : BookingType
         string? paymentProvider,
         IReadOnlyList<DayOfWeek> availableDays,
         long priceInCentavos,
-        string currency)
+        string currency,
+        bool requiresStaffAssignment = false)
     {
         return new CalendarBookingType
         {
@@ -32,7 +33,8 @@ public sealed class CalendarBookingType : BookingType
             PaymentProvider = paymentProvider,
             AvailableDays = availableDays,
             PriceInCentavos = priceInCentavos,
-            Currency = currency
+            Currency = currency,
+            RequiresStaffAssignment = requiresStaffAssignment
         };
     }
 
@@ -47,11 +49,14 @@ public sealed class CalendarBookingType : BookingType
         IReadOnlyList<TimeSlotWindow>? availabilityWindows,
         IReadOnlyList<DayOfWeek>? availableDays,
         long priceInCentavos,
-        string currency)
+        string currency,
+        bool requiresStaffAssignment = false,
+        string? customFieldSchema = null)
     {
         base.Update(name, capacity, paymentMode, paymentProvider,
             durationMinutes, bufferBeforeMinutes, bufferAfterMinutes,
-            availabilityWindows, availableDays, priceInCentavos, currency);
+            availabilityWindows, availableDays, priceInCentavos, currency,
+            requiresStaffAssignment, customFieldSchema);
         AvailableDays = availableDays ?? Array.Empty<DayOfWeek>();
     }
 

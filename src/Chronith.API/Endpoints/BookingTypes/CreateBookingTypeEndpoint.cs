@@ -15,6 +15,7 @@ public sealed class CreateBookingTypeRequest
     public string? PaymentProvider { get; set; }
     public long PriceInCentavos { get; set; }
     public string Currency { get; set; } = "PHP";
+    public bool RequiresStaffAssignment { get; set; }
     public int DurationMinutes { get; set; }
     public int BufferBeforeMinutes { get; set; }
     public int BufferAfterMinutes { get; set; }
@@ -44,6 +45,7 @@ public sealed class CreateBookingTypeEndpoint(ISender sender)
             PaymentProvider = req.PaymentProvider,
             PriceInCentavos = req.PriceInCentavos,
             Currency = req.Currency,
+            RequiresStaffAssignment = req.RequiresStaffAssignment,
             DurationMinutes = req.DurationMinutes,
             BufferBeforeMinutes = req.BufferBeforeMinutes,
             BufferAfterMinutes = req.BufferAfterMinutes,

@@ -14,6 +14,7 @@ public sealed record BookingDto(
     long AmountInCentavos,
     string Currency,
     string? CheckoutUrl,
+    Guid? StaffMemberId,
     IReadOnlyList<BookingStatusChangeDto> StatusChanges
 );
 

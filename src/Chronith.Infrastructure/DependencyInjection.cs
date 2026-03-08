@@ -2,6 +2,7 @@ using Chronith.Application.Interfaces;
 using Chronith.Application.Options;
 using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Caching;
+using Chronith.Infrastructure.Notifications;
 using Chronith.Infrastructure.Payments;
 using Chronith.Infrastructure.Payments.PayMongo;
 using Chronith.Infrastructure.Persistence;
@@ -46,18 +47,40 @@ public static class DependencyInjection
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<IWebhookRepository, WebhookRepository>();
+        services.AddScoped<IStaffMemberRepository, StaffMemberRepository>();
+        services.AddScoped<IWaitlistRepository, WaitlistRepository>();
+        services.AddScoped<ITimeBlockRepository, TimeBlockRepository>();
         services.AddScoped<IWebhookOutboxRepository, WebhookOutboxRepository>();
+        services.AddScoped<INotificationConfigRepository, NotificationConfigRepository>();
+        services.AddScoped<IBookingReminderRepository, BookingReminderRepository>();
+        services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
         services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
         services.AddScoped<ITenantUserRepository, TenantUserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddHostedService<WebhookDispatcherService>();
+        services.AddHostedService<WaitlistPromotionService>();
+        services.AddHostedService<NotificationDispatcherService>();
+        services.AddHostedService<ReminderSchedulerService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
         {
             client.Timeout = TimeSpan.FromSeconds(httpTimeoutSeconds);
         });
         services.Configure<WebhookDispatcherOptions>(configuration.GetSection("Webhooks"));
+        services.Configure<WaitlistPromotionOptions>(configuration.GetSection("WaitlistPromotion"));
+        services.Configure<NotificationDispatcherOptions>(configuration.GetSection("NotificationDispatcher"));
+        services.Configure<ReminderSchedulerOptions>(configuration.GetSection("ReminderScheduler"));
+
+        // Notification channels
+        services.Configure<SmtpOptions>(configuration.GetSection("Notifications:Smtp"));
+        services.Configure<TwilioOptions>(configuration.GetSection("Notifications:Twilio"));
+        services.Configure<FirebasePushOptions>(configuration.GetSection("Notifications:Firebase"));
+        services.AddSingleton<INotificationChannel, SmtpEmailChannel>();
+        services.AddSingleton<INotificationChannel, TwilioSmsChannel>();
+        services.AddSingleton<INotificationChannel, FirebasePushChannel>();
+        services.AddSingleton<NotificationChannelFactory>();
+        services.AddHttpClient("Twilio");
 
         // Payment providers
         services.Configure<PaymentsOptions>(configuration.GetSection("Payments"));

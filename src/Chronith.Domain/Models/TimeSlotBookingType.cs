@@ -25,7 +25,8 @@ public sealed class TimeSlotBookingType : BookingType
         int bufferAfterMinutes,
         IReadOnlyList<TimeSlotWindow> availabilityWindows,
         long priceInCentavos,
-        string currency)
+        string currency,
+        bool requiresStaffAssignment = false)
     {
         return new TimeSlotBookingType
         {
@@ -41,7 +42,8 @@ public sealed class TimeSlotBookingType : BookingType
             BufferAfterMinutes = bufferAfterMinutes,
             AvailabilityWindows = availabilityWindows,
             PriceInCentavos = priceInCentavos,
-            Currency = currency
+            Currency = currency,
+            RequiresStaffAssignment = requiresStaffAssignment
         };
     }
 
@@ -56,11 +58,14 @@ public sealed class TimeSlotBookingType : BookingType
         IReadOnlyList<TimeSlotWindow>? availabilityWindows,
         IReadOnlyList<DayOfWeek>? availableDays,
         long priceInCentavos,
-        string currency)
+        string currency,
+        bool requiresStaffAssignment = false,
+        string? customFieldSchema = null)
     {
         base.Update(name, capacity, paymentMode, paymentProvider,
             durationMinutes, bufferBeforeMinutes, bufferAfterMinutes,
-            availabilityWindows, availableDays, priceInCentavos, currency);
+            availabilityWindows, availableDays, priceInCentavos, currency,
+            requiresStaffAssignment, customFieldSchema);
         DurationMinutes = durationMinutes;
         BufferBeforeMinutes = bufferBeforeMinutes;
         BufferAfterMinutes = bufferAfterMinutes;

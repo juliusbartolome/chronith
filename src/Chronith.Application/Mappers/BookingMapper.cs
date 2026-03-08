@@ -18,6 +18,7 @@ public static class BookingMapper
             AmountInCentavos: booking.AmountInCentavos,
             Currency: booking.Currency,
             CheckoutUrl: booking.CheckoutUrl,
+            StaffMemberId: booking.StaffMemberId,
             StatusChanges: booking.StatusChanges
                 .Select(sc => new BookingStatusChangeDto(
                     sc.Id,
