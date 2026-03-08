@@ -69,6 +69,8 @@ public static class BookingTypeEntityMapper
         SetProperty(domain, nameof(BookingType.Currency), e.Currency);
         SetProperty(domain, nameof(BookingType.IsDeleted), e.IsDeleted);
         SetProperty(domain, nameof(BookingType.RequiresStaffAssignment), e.RequiresStaffAssignment);
+        SetProperty(domain, nameof(BookingType.CustomFieldSchema), e.CustomFieldSchema);
+        SetProperty(domain, nameof(BookingType.ReminderIntervals), e.ReminderIntervals);
         SetProperty(domain, nameof(BookingType.CustomerCallbackUrl), e.CustomerCallbackUrl);
         SetProperty(domain, nameof(BookingType.CustomerCallbackSecret), e.CustomerCallbackSecret);
     }
@@ -114,6 +116,8 @@ public static class BookingTypeEntityMapper
             Currency = domain.Currency,
             IsDeleted = domain.IsDeleted,
             RequiresStaffAssignment = domain.RequiresStaffAssignment,
+            CustomFieldSchema = domain.CustomFieldSchema,
+            ReminderIntervals = domain.ReminderIntervals,
             CustomerCallbackUrl = domain.CustomerCallbackUrl,
             CustomerCallbackSecret = domain.CustomerCallbackSecret
         };

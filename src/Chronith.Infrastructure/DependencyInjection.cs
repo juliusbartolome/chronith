@@ -51,6 +51,8 @@ public static class DependencyInjection
         services.AddScoped<IWaitlistRepository, WaitlistRepository>();
         services.AddScoped<ITimeBlockRepository, TimeBlockRepository>();
         services.AddScoped<IWebhookOutboxRepository, WebhookOutboxRepository>();
+        services.AddScoped<INotificationConfigRepository, NotificationConfigRepository>();
+        services.AddScoped<IBookingReminderRepository, BookingReminderRepository>();
         services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
         services.AddScoped<ITenantUserRepository, TenantUserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();

@@ -33,6 +33,10 @@ public sealed class ChronithDbContext : DbContext
     public DbSet<BookingTypeStaffAssignmentEntity> BookingTypeStaffAssignments => Set<BookingTypeStaffAssignmentEntity>();
     public DbSet<WaitlistEntryEntity> WaitlistEntries => Set<WaitlistEntryEntity>();
     public DbSet<TimeBlockEntity> TimeBlocks => Set<TimeBlockEntity>();
+    // No global query filter: notification configs and reminders are accessed by
+    // background services which require cross-tenant access.
+    public DbSet<TenantNotificationConfigEntity> TenantNotificationConfigs => Set<TenantNotificationConfigEntity>();
+    public DbSet<BookingReminderEntity> BookingReminders => Set<BookingReminderEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -81,5 +81,9 @@ public sealed class BookingTypeConfiguration : IEntityTypeConfiguration<BookingT
         builder.Property(bt => bt.CustomFieldSchema)
             .HasColumnType("jsonb")
             .IsRequired(false);
+
+        builder.Property(bt => bt.ReminderIntervals)
+            .HasColumnType("jsonb")
+            .IsRequired(false);
     }
 }

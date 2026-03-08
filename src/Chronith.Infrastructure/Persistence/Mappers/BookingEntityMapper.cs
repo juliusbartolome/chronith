@@ -26,6 +26,7 @@ public static class BookingEntityMapper
         SetPrivate(domain, nameof(Booking.Currency), entity.Currency);
         SetPrivate(domain, nameof(Booking.CheckoutUrl), entity.CheckoutUrl);
         SetPrivate(domain, nameof(Booking.StaffMemberId), entity.StaffMemberId);
+        SetPrivate(domain, nameof(Booking.CustomFields), entity.CustomFields);
         SetPrivate(domain, nameof(Booking.IsDeleted), entity.IsDeleted);
         SetPrivate(domain, nameof(Booking.RowVersion), entity.RowVersion);
 
@@ -48,6 +49,7 @@ public static class BookingEntityMapper
             Currency = domain.Currency,
             CheckoutUrl = domain.CheckoutUrl,
             StaffMemberId = domain.StaffMemberId,
+            CustomFields = domain.CustomFields,
             IsDeleted = domain.IsDeleted,
             RowVersion = domain.RowVersion,
             StatusChanges = domain.StatusChanges.Select(sc => new BookingStatusChangeEntity

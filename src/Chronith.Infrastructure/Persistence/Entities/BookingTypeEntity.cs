@@ -21,6 +21,7 @@ public sealed class BookingTypeEntity
     public bool IsDeleted { get; set; }
     public bool RequiresStaffAssignment { get; set; }
     public string? CustomFieldSchema { get; set; }
+    public string? ReminderIntervals { get; set; }
 
     // TimeSlot-specific (null for Calendar)
     public int? DurationMinutes { get; set; }
