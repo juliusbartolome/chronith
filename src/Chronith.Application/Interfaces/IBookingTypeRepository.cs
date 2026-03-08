@@ -10,6 +10,10 @@ namespace Chronith.Application.Interfaces;
 public interface IBookingTypeRepository
 {
     Task<BookingType?> GetBySlugAsync(Guid tenantId, string slug, CancellationToken ct = default);
+
+    /// <summary>Cross-tenant lookup by slug for public/anonymous endpoints (e.g. iCal feed).</summary>
+    Task<BookingType?> GetBySlugAsync(string slug, CancellationToken ct = default);
+
     Task<BookingType?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default);
 
     /// <summary>Cross-tenant lookup for dispatcher use only. Does not apply tenant filter.</summary>

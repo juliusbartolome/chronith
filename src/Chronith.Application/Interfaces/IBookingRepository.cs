@@ -52,4 +52,10 @@ public interface IBookingRepository
 
     Task<BookingMetrics> GetMetricsAsync(
         Guid tenantId, DateTimeOffset monthStartUtc, CancellationToken ct = default);
+
+    /// <summary>
+    /// Lightweight projection for iCal feed — returns only Id, Start, End for confirmed bookings.
+    /// </summary>
+    Task<IReadOnlyList<(Guid Id, DateTimeOffset Start, DateTimeOffset End)>> GetICalEntriesAsync(
+        Guid bookingTypeId, CancellationToken ct = default);
 }
