@@ -1,4 +1,5 @@
 using Chronith.Application.DTOs;
+using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 
 namespace Chronith.Application.Interfaces;
@@ -7,6 +8,8 @@ public interface IWebhookOutboxRepository
 {
     Task AddRangeAsync(IEnumerable<WebhookOutboxEntry> entries, CancellationToken ct);
     Task<IReadOnlyList<PendingOutboxEntry>> GetPendingAsync(int batchSize, CancellationToken ct);
+    Task<IReadOnlyList<PendingOutboxEntry>> GetPendingByCategoryAsync(
+        OutboxCategory category, int batchSize, CancellationToken ct);
     Task MarkDeliveredAsync(Guid entryId, DateTimeOffset now, CancellationToken ct);
     Task MarkFailedAttemptAsync(Guid entryId, int newAttemptCount, DateTimeOffset now, DateTimeOffset? nextRetryAt, bool isFinalFailure, CancellationToken ct);
 

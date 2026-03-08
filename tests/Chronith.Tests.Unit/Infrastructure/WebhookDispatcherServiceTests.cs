@@ -74,7 +74,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
     {
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
-        var entry = new PendingOutboxEntry(entryId, webhookId, null, "booking.confirmed", "{}", 0, OutboxCategory.TenantWebhook);
+        var entry = new PendingOutboxEntry(entryId, Guid.NewGuid(), webhookId, null, "booking.confirmed", "{}", 0, OutboxCategory.TenantWebhook);
         var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
@@ -93,7 +93,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
     {
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
-        var entry = new PendingOutboxEntry(entryId, webhookId, null, "booking.confirmed", "{}", 0, OutboxCategory.TenantWebhook);
+        var entry = new PendingOutboxEntry(entryId, Guid.NewGuid(), webhookId, null, "booking.confirmed", "{}", 0, OutboxCategory.TenantWebhook);
         var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
@@ -113,7 +113,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
     {
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
-        var entry = new PendingOutboxEntry(entryId, webhookId, null, "booking.confirmed", "{}", 0, OutboxCategory.TenantWebhook);
+        var entry = new PendingOutboxEntry(entryId, Guid.NewGuid(), webhookId, null, "booking.confirmed", "{}", 0, OutboxCategory.TenantWebhook);
 
         var (sut, outboxRepo, webhookRepo, _) = BuildSut(pending: [entry]);
         webhookRepo.GetByIdCrossTenantAsync(webhookId, Arg.Any<CancellationToken>()).Returns(default(Webhook));
@@ -138,7 +138,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
         // GetBackOffDelay(5) = 4 hours
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
-        var entry = new PendingOutboxEntry(entryId, webhookId, null, "booking.confirmed", "{}", 4, OutboxCategory.TenantWebhook);
+        var entry = new PendingOutboxEntry(entryId, Guid.NewGuid(), webhookId, null, "booking.confirmed", "{}", 4, OutboxCategory.TenantWebhook);
         var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
@@ -162,7 +162,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
         // AttemptCount = 5 → newAttemptCount = 6 → isFinal = true (MaxAttempts = 6)
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
-        var entry = new PendingOutboxEntry(entryId, webhookId, null, "booking.confirmed", "{}", 5, OutboxCategory.TenantWebhook);
+        var entry = new PendingOutboxEntry(entryId, Guid.NewGuid(), webhookId, null, "booking.confirmed", "{}", 5, OutboxCategory.TenantWebhook);
         var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);

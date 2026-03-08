@@ -40,7 +40,7 @@ public class WebhookDispatcherCustomerCallbackTests
         var entryId = Guid.NewGuid();
 
         _outboxRepo.GetPendingAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns([new PendingOutboxEntry(entryId, null, bookingTypeId,
+            .Returns([new PendingOutboxEntry(entryId, Guid.NewGuid(), null, bookingTypeId,
                 "customer.booking.confirmed", "{}", 0, OutboxCategory.CustomerCallback)]);
 
         // BookingType has no callback URL
