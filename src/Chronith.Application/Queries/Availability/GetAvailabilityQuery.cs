@@ -3,6 +3,7 @@ using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
+using Chronith.Domain.Models;
 using MediatR;
 
 namespace Chronith.Application.Queries.Availability;
@@ -25,6 +26,7 @@ public sealed class GetAvailabilityHandler(
     ITenantRepository tenantRepo,
     ITimeBlockRepository timeBlockRepo,
     ISlotGeneratorService slotGenerator,
+    IStaffMemberRepository? staffRepo = null,
     IRedisCacheService? cacheService = null)
     : IRequestHandler<GetAvailabilityQuery, AvailabilityDto>
 {
@@ -83,7 +85,52 @@ public sealed class GetAvailabilityHandler(
             .Where(s => !timeBlocks.Any(tb => s.Start < tb.End && s.End > tb.Start))
             .ToList();
 
+        // 7. If RequiresStaffAssignment, filter to only slots covered by at least one active staff member
+        if (bookingType.RequiresStaffAssignment && staffRepo is not null)
+        {
+            var assignedStaff = await staffRepo.ListByBookingTypeAsync(
+                tenantContext.TenantId, bookingType.Id, ct);
+
+            filtered = FilterByStaffAvailability(filtered, assignedStaff, tz);
+        }
+
         return new AvailabilityDto(
             filtered.Select(s => new AvailableSlotDto(s.Start, s.End)).ToList());
+    }
+
+    /// <summary>
+    /// Filters slots to only those where at least one active staff member has an
+    /// availability window covering the entire slot duration.
+    /// </summary>
+    internal static List<(DateTimeOffset Start, DateTimeOffset End)> FilterByStaffAvailability(
+        List<(DateTimeOffset Start, DateTimeOffset End)> slots,
+        IReadOnlyList<StaffMember> staff,
+        TenantTimeZone tz)
+    {
+        var activeStaff = staff.Where(s => s.IsActive).ToList();
+        if (activeStaff.Count == 0) return [];
+
+        return slots.Where(slot => activeStaff.Any(s => StaffCoversSlot(s, slot, tz))).ToList();
+    }
+
+    /// <summary>
+    /// Checks whether a staff member has an availability window on the same day-of-week
+    /// that fully contains the slot's time range.
+    /// </summary>
+    private static bool StaffCoversSlot(
+        StaffMember staff,
+        (DateTimeOffset Start, DateTimeOffset End) slot,
+        TenantTimeZone tz)
+    {
+        var slotLocalStart = tz.ToLocalDateTime(slot.Start);
+        var slotLocalEnd = tz.ToLocalDateTime(slot.End);
+        var slotDow = slotLocalStart.DayOfWeek;
+        var slotStartTime = TimeOnly.FromTimeSpan(slotLocalStart.TimeOfDay);
+        var slotEndTime = TimeOnly.FromTimeSpan(slotLocalEnd.TimeOfDay);
+
+        return staff.AvailabilityWindows.Any(w =>
+            w.DayOfWeek == slotDow &&
+            w.StartTime <= slotStartTime &&
+            w.EndTime >= slotEndTime);
     }
 }
