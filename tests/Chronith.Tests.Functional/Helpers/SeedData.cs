@@ -102,7 +102,9 @@ public static class SeedData
         DateTimeOffset start,
         DateTimeOffset end,
         BookingStatus status = BookingStatus.PendingPayment,
-        string customerId = "cust-seed-1")
+        string customerId = "cust-seed-1",
+        long amountInCentavos = 0,
+        Guid? staffMemberId = null)
     {
         var id = Guid.NewGuid();
         db.Bookings.Add(new BookingEntity
@@ -115,6 +117,8 @@ public static class SeedData
             Status = status,
             CustomerId = customerId,
             CustomerEmail = $"{customerId}@example.com",
+            AmountInCentavos = amountInCentavos,
+            StaffMemberId = staffMemberId,
             IsDeleted = false
         });
         await db.SaveChangesAsync();
