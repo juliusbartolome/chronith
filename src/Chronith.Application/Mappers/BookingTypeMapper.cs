@@ -33,6 +33,8 @@ public static class BookingTypeMapper
                 .ToList(),
             AvailableDays: null,
             RequiresStaffAssignment: ts.RequiresStaffAssignment,
+            CustomFieldSchema: ts.CustomFieldSchema,
+            ReminderIntervals: ts.ReminderIntervals,
             CustomerCallbackUrl: ts.CustomerCallbackUrl
         );
 
@@ -53,6 +55,8 @@ public static class BookingTypeMapper
             AvailabilityWindows: null,
             AvailableDays: cal.AvailableDays.ToList(),
             RequiresStaffAssignment: cal.RequiresStaffAssignment,
+            CustomFieldSchema: cal.CustomFieldSchema,
+            ReminderIntervals: cal.ReminderIntervals,
             CustomerCallbackUrl: cal.CustomerCallbackUrl
         );
 }
