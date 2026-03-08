@@ -34,6 +34,7 @@ public sealed class GetAvailabilityHandlerCacheTests
         var tenantRepo = Substitute.For<ITenantRepository>();
         var slotGenerator = Substitute.For<ISlotGeneratorService>();
         var timeBlockRepo = Substitute.For<ITimeBlockRepository>();
+        var staffRepo = Substitute.For<IStaffMemberRepository>();
 
         var cacheService = Substitute.For<IRedisCacheService>();
         cacheService
@@ -45,7 +46,8 @@ public sealed class GetAvailabilityHandlerCacheTests
             .Returns(cached);
 
         var handler = new GetAvailabilityHandler(
-            tenantContext, bookingTypeRepo, bookingRepo, tenantRepo, timeBlockRepo, slotGenerator, cacheService);
+            tenantContext, bookingTypeRepo, bookingRepo, tenantRepo, timeBlockRepo, slotGenerator,
+            staffRepo, cacheService);
 
         var result = await handler.Handle(query, CancellationToken.None);
 

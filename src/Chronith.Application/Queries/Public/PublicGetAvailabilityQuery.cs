@@ -1,8 +1,10 @@
 using Chronith.Application.Behaviors;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Queries.Availability;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
+using Chronith.Domain.Models;
 using MediatR;
 
 namespace Chronith.Application.Queries.Public;
@@ -24,7 +26,8 @@ public sealed class PublicGetAvailabilityHandler(
     IBookingRepository bookingRepo,
     ITenantRepository tenantRepo,
     ITimeBlockRepository timeBlockRepo,
-    ISlotGeneratorService slotGenerator)
+    ISlotGeneratorService slotGenerator,
+    IStaffMemberRepository? staffRepo = null)
     : IRequestHandler<PublicGetAvailabilityQuery, AvailabilityDto>
 {
     private static readonly BookingStatus[] ConflictStatuses =
@@ -57,6 +60,15 @@ public sealed class PublicGetAvailabilityHandler(
         var filtered = slots
             .Where(s => !timeBlocks.Any(tb => s.Start < tb.End && s.End > tb.Start))
             .ToList();
+
+        // Filter by staff availability when booking type requires staff assignment
+        if (bookingType.RequiresStaffAssignment && staffRepo is not null)
+        {
+            var assignedStaff = await staffRepo.ListByBookingTypeAsync(
+                query.TenantId, bookingType.Id, ct);
+
+            filtered = GetAvailabilityHandler.FilterByStaffAvailability(filtered, assignedStaff, tz);
+        }
 
         return new AvailabilityDto(
             filtered.Select(s => new AvailableSlotDto(s.Start, s.End)).ToList());
