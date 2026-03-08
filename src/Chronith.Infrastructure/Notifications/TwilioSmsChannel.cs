@@ -27,13 +27,13 @@ public sealed class TwilioSmsChannel(
             ["Body"] = message.Body
         });
 
-        var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
+        using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
         var credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{opts.AccountSid}:{opts.AuthToken}"));
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
 
         var response = await client.SendAsync(request, ct);
         response.EnsureSuccessStatusCode();
 
-        logger.LogInformation("SMS sent to {Recipient}", message.Recipient);
+        logger.LogInformation("SMS notification sent successfully for subject '{Subject}'", message.Subject);
     }
 }

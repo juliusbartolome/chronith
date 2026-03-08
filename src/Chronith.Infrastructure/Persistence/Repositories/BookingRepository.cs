@@ -80,6 +80,7 @@ public sealed class BookingRepository : IBookingRepository
         var statusList = statuses.ToList();
         var results = await _db.Bookings
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(b => b.BookingTypeId == bookingTypeId
                         && !b.IsDeleted
                         && statusList.Contains(b.Status)

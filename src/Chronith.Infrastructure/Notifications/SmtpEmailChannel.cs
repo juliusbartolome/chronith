@@ -16,7 +16,7 @@ public sealed class SmtpEmailChannel(
     {
         var opts = options.Value;
 
-        var email = new MimeMessage();
+        using var email = new MimeMessage();
         email.From.Add(new MailboxAddress(opts.FromName, opts.FromAddress));
         email.To.Add(MailboxAddress.Parse(message.Recipient));
         email.Subject = message.Subject;
@@ -31,6 +31,6 @@ public sealed class SmtpEmailChannel(
         await client.SendAsync(email, ct);
         await client.DisconnectAsync(true, ct);
 
-        logger.LogInformation("Email sent to {Recipient}", message.Recipient);
+        logger.LogInformation("Email notification sent successfully for subject '{Subject}'", message.Subject);
     }
 }

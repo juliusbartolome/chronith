@@ -18,7 +18,8 @@ public sealed class TimeBlockRepository : ITimeBlockRepository
     {
         var query = _db.TimeBlocks
             .AsNoTracking()
-            .Where(t => t.TenantId == tenantId && t.Start < to && t.End > from);
+            .IgnoreQueryFilters()
+            .Where(t => t.TenantId == tenantId && !t.IsDeleted && t.Start < to && t.End > from);
 
         if (bookingTypeId.HasValue)
             query = query.Where(t => t.BookingTypeId == null || t.BookingTypeId == bookingTypeId);

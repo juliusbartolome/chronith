@@ -27,9 +27,9 @@ public static class CustomFieldValidator
         var schemaMap = schema.ToDictionary(f => f.Name);
 
         // Check for unknown fields
-        foreach (var key in data.Keys)
-            if (!schemaMap.ContainsKey(key))
-                throw new CustomFieldValidationException($"Unknown custom field: {key}");
+        var unknownField = data.Keys.FirstOrDefault(key => !schemaMap.ContainsKey(key));
+        if (unknownField is not null)
+            throw new CustomFieldValidationException($"Unknown custom field: {unknownField}");
 
         // Check required + type
         foreach (var field in schema)

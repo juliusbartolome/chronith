@@ -34,7 +34,9 @@ public sealed class FirebasePushChannel(
         logger.LogInformation("Push notification sent, message ID: {MessageId}", response);
     }
 
-    private void EnsureInitialized()
+    private void EnsureInitialized() => InitializeApp(options.Value);
+
+    private static void InitializeApp(FirebasePushOptions opts)
     {
         if (_initialized) return;
 
@@ -42,7 +44,6 @@ public sealed class FirebasePushChannel(
         {
             if (_initialized) return;
 
-            var opts = options.Value;
             FirebaseApp.Create(new AppOptions
             {
                 Credential = GoogleCredential.FromJson(opts.ServiceAccountJson),

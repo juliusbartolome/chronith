@@ -160,7 +160,7 @@ public sealed class ReminderSchedulerService(
         {
             return JsonSerializer.Deserialize<int[]>(json) ?? [];
         }
-        catch
+        catch (JsonException)
         {
             return [];
         }

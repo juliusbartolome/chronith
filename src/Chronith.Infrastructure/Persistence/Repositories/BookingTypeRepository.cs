@@ -18,8 +18,9 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
     {
         var entity = await _db.BookingTypes
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(bt => bt.AvailabilityWindows)
-            .FirstOrDefaultAsync(bt => bt.TenantId == tenantId && bt.Slug == slug, ct);
+            .FirstOrDefaultAsync(bt => bt.TenantId == tenantId && !bt.IsDeleted && bt.Slug == slug, ct);
 
         return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
     }
@@ -62,8 +63,9 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
     {
         var entities = await _db.BookingTypes
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(bt => bt.AvailabilityWindows)
-            .Where(bt => bt.TenantId == tenantId)
+            .Where(bt => bt.TenantId == tenantId && !bt.IsDeleted)
             .OrderBy(bt => bt.Name)
             .ToListAsync(ct);
 

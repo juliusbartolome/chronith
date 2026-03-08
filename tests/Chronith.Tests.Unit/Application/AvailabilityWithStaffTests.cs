@@ -252,10 +252,9 @@ public sealed class AvailabilityWithStaffTests
 
                     while (currentDate <= endDate)
                     {
-                        foreach (var window in tsbt.AvailabilityWindows)
+                        foreach (var window in tsbt.AvailabilityWindows
+                            .Where(w => w.DayOfWeek == currentDate.DayOfWeek))
                         {
-                            if (window.DayOfWeek != currentDate.DayOfWeek) continue;
-
                             var cursor = window.StartTime;
                             while (cursor.AddMinutes(tsbt.DurationMinutes) <= window.EndTime)
                             {

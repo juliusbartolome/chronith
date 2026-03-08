@@ -117,8 +117,8 @@ public sealed class NotificationDispatcherService(
             await outboxRepo.MarkDeliveredAsync(entry.Id, now, ct);
 
             logger.LogInformation(
-                "Delivered notification {EntryId} via {ChannelType} to {Recipient}",
-                entry.Id, channelType, customerEmail);
+                "Delivered notification {EntryId} via {ChannelType}",
+                entry.Id, channelType);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

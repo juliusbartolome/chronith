@@ -28,8 +28,9 @@ public sealed class StaffMemberRepository : IStaffMemberRepository
     {
         var entities = await _db.StaffMembers
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(s => s.AvailabilityWindows)
-            .Where(s => s.TenantId == tenantId)
+            .Where(s => s.TenantId == tenantId && !s.IsDeleted)
             .OrderBy(s => s.Name)
             .ToListAsync(ct);
 
@@ -45,8 +46,9 @@ public sealed class StaffMemberRepository : IStaffMemberRepository
             .Join(
                 _db.StaffMembers
                     .AsNoTracking()
+                    .IgnoreQueryFilters()
                     .Include(s => s.AvailabilityWindows)
-                    .Where(s => s.TenantId == tenantId),
+                    .Where(s => s.TenantId == tenantId && !s.IsDeleted),
                 a => a.StaffMemberId,
                 s => s.Id,
                 (_, s) => s)
