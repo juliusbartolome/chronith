@@ -28,6 +28,31 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
             .Take(batchSize)
             .Select(e => new PendingOutboxEntry(
                 e.Id,
+                e.TenantId,
+                e.WebhookId,
+                e.BookingTypeId,
+                e.EventType,
+                e.Payload,
+                e.AttemptCount,
+                (OutboxCategory)e.Category))
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<PendingOutboxEntry>> GetPendingByCategoryAsync(
+        OutboxCategory category, int batchSize, CancellationToken ct)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var categoryInt = (int)category;
+        return await db.WebhookOutboxEntries
+            .AsNoTracking()
+            .Where(e => e.Status == OutboxStatus.Pending
+                     && e.Category == categoryInt
+                     && (e.NextRetryAt == null || e.NextRetryAt <= now))
+            .OrderBy(e => e.CreatedAt)
+            .Take(batchSize)
+            .Select(e => new PendingOutboxEntry(
+                e.Id,
+                e.TenantId,
                 e.WebhookId,
                 e.BookingTypeId,
                 e.EventType,

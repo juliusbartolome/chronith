@@ -59,6 +59,8 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddHostedService<WebhookDispatcherService>();
         services.AddHostedService<WaitlistPromotionService>();
+        services.AddHostedService<NotificationDispatcherService>();
+        services.AddHostedService<ReminderSchedulerService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
         {
@@ -66,6 +68,8 @@ public static class DependencyInjection
         });
         services.Configure<WebhookDispatcherOptions>(configuration.GetSection("Webhooks"));
         services.Configure<WaitlistPromotionOptions>(configuration.GetSection("WaitlistPromotion"));
+        services.Configure<NotificationDispatcherOptions>(configuration.GetSection("NotificationDispatcher"));
+        services.Configure<ReminderSchedulerOptions>(configuration.GetSection("ReminderScheduler"));
 
         // Notification channels
         services.Configure<SmtpOptions>(configuration.GetSection("Notifications:Smtp"));
