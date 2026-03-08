@@ -131,6 +131,21 @@ public sealed class BookingRepository : IBookingRepository
         return entity is null ? null : BookingEntityMapper.ToDomain(entity);
     }
 
+    public async Task<IReadOnlyList<(Guid Id, DateTimeOffset Start, DateTimeOffset End)>> GetICalEntriesAsync(
+        Guid bookingTypeId, CancellationToken ct = default)
+    {
+        var results = await _db.Bookings
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(b => b.BookingTypeId == bookingTypeId
+                        && !b.IsDeleted
+                        && b.Status == BookingStatus.Confirmed)
+            .Select(b => new { b.Id, b.Start, b.End })
+            .ToListAsync(ct);
+
+        return results.Select(r => (r.Id, r.Start, r.End)).ToList();
+    }
+
     public async Task AddAsync(Booking booking, CancellationToken ct = default)
     {
         var entity = BookingEntityMapper.ToEntity(booking);
