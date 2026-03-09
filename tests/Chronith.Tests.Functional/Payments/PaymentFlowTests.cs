@@ -66,7 +66,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
             });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.Status.Should().Be(BookingStatus.PendingVerification,
             "free bookings (price=0) should skip PendingPayment and go directly to PendingVerification");
@@ -88,7 +88,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
             });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.CheckoutUrl.Should().BeNull(
             "free bookings should not have a checkout URL since no payment is needed");
@@ -111,7 +111,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
             });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.Status.Should().Be(BookingStatus.PendingPayment,
             "paid automatic bookings should start in PendingPayment status");
@@ -133,7 +133,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
             });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.CheckoutUrl.Should().NotBeNullOrEmpty(
             "Automatic mode with Stub provider should return a checkout URL");
@@ -156,7 +156,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
             });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.PaymentReference.Should().NotBeNullOrEmpty(
             "Automatic mode with Stub provider should set a payment reference (provider transaction ID)");
@@ -181,7 +181,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
             });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.Status.Should().Be(BookingStatus.PendingPayment,
             "manual mode bookings with non-zero price should start in PendingPayment");
@@ -202,7 +202,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
             });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.CheckoutUrl.Should().BeNull(
             "manual payment mode should not create an automatic checkout session");

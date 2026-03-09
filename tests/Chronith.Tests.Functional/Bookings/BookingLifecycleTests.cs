@@ -32,7 +32,7 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.Status.Should().Be(BookingStatus.PendingPayment);
     }
@@ -50,7 +50,7 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
             customerEmail = $"lifecycle2-{Guid.NewGuid():N}@example.com"
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await createResp.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await createResp.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
 
         // Step 2: Confirm as Staff (requires PendingVerification — first pay to move to PendingVerification)
@@ -61,7 +61,7 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
             bookingTypeSlug = BookingTypeSlug
         });
         payResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var paidBooking = await payResp.Content.ReadFromJsonAsync<BookingDto>();
+        var paidBooking = await payResp.ReadFromApiJsonAsync<BookingDto>();
         paidBooking!.Status.Should().Be(BookingStatus.PendingVerification);
 
         var confirmResp = await staffClient.PostAsJsonAsync($"/v1/bookings/{booking.Id}/confirm", new
@@ -69,7 +69,7 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
             bookingTypeSlug = BookingTypeSlug
         });
         confirmResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var confirmedBooking = await confirmResp.Content.ReadFromJsonAsync<BookingDto>();
+        var confirmedBooking = await confirmResp.ReadFromApiJsonAsync<BookingDto>();
         confirmedBooking!.Status.Should().Be(BookingStatus.Confirmed);
     }
 
@@ -85,14 +85,14 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
             customerEmail = $"lifecycle3-{Guid.NewGuid():N}@example.com"
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await createResp.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await createResp.ReadFromApiJsonAsync<BookingDto>();
 
         var cancelResp = await client.PostAsJsonAsync($"/v1/bookings/{booking!.Id}/cancel", new
         {
             bookingTypeSlug = BookingTypeSlug
         });
         cancelResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var cancelled = await cancelResp.Content.ReadFromJsonAsync<BookingDto>();
+        var cancelled = await cancelResp.ReadFromApiJsonAsync<BookingDto>();
         cancelled!.Status.Should().Be(BookingStatus.Cancelled);
     }
 
@@ -107,11 +107,11 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
             startTime = "2026-06-13T08:00:00Z",
             customerEmail = $"get-check-{Guid.NewGuid():N}@example.com"
         });
-        var booking = await createResp.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await createResp.ReadFromApiJsonAsync<BookingDto>();
 
         var getResp = await client.GetAsync($"/v1/bookings/{booking!.Id}");
         getResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var fetched = await getResp.Content.ReadFromJsonAsync<BookingDto>();
+        var fetched = await getResp.ReadFromApiJsonAsync<BookingDto>();
         fetched!.Id.Should().Be(booking.Id);
     }
 }

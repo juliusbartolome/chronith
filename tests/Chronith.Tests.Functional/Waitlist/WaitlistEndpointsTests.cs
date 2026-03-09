@@ -34,7 +34,7 @@ public sealed class WaitlistEndpointsTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var entry = await response.Content.ReadFromJsonAsync<WaitlistEntryDto>();
+        var entry = await response.ReadFromApiJsonAsync<WaitlistEntryDto>();
         entry.Should().NotBeNull();
         entry!.Status.Should().Be(WaitlistStatus.Waiting);
         entry.CustomerId.Should().Be(TestConstants.CustomerUserId);
@@ -63,7 +63,7 @@ public sealed class WaitlistEndpointsTests(FunctionalTestFixture fixture)
             $"/v1/booking-types/{BookingTypeSlug}/waitlist?from={from}&to={to}");
 
         listResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var entries = await listResp.Content.ReadFromJsonAsync<List<WaitlistEntryDto>>();
+        var entries = await listResp.ReadFromApiJsonAsync<List<WaitlistEntryDto>>();
         entries.Should().NotBeNull();
         entries!.Should().NotBeEmpty();
     }
@@ -82,7 +82,7 @@ public sealed class WaitlistEndpointsTests(FunctionalTestFixture fixture)
             desiredEnd = start.AddHours(1)
         });
         joinResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var entry = await joinResp.Content.ReadFromJsonAsync<WaitlistEntryDto>();
+        var entry = await joinResp.ReadFromApiJsonAsync<WaitlistEntryDto>();
 
         // Remove
         var deleteResp = await client.DeleteAsync($"/v1/waitlist/{entry!.Id}");
@@ -111,7 +111,7 @@ public sealed class WaitlistEndpointsTests(FunctionalTestFixture fixture)
         var acceptResp = await client.PostAsJsonAsync($"/v1/waitlist/{entryId}/accept", new { });
 
         acceptResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var accepted = await acceptResp.Content.ReadFromJsonAsync<WaitlistEntryDto>();
+        var accepted = await acceptResp.ReadFromApiJsonAsync<WaitlistEntryDto>();
         accepted.Should().NotBeNull();
         accepted!.Status.Should().Be(WaitlistStatus.Converted);
     }

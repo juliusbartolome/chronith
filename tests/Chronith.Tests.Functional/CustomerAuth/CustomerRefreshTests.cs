@@ -9,12 +9,13 @@ namespace Chronith.Tests.Functional.CustomerAuth;
 public sealed class CustomerRefreshTests(FunctionalTestFixture fixture)
 {
     private const string TenantSlug = "cust-refresh";
+    private static readonly Guid TenantId = Guid.Parse("10000000-0000-0000-0000-000000000003");
 
     private async Task EnsureSeedAsync()
     {
         await using var db = SeedData.CreateDbContext(fixture.Factory);
-        await SeedData.SeedTenantAsync(db, slug: TenantSlug);
-        await SeedData.SeedTenantAuthConfigAsync(db);
+        await SeedData.SeedTenantAsync(db, id: TenantId, slug: TenantSlug);
+        await SeedData.SeedTenantAuthConfigAsync(db, tenantId: TenantId);
     }
 
     [Fact]
@@ -28,7 +29,7 @@ public sealed class CustomerRefreshTests(FunctionalTestFixture fixture)
         {
             email, password = "Password123!", name = "Refresh Test"
         });
-        var tokens = await reg.Content.ReadFromJsonAsync<CustomerAuthTokenDto>();
+        var tokens = await reg.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
 
         var response = await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/refresh", new
         {
@@ -36,7 +37,7 @@ public sealed class CustomerRefreshTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var newTokens = await response.Content.ReadFromJsonAsync<CustomerAuthTokenDto>();
+        var newTokens = await response.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
         newTokens!.AccessToken.Should().NotBeNullOrWhiteSpace();
         newTokens.RefreshToken.Should().NotBe(tokens.RefreshToken);
     }
@@ -52,7 +53,7 @@ public sealed class CustomerRefreshTests(FunctionalTestFixture fixture)
         {
             email, password = "Password123!", name = "Refresh Used"
         });
-        var tokens = await reg.Content.ReadFromJsonAsync<CustomerAuthTokenDto>();
+        var tokens = await reg.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
 
         // Use it once
         await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/refresh", new

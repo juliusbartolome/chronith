@@ -19,7 +19,8 @@ internal static class CustomerEntityMapper
         IsActive = c.IsActive,
         IsDeleted = c.IsDeleted,
         CreatedAt = c.CreatedAt,
-        LastLoginAt = c.LastLoginAt
+        LastLoginAt = c.LastLoginAt,
+        RowVersion = c.RowVersion
     };
 
     public static Customer ToDomain(this CustomerEntity e) =>
@@ -27,7 +28,7 @@ internal static class CustomerEntityMapper
             e.Id, e.TenantId, e.Email, e.PasswordHash,
             e.Name, e.Phone, e.ExternalId, e.AuthProvider,
             e.IsEmailVerified, e.IsActive, e.IsDeleted,
-            e.CreatedAt, e.LastLoginAt);
+            e.CreatedAt, e.LastLoginAt, e.RowVersion);
 
     public static CustomerRefreshTokenEntity ToEntity(this CustomerRefreshToken t) => new()
     {

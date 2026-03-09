@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Chronith.Application.DTOs;
 using Chronith.Tests.Functional.Fixtures;
+using Chronith.Tests.Functional.Helpers;
 using FluentAssertions;
 
 namespace Chronith.Tests.Functional.Auth;
@@ -20,7 +21,7 @@ public class MeTests(FunctionalTestFixture fixture)
             tenantName = "Me Test", tenantSlug = slug, timeZoneId = "UTC",
             email, password = "Password123"
         });
-        var tokens = await reg.Content.ReadFromJsonAsync<AuthTokenDto>();
+        var tokens = await reg.ReadFromApiJsonAsync<AuthTokenDto>();
         return (client, tokens!.AccessToken);
     }
 
@@ -34,7 +35,7 @@ public class MeTests(FunctionalTestFixture fixture)
         var response = await client.GetAsync("/v1/auth/me");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<UserProfileDto>();
+        var body = await response.ReadFromApiJsonAsync<UserProfileDto>();
         body!.Email.Should().NotBeNullOrWhiteSpace();
         body.Role.Should().Be("Owner");
     }
@@ -59,7 +60,7 @@ public class MeTests(FunctionalTestFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var getMe = await client.GetAsync("/v1/auth/me");
-        var body = await getMe.Content.ReadFromJsonAsync<UserProfileDto>();
+        var body = await getMe.ReadFromApiJsonAsync<UserProfileDto>();
         body!.Email.Should().Be(newEmail);
     }
 }

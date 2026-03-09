@@ -40,7 +40,7 @@ public sealed class CustomerCallbackFunctionalTests(FunctionalTestFixture fixtur
             })
         });
         updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var updatedType = await updateResponse.Content.ReadFromJsonAsync<BookingTypeDto>();
+        var updatedType = await updateResponse.ReadFromApiJsonAsync<BookingTypeDto>();
         updatedType!.CustomerCallbackUrl.Should().Be("https://customer.example.com/callback");
 
         // Create booking
@@ -51,7 +51,7 @@ public sealed class CustomerCallbackFunctionalTests(FunctionalTestFixture fixtur
             customerEmail = $"cb-func-{Guid.NewGuid():N}@example.com"
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await createResp.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await createResp.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
 
         // Pay → PendingVerification
@@ -68,7 +68,7 @@ public sealed class CustomerCallbackFunctionalTests(FunctionalTestFixture fixtur
             bookingTypeSlug = slug
         });
         confirmResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var confirmed = await confirmResp.Content.ReadFromJsonAsync<BookingDto>();
+        var confirmed = await confirmResp.ReadFromApiJsonAsync<BookingDto>();
         confirmed!.Status.Should().Be(Domain.Enums.BookingStatus.Confirmed);
 
         // Assert — CustomerCallback outbox entry was created

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Chronith.Application.DTOs;
 using Chronith.Tests.Functional.Fixtures;
+using Chronith.Tests.Functional.Helpers;
 using FluentAssertions;
 
 namespace Chronith.Tests.Functional.Auth;
@@ -24,7 +25,7 @@ public class RegisterTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<AuthTokenDto>();
+        var body = await response.ReadFromApiJsonAsync<AuthTokenDto>();
         body!.AccessToken.Should().NotBeNullOrWhiteSpace();
         body.RefreshToken.Should().NotBeNullOrWhiteSpace();
     }

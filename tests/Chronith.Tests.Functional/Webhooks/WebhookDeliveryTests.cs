@@ -43,7 +43,7 @@ public sealed class WebhookDeliveryTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var confirmed = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var confirmed = await response.ReadFromApiJsonAsync<BookingDto>();
         confirmed!.Status.Should().Be(BookingStatus.Confirmed);
 
         // Assert: a WebhookOutboxEntry row exists for this booking (filter to webhook category only)
@@ -83,7 +83,7 @@ public sealed class WebhookDeliveryTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var confirmed = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var confirmed = await response.ReadFromApiJsonAsync<BookingDto>();
         confirmed!.Status.Should().Be(BookingStatus.Confirmed);
 
         // Assert: no WebhookOutboxEntry for this booking (filter to webhook category only)

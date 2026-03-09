@@ -31,7 +31,7 @@ public sealed class TenantAuthConfigTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<TenantAuthConfigDto>();
+        var body = await response.ReadFromApiJsonAsync<TenantAuthConfigDto>();
         body!.AllowBuiltInAuth.Should().BeTrue();
         body.MagicLinkEnabled.Should().BeFalse();
     }
@@ -54,7 +54,7 @@ public sealed class TenantAuthConfigTests(FunctionalTestFixture fixture)
         var response = await client.GetAsync("/v1/tenant/auth-config");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<TenantAuthConfigDto>();
+        var body = await response.ReadFromApiJsonAsync<TenantAuthConfigDto>();
         body!.AllowBuiltInAuth.Should().BeTrue();
         body.MagicLinkEnabled.Should().BeTrue();
         body.OidcIssuer.Should().Be("https://login.example.com");

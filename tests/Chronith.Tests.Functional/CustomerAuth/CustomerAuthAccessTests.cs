@@ -8,12 +8,13 @@ namespace Chronith.Tests.Functional.CustomerAuth;
 public sealed class CustomerAuthAccessTests(FunctionalTestFixture fixture)
 {
     private const string TenantSlug = "cust-auth-access";
+    private static readonly Guid TenantId = Guid.Parse("10000000-0000-0000-0000-000000000006");
 
     private async Task EnsureSeedAsync()
     {
         await using var db = SeedData.CreateDbContext(fixture.Factory);
-        await SeedData.SeedTenantAsync(db, slug: TenantSlug);
-        await SeedData.SeedTenantAuthConfigAsync(db);
+        await SeedData.SeedTenantAsync(db, id: TenantId, slug: TenantSlug);
+        await SeedData.SeedTenantAuthConfigAsync(db, tenantId: TenantId);
     }
 
     // GET /public/{slug}/auth/me — Customer-only
@@ -24,7 +25,7 @@ public sealed class CustomerAuthAccessTests(FunctionalTestFixture fixture)
     public async Task GetMe_NonCustomerRole_ReturnsForbidden(string role, HttpStatusCode expected)
     {
         await EnsureSeedAsync();
-        var client = fixture.CreateClient(role);
+        var client = fixture.CreateClient(role, tenantId: TenantId);
         var response = await client.GetAsync($"/v1/public/{TenantSlug}/auth/me");
         response.StatusCode.Should().Be(expected);
     }
@@ -45,7 +46,7 @@ public sealed class CustomerAuthAccessTests(FunctionalTestFixture fixture)
     public async Task UpdateMe_NonCustomerRole_ReturnsForbidden(string role, HttpStatusCode expected)
     {
         await EnsureSeedAsync();
-        var client = fixture.CreateClient(role);
+        var client = fixture.CreateClient(role, tenantId: TenantId);
         var response = await client.PutAsJsonAsync($"/v1/public/{TenantSlug}/auth/me", new
         {
             name = "Test", phone = (string?)null
@@ -72,7 +73,7 @@ public sealed class CustomerAuthAccessTests(FunctionalTestFixture fixture)
     public async Task GetMyBookings_NonCustomerRole_ReturnsForbidden(string role, HttpStatusCode expected)
     {
         await EnsureSeedAsync();
-        var client = fixture.CreateClient(role);
+        var client = fixture.CreateClient(role, tenantId: TenantId);
         var response = await client.GetAsync($"/v1/public/{TenantSlug}/my-bookings");
         response.StatusCode.Should().Be(expected);
     }
@@ -93,7 +94,7 @@ public sealed class CustomerAuthAccessTests(FunctionalTestFixture fixture)
     public async Task GetMyBookingDetail_NonCustomerRole_ReturnsForbidden(string role, HttpStatusCode expected)
     {
         await EnsureSeedAsync();
-        var client = fixture.CreateClient(role);
+        var client = fixture.CreateClient(role, tenantId: TenantId);
         var response = await client.GetAsync($"/v1/public/{TenantSlug}/my-bookings/{Guid.NewGuid()}");
         response.StatusCode.Should().Be(expected);
     }

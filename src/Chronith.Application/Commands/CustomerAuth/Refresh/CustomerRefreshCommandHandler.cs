@@ -34,7 +34,7 @@ public sealed class CustomerRefreshCommandHandler(
         if (!stored.IsValid())
             throw new UnauthorizedException("Invalid or expired refresh token.");
 
-        var customer = await customerRepository.GetByIdAsync(stored.CustomerId, cancellationToken)
+        var customer = await customerRepository.GetByIdCrossTenantAsync(stored.CustomerId, cancellationToken)
             ?? throw new UnauthorizedException("Invalid or expired refresh token.");
 
         if (customer.TenantId != tenant.Id)

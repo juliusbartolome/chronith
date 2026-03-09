@@ -43,7 +43,7 @@ public sealed class BookingRescheduleTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.Start.Should().BeCloseTo(newStart, TimeSpan.FromSeconds(1));
         booking.End.Should().BeCloseTo(newEnd, TimeSpan.FromSeconds(1));

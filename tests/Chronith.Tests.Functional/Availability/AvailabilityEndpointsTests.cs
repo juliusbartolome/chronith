@@ -23,7 +23,7 @@ public sealed class AvailabilityEndpointsTests(FunctionalTestFixture fixture)
         var response = await client.GetAsync(url);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<AvailabilityDto>();
+        var body = await response.ReadFromApiJsonAsync<AvailabilityDto>();
         body.Should().NotBeNull();
         // Slots may be empty if no availability windows configured — just assert shape is valid
         body!.Slots.Should().NotBeNull();

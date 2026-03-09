@@ -27,7 +27,7 @@ public sealed class TenantMetricsTests(FunctionalTestFixture fixture)
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadFromJsonAsync<TenantMetricsDto>();
+        var body = await response.ReadFromApiJsonAsync<TenantMetricsDto>();
         body.Should().NotBeNull();
         body!.Bookings.Should().NotBeNull();
         body.Webhooks.Should().NotBeNull();
@@ -70,7 +70,7 @@ public sealed class TenantMetricsTests(FunctionalTestFixture fixture)
         var response = await client.GetAsync("/v1/tenant/metrics");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<TenantMetricsDto>();
+        var body = await response.ReadFromApiJsonAsync<TenantMetricsDto>();
         body!.Bookings.Total.Should().BeGreaterThanOrEqualTo(1);
         body.BookingTypes.Active.Should().BeGreaterThanOrEqualTo(1);
     }

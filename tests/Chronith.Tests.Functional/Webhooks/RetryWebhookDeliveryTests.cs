@@ -29,7 +29,7 @@ public sealed class RetryWebhookDeliveryTests(FunctionalTestFixture fixture)
 
         // Verify it was reset to Pending
         var getResponse = await client.GetAsync($"/v1/webhooks/{webhookId}/deliveries");
-        var body = await getResponse.Content.ReadFromJsonAsync<PagedResultDto<WebhookDeliveryDto>>();
+        var body = await getResponse.ReadFromApiJsonAsync<PagedResultDto<WebhookDeliveryDto>>();
         body!.Items.First(e => e.Id == deliveryId).Status.Should().Be(OutboxStatus.Pending);
     }
 

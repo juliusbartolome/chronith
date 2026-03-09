@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Chronith.Application.DTOs;
 
 public sealed record CreateCheckoutRequest(
@@ -20,6 +22,7 @@ public sealed record WebhookPaymentEvent(
     string ProviderTransactionId,
     PaymentEventType EventType);
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum PaymentEventType
 {
     Success,

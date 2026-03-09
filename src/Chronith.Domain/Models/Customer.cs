@@ -15,6 +15,7 @@ public sealed class Customer
     public bool IsDeleted { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? LastLoginAt { get; private set; }
+    public uint RowVersion { get; private set; }
 
     internal Customer() { }
 
@@ -58,12 +59,13 @@ public sealed class Customer
 
     internal static Customer Hydrate(Guid id, Guid tenantId, string email, string? passwordHash,
         string name, string? phone, string? externalId, string authProvider, bool isEmailVerified,
-        bool isActive, bool isDeleted, DateTimeOffset createdAt, DateTimeOffset? lastLoginAt) => new()
+        bool isActive, bool isDeleted, DateTimeOffset createdAt, DateTimeOffset? lastLoginAt,
+        uint rowVersion) => new()
     {
         Id = id, TenantId = tenantId, Email = email, PasswordHash = passwordHash,
         Name = name, Phone = phone, ExternalId = externalId, AuthProvider = authProvider,
         IsEmailVerified = isEmailVerified, IsActive = isActive, IsDeleted = isDeleted,
-        CreatedAt = createdAt, LastLoginAt = lastLoginAt
+        CreatedAt = createdAt, LastLoginAt = lastLoginAt, RowVersion = rowVersion
     };
 
     public void UpdateProfile(string name, string? phone)

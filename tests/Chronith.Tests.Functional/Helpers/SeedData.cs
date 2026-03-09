@@ -248,13 +248,14 @@ public static class SeedData
         Guid? id = null,
         string email = "seeded-customer@example.com",
         string name = "Seeded Customer",
-        string passwordHash = "$2a$11$dummyhashforseeding00000000000000000000000000000")
+        string passwordHash = "$2a$11$dummyhashforseeding00000000000000000000000000000",
+        Guid? tenantId = null)
     {
         var customerId = id ?? Guid.NewGuid();
         db.Customers.Add(new CustomerEntity
         {
             Id = customerId,
-            TenantId = TestConstants.TenantId,
+            TenantId = tenantId ?? TestConstants.TenantId,
             Email = email,
             Name = name,
             PasswordHash = passwordHash,
@@ -275,18 +276,21 @@ public static class SeedData
         bool magicLink = false,
         string? oidcIssuer = null,
         string? oidcClientId = null,
-        string? oidcAudience = null)
+        string? oidcAudience = null,
+        Guid? tenantId = null)
     {
+        var tid = tenantId ?? TestConstants.TenantId;
+
         // Idempotent — return existing id if already seeded for this tenant
         var existing = db.TenantAuthConfigs.IgnoreQueryFilters()
-            .FirstOrDefault(c => c.TenantId == TestConstants.TenantId);
+            .FirstOrDefault(c => c.TenantId == tid);
         if (existing is not null) return existing.Id;
 
         var id = Guid.NewGuid();
         db.TenantAuthConfigs.Add(new TenantAuthConfigEntity
         {
             Id = id,
-            TenantId = TestConstants.TenantId,
+            TenantId = tid,
             AllowBuiltInAuth = allowBuiltIn,
             OidcIssuer = oidcIssuer,
             OidcClientId = oidcClientId,

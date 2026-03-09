@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Chronith.Application.DTOs;
 using Chronith.Tests.Functional.Fixtures;
+using Chronith.Tests.Functional.Helpers;
 using FluentAssertions;
 
 namespace Chronith.Tests.Functional.Auth;
@@ -21,13 +22,13 @@ public class RefreshTests(FunctionalTestFixture fixture)
             tenantName = "T", tenantSlug = slug, timeZoneId = "UTC",
             email, password = "Password123"
         });
-        var tokens = await reg.Content.ReadFromJsonAsync<AuthTokenDto>();
+        var tokens = await reg.ReadFromApiJsonAsync<AuthTokenDto>();
 
         var response = await client.PostAsJsonAsync("/v1/auth/refresh",
             new { refreshToken = tokens!.RefreshToken });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var newTokens = await response.Content.ReadFromJsonAsync<AuthTokenDto>();
+        var newTokens = await response.ReadFromApiJsonAsync<AuthTokenDto>();
         newTokens!.AccessToken.Should().NotBeNullOrWhiteSpace();
         newTokens.RefreshToken.Should().NotBe(tokens.RefreshToken); // rotated
     }
@@ -44,7 +45,7 @@ public class RefreshTests(FunctionalTestFixture fixture)
             tenantName = "T", tenantSlug = slug, timeZoneId = "UTC",
             email, password = "Password123"
         });
-        var tokens = await reg.Content.ReadFromJsonAsync<AuthTokenDto>();
+        var tokens = await reg.ReadFromApiJsonAsync<AuthTokenDto>();
 
         // Use it once
         await client.PostAsJsonAsync("/v1/auth/refresh", new { refreshToken = tokens!.RefreshToken });

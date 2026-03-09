@@ -31,7 +31,7 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var result = await response.Content.ReadFromJsonAsync<CreateApiKeyResult>();
+        var result = await response.ReadFromApiJsonAsync<CreateApiKeyResult>();
         result.Should().NotBeNull();
         result!.Id.Should().NotBeEmpty();
         result.RawKey.Should().StartWith("cth_");
@@ -65,12 +65,12 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
             role = "TenantAdmin"
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<CreateApiKeyResult>();
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
 
         // List and verify it appears
         var listResp = await client.GetAsync(ApiKeysUrl);
         listResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var keys = await listResp.Content.ReadFromJsonAsync<List<ApiKeyDto>>();
+        var keys = await listResp.ReadFromApiJsonAsync<List<ApiKeyDto>>();
         keys.Should().NotBeNull();
         keys!.Should().Contain(k => k.Id == created!.Id);
     }
@@ -88,7 +88,7 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
             role = "TenantAdmin"
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<CreateApiKeyResult>();
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
 
         // Revoke it
         var deleteResp = await client.DeleteAsync(ApiKeyUrl(created!.Id));
@@ -108,7 +108,7 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
             role = "TenantAdmin"
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<CreateApiKeyResult>();
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
         var rawKey = created!.RawKey;
 
         // Use the raw key as X-Api-Key header (no Bearer token)
@@ -132,7 +132,7 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
             role = "TenantAdmin"
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<CreateApiKeyResult>();
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
         var rawKey = created!.RawKey;
 
         // Revoke the key

@@ -83,7 +83,7 @@ public sealed class BookingCheckoutUrlPersistenceTests(FunctionalTestFixture fix
             });
 
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<BookingDto>();
+        var created = await createResp.ReadFromApiJsonAsync<BookingDto>();
         created.Should().NotBeNull();
 
         // The POST response itself should already have CheckoutUrl
@@ -93,7 +93,7 @@ public sealed class BookingCheckoutUrlPersistenceTests(FunctionalTestFixture fix
         // GET — loads the booking fresh from the database
         var getResp = await client.GetAsync($"/v1/bookings/{created.Id}");
         getResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var fetched = await getResp.Content.ReadFromJsonAsync<BookingDto>();
+        var fetched = await getResp.ReadFromApiJsonAsync<BookingDto>();
         fetched.Should().NotBeNull();
 
         // This is the regression assertion: CheckoutUrl must survive the round-trip to the DB

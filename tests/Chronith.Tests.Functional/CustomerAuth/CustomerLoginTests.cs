@@ -9,12 +9,13 @@ namespace Chronith.Tests.Functional.CustomerAuth;
 public sealed class CustomerLoginTests(FunctionalTestFixture fixture)
 {
     private const string TenantSlug = "cust-login";
+    private static readonly Guid TenantId = Guid.Parse("10000000-0000-0000-0000-000000000002");
 
     private async Task EnsureSeedAsync()
     {
         await using var db = SeedData.CreateDbContext(fixture.Factory);
-        await SeedData.SeedTenantAsync(db, slug: TenantSlug);
-        await SeedData.SeedTenantAuthConfigAsync(db);
+        await SeedData.SeedTenantAsync(db, id: TenantId, slug: TenantSlug);
+        await SeedData.SeedTenantAuthConfigAsync(db, tenantId: TenantId);
     }
 
     [Fact]
@@ -36,7 +37,7 @@ public sealed class CustomerLoginTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CustomerAuthTokenDto>();
+        var body = await response.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
         body!.AccessToken.Should().NotBeNullOrWhiteSpace();
         body.RefreshToken.Should().NotBeNullOrWhiteSpace();
         body.Customer.Email.Should().Be(email);

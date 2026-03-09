@@ -25,7 +25,7 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
             new Claim("tenant_id", user.TenantId.ToString()),
             new Claim("email", user.Email),
             new Claim("chronith_role", user.Role.ToString()),
-            new Claim(ClaimTypes.Role, user.AuthorizationRole),
+            new Claim("role", user.AuthorizationRole),
         };
 
         var token = new JwtSecurityToken(
@@ -48,7 +48,7 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
             new Claim("tenant_id", customer.TenantId.ToString()),
             new Claim("customer_id", customer.Id.ToString()),
             new Claim("email", customer.Email),
-            new Claim(ClaimTypes.Role, "Customer"),
+            new Claim("role", "Customer"),
         };
 
         var token = new JwtSecurityToken(

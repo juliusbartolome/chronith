@@ -21,13 +21,17 @@ public sealed class UpsertTenantAuthConfigCommandHandler(
         if (config is null)
         {
             config = Domain.Models.TenantAuthConfig.Create(tenantContext.TenantId);
+            config.Update(request.AllowBuiltInAuth, request.OidcIssuer, request.OidcClientId,
+                request.OidcAudience, request.MagicLinkEnabled);
             await authConfigRepository.AddAsync(config, cancellationToken);
         }
+        else
+        {
+            config.Update(request.AllowBuiltInAuth, request.OidcIssuer, request.OidcClientId,
+                request.OidcAudience, request.MagicLinkEnabled);
+            authConfigRepository.Update(config);
+        }
 
-        config.Update(request.AllowBuiltInAuth, request.OidcIssuer, request.OidcClientId,
-            request.OidcAudience, request.MagicLinkEnabled);
-
-        authConfigRepository.Update(config);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return config.ToDto();

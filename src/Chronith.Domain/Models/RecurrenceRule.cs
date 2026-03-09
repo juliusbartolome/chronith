@@ -14,6 +14,7 @@ public sealed class RecurrenceRule
     public DateOnly? SeriesEnd { get; private set; }
     public int? MaxOccurrences { get; private set; }
     public bool IsDeleted { get; private set; }
+    public uint RowVersion { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
     internal RecurrenceRule() { }
@@ -62,6 +63,7 @@ public sealed class RecurrenceRule
         DateOnly? seriesEnd,
         int? maxOccurrences,
         bool isDeleted,
+        uint rowVersion,
         DateTimeOffset createdAt) => new()
     {
         Id = id,
@@ -74,6 +76,7 @@ public sealed class RecurrenceRule
         SeriesEnd = seriesEnd,
         MaxOccurrences = maxOccurrences,
         IsDeleted = isDeleted,
+        RowVersion = rowVersion,
         CreatedAt = createdAt
     };
 

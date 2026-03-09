@@ -9,12 +9,13 @@ namespace Chronith.Tests.Functional.CustomerAuth;
 public sealed class CustomerBookingsTests(FunctionalTestFixture fixture)
 {
     private const string TenantSlug = "cust-bookings";
+    private static readonly Guid TenantId = Guid.Parse("10000000-0000-0000-0000-000000000005");
 
     private async Task EnsureSeedAsync()
     {
         await using var db = SeedData.CreateDbContext(fixture.Factory);
-        await SeedData.SeedTenantAsync(db, slug: TenantSlug);
-        await SeedData.SeedTenantAuthConfigAsync(db);
+        await SeedData.SeedTenantAsync(db, id: TenantId, slug: TenantSlug);
+        await SeedData.SeedTenantAuthConfigAsync(db, tenantId: TenantId);
     }
 
     [Fact]
@@ -28,7 +29,7 @@ public sealed class CustomerBookingsTests(FunctionalTestFixture fixture)
         {
             email, password = "Password123!", name = "Booking Test"
         });
-        var tokens = await reg.Content.ReadFromJsonAsync<CustomerAuthTokenDto>();
+        var tokens = await reg.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
 
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokens!.AccessToken);
@@ -49,7 +50,7 @@ public sealed class CustomerBookingsTests(FunctionalTestFixture fixture)
         {
             email, password = "Password123!", name = "Detail Test"
         });
-        var tokens = await reg.Content.ReadFromJsonAsync<CustomerAuthTokenDto>();
+        var tokens = await reg.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
 
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokens!.AccessToken);

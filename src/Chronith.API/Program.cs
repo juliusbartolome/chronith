@@ -17,6 +17,7 @@ using Microsoft.Extensions.Options;
 using NSwag;
 using Serilog;
 using System.Globalization;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -151,10 +152,13 @@ app.Use(async (ctx, next) =>
 
 app.UseMiddleware<VersionRedirectMiddleware>();
 
+app.UseMiddleware<RequestBodyHashMiddleware>();
+
 app.UseFastEndpoints(c =>
 {
     c.Endpoints.RoutePrefix = "v1";
     c.Errors.UseProblemDetails();
+    c.Serializer.Options.Converters.Add(new JsonStringEnumConverter());
     c.Endpoints.Configurator = ep =>
     {
         ep.PreProcessor<IdempotencyPreProcessor>(Order.Before);

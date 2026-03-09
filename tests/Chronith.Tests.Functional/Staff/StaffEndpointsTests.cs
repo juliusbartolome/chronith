@@ -37,7 +37,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var staff = await response.Content.ReadFromJsonAsync<StaffMemberDto>();
+        var staff = await response.ReadFromApiJsonAsync<StaffMemberDto>();
         staff.Should().NotBeNull();
         staff!.Id.Should().NotBeEmpty();
         staff.Name.Should().Be("Alice Test");
@@ -59,12 +59,12 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
             availabilityWindows = Array.Empty<object>()
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<StaffMemberDto>();
+        var created = await createResp.ReadFromApiJsonAsync<StaffMemberDto>();
 
         // List and verify
         var listResp = await client.GetAsync("/v1/staff");
         listResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var staffList = await listResp.Content.ReadFromJsonAsync<List<StaffMemberDto>>();
+        var staffList = await listResp.ReadFromApiJsonAsync<List<StaffMemberDto>>();
         staffList.Should().NotBeNull();
         staffList!.Should().Contain(s => s.Id == created!.Id);
     }
@@ -83,13 +83,13 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
             availabilityWindows = Array.Empty<object>()
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<StaffMemberDto>();
+        var created = await createResp.ReadFromApiJsonAsync<StaffMemberDto>();
 
         // Get as TenantStaff role
         var staffClient = fixture.CreateClient("TenantStaff");
         var getResp = await staffClient.GetAsync($"/v1/staff/{created!.Id}");
         getResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var staff = await getResp.Content.ReadFromJsonAsync<StaffMemberDto>();
+        var staff = await getResp.ReadFromApiJsonAsync<StaffMemberDto>();
         staff.Should().NotBeNull();
         staff!.Id.Should().Be(created.Id);
         staff.Name.Should().Be("Get Test Staff");
@@ -109,7 +109,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
             availabilityWindows = Array.Empty<object>()
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<StaffMemberDto>();
+        var created = await createResp.ReadFromApiJsonAsync<StaffMemberDto>();
 
         // Update
         var updateResp = await client.PutAsJsonAsync($"/v1/staff/{created!.Id}", new
@@ -123,7 +123,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
         });
 
         updateResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var updated = await updateResp.Content.ReadFromJsonAsync<StaffMemberDto>();
+        var updated = await updateResp.ReadFromApiJsonAsync<StaffMemberDto>();
         updated.Should().NotBeNull();
         updated!.Name.Should().Be("Updated Name");
         updated.AvailabilityWindows.Should().HaveCount(1);
@@ -143,7 +143,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
             availabilityWindows = Array.Empty<object>()
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<StaffMemberDto>();
+        var created = await createResp.ReadFromApiJsonAsync<StaffMemberDto>();
 
         // Delete
         var deleteResp = await client.DeleteAsync($"/v1/staff/{created!.Id}");
@@ -151,7 +151,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
 
         // Verify it's gone from list
         var listResp = await client.GetAsync("/v1/staff");
-        var staffList = await listResp.Content.ReadFromJsonAsync<List<StaffMemberDto>>();
+        var staffList = await listResp.ReadFromApiJsonAsync<List<StaffMemberDto>>();
         staffList!.Should().NotContain(s => s.Id == created.Id);
     }
 
@@ -169,7 +169,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
             availabilityWindows = Array.Empty<object>()
         });
         staffResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var staff = await staffResp.Content.ReadFromJsonAsync<StaffMemberDto>();
+        var staff = await staffResp.ReadFromApiJsonAsync<StaffMemberDto>();
 
         // Seed a booking
         await using var db = SeedData.CreateDbContext(fixture.Factory);

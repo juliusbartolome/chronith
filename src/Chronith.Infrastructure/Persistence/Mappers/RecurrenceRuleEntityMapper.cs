@@ -18,6 +18,7 @@ internal static class RecurrenceRuleEntityMapper
         SeriesEnd = r.SeriesEnd,
         MaxOccurrences = r.MaxOccurrences,
         IsDeleted = r.IsDeleted,
+        RowVersion = r.RowVersion,
         CreatedAt = r.CreatedAt
     };
 
@@ -33,5 +34,6 @@ internal static class RecurrenceRuleEntityMapper
             e.SeriesEnd,
             e.MaxOccurrences,
             e.IsDeleted,
+            e.RowVersion,
             e.CreatedAt);
 }

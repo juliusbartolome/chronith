@@ -39,7 +39,7 @@ public sealed class IdempotencyTests(FunctionalTestFixture fixture)
         var response = await client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.Status.Should().Be(BookingStatus.PendingPayment);
     }
@@ -129,7 +129,7 @@ public sealed class IdempotencyTests(FunctionalTestFixture fixture)
         request1.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
         var response1 = await client.SendAsync(request1);
         response1.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking1 = await response1.Content.ReadFromJsonAsync<BookingDto>();
+        var booking1 = await response1.ReadFromApiJsonAsync<BookingDto>();
 
         // Second request with key B
         var request2 = new HttpRequestMessage(HttpMethod.Post, $"/v1/booking-types/{BookingTypeSlug}/bookings")
@@ -144,7 +144,7 @@ public sealed class IdempotencyTests(FunctionalTestFixture fixture)
         var response2 = await client.SendAsync(request2);
 
         response2.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking2 = await response2.Content.ReadFromJsonAsync<BookingDto>();
+        var booking2 = await response2.ReadFromApiJsonAsync<BookingDto>();
         booking2!.Id.Should().NotBe(booking1!.Id);
     }
 
@@ -162,7 +162,7 @@ public sealed class IdempotencyTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.Status.Should().Be(BookingStatus.PendingPayment);
     }

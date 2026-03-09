@@ -9,12 +9,13 @@ namespace Chronith.Tests.Functional.CustomerAuth;
 public sealed class CustomerMeTests(FunctionalTestFixture fixture)
 {
     private const string TenantSlug = "cust-me";
+    private static readonly Guid TenantId = Guid.Parse("10000000-0000-0000-0000-000000000004");
 
     private async Task EnsureSeedAsync()
     {
         await using var db = SeedData.CreateDbContext(fixture.Factory);
-        await SeedData.SeedTenantAsync(db, slug: TenantSlug);
-        await SeedData.SeedTenantAuthConfigAsync(db);
+        await SeedData.SeedTenantAsync(db, id: TenantId, slug: TenantSlug);
+        await SeedData.SeedTenantAuthConfigAsync(db, tenantId: TenantId);
     }
 
     [Fact]
@@ -29,7 +30,7 @@ public sealed class CustomerMeTests(FunctionalTestFixture fixture)
         {
             email, password = "Password123!", name = "Me Test"
         });
-        var tokens = await reg.Content.ReadFromJsonAsync<CustomerAuthTokenDto>();
+        var tokens = await reg.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
 
         // Use the access token for the /me endpoint
         client.DefaultRequestHeaders.Authorization =
@@ -38,7 +39,7 @@ public sealed class CustomerMeTests(FunctionalTestFixture fixture)
         var response = await client.GetAsync($"/v1/public/{TenantSlug}/auth/me");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CustomerDto>();
+        var body = await response.ReadFromApiJsonAsync<CustomerDto>();
         body!.Email.Should().Be(email);
         body.Name.Should().Be("Me Test");
     }
@@ -54,7 +55,7 @@ public sealed class CustomerMeTests(FunctionalTestFixture fixture)
         {
             email, password = "Password123!", name = "Original Name"
         });
-        var tokens = await reg.Content.ReadFromJsonAsync<CustomerAuthTokenDto>();
+        var tokens = await reg.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
 
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokens!.AccessToken);
@@ -66,7 +67,7 @@ public sealed class CustomerMeTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CustomerDto>();
+        var body = await response.ReadFromApiJsonAsync<CustomerDto>();
         body!.Name.Should().Be("Updated Name");
         body.Phone.Should().Be("+639171234567");
     }
@@ -77,14 +78,14 @@ public sealed class CustomerMeTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var customerId = Guid.NewGuid();
         await using var db = SeedData.CreateDbContext(fixture.Factory);
-        await SeedData.SeedCustomerAsync(db, id: customerId, email: $"seeded-{customerId:N}@example.com");
+        await SeedData.SeedCustomerAsync(db, id: customerId, email: $"seeded-{customerId:N}@example.com", tenantId: TenantId);
 
-        var client = fixture.CreateClientWithCustomerToken(customerId.ToString());
+        var client = fixture.CreateClientWithCustomerToken(customerId.ToString(), tenantId: TenantId);
 
         var response = await client.GetAsync($"/v1/public/{TenantSlug}/auth/me");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CustomerDto>();
+        var body = await response.ReadFromApiJsonAsync<CustomerDto>();
         body!.Id.Should().Be(customerId);
     }
 }

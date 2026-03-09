@@ -1,5 +1,4 @@
-using System.Security.Cryptography;
-using System.Text;
+using Chronith.API.Middleware;
 using Chronith.Application.Interfaces;
 using FastEndpoints;
 
@@ -30,14 +29,10 @@ public sealed class IdempotencyPreProcessor : IGlobalPreProcessor
         if (string.IsNullOrEmpty(tenantIdClaim) || !Guid.TryParse(tenantIdClaim, out var tenantId))
             return;
 
-        // Enable request body buffering and compute SHA-256 hash
-        httpContext.Request.EnableBuffering();
-        httpContext.Request.Body.Position = 0;
-        using var reader = new StreamReader(httpContext.Request.Body, Encoding.UTF8, leaveOpen: true);
-        var requestBody = await reader.ReadToEndAsync(ct);
-        httpContext.Request.Body.Position = 0;
-
-        var requestHash = ComputeSha256(requestBody);
+        // Read pre-computed body hash from RequestBodyHashMiddleware.
+        // The middleware runs before FastEndpoints, so the body was read before model binding consumed it.
+        var requestHash = httpContext.Items[RequestBodyHashMiddleware.RequestHashItemsKey] as string
+            ?? string.Empty;
 
         var endpointRoute = httpContext.Request.Path.Value ?? string.Empty;
 
@@ -79,12 +74,6 @@ public sealed class IdempotencyPreProcessor : IGlobalPreProcessor
         var captureStream = new MemoryStream();
         httpContext.Response.Body = captureStream;
         httpContext.Items[IdempotencyOriginalBodyKey] = originalBodyStream;
-    }
-
-    private static string ComputeSha256(string input)
-    {
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-        return Convert.ToHexStringLower(hash);
     }
 }
 

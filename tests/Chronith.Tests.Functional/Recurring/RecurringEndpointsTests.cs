@@ -35,7 +35,7 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var rule = await response.Content.ReadFromJsonAsync<RecurrenceRuleDto>();
+        var rule = await response.ReadFromApiJsonAsync<RecurrenceRuleDto>();
         rule.Should().NotBeNull();
         rule!.Id.Should().NotBeEmpty();
         rule.Frequency.Should().Be(RecurrenceFrequency.Weekly);
@@ -76,7 +76,7 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
 
         var listResp = await client.GetAsync("/v1/recurring");
         listResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var rules = await listResp.Content.ReadFromJsonAsync<List<RecurrenceRuleDto>>();
+        var rules = await listResp.ReadFromApiJsonAsync<List<RecurrenceRuleDto>>();
         rules.Should().NotBeNull();
         rules!.Should().NotBeEmpty();
     }
@@ -96,13 +96,13 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
             maxOccurrences = 5
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<RecurrenceRuleDto>();
+        var created = await createResp.ReadFromApiJsonAsync<RecurrenceRuleDto>();
 
         // Get as TenantStaff
         var staffClient = fixture.CreateClient("TenantStaff");
         var getResp = await staffClient.GetAsync($"/v1/recurring/{created!.Id}");
         getResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var rule = await getResp.Content.ReadFromJsonAsync<RecurrenceRuleDto>();
+        var rule = await getResp.ReadFromApiJsonAsync<RecurrenceRuleDto>();
         rule.Should().NotBeNull();
         rule!.Id.Should().Be(created.Id);
     }
@@ -121,7 +121,7 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
             seriesStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)).ToString("yyyy-MM-dd")
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<RecurrenceRuleDto>();
+        var created = await createResp.ReadFromApiJsonAsync<RecurrenceRuleDto>();
 
         // Update
         var updateResp = await client.PutAsJsonAsync($"/v1/recurring/{created!.Id}", new
@@ -134,7 +134,7 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         });
 
         updateResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var updated = await updateResp.Content.ReadFromJsonAsync<RecurrenceRuleDto>();
+        var updated = await updateResp.ReadFromApiJsonAsync<RecurrenceRuleDto>();
         updated.Should().NotBeNull();
         updated!.Frequency.Should().Be(RecurrenceFrequency.Weekly);
         updated.Interval.Should().Be(2);
@@ -155,7 +155,7 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
             seriesStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)).ToString("yyyy-MM-dd")
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<RecurrenceRuleDto>();
+        var created = await createResp.ReadFromApiJsonAsync<RecurrenceRuleDto>();
 
         // Cancel (DELETE)
         var deleteResp = await client.DeleteAsync($"/v1/recurring/{created!.Id}");
@@ -177,7 +177,7 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
             maxOccurrences = 7
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<RecurrenceRuleDto>();
+        var created = await createResp.ReadFromApiJsonAsync<RecurrenceRuleDto>();
 
         var from = start;
         var to = start.AddDays(30);
@@ -186,7 +186,7 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
             $"/v1/recurring/{created!.Id}/occurrences?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}");
 
         occResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var occurrences = await occResp.Content.ReadFromJsonAsync<List<string>>();
+        var occurrences = await occResp.ReadFromApiJsonAsync<List<string>>();
         occurrences.Should().NotBeNull();
         occurrences!.Count.Should().Be(7);
     }

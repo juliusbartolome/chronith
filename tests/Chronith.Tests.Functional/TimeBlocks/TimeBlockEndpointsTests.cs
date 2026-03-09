@@ -33,7 +33,7 @@ public sealed class TimeBlockEndpointsTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var block = await response.Content.ReadFromJsonAsync<TimeBlockDto>();
+        var block = await response.ReadFromApiJsonAsync<TimeBlockDto>();
         block.Should().NotBeNull();
         block!.Reason.Should().Be("Staff meeting");
         block.Start.Should().BeCloseTo(start, TimeSpan.FromSeconds(1));
@@ -61,7 +61,7 @@ public sealed class TimeBlockEndpointsTests(FunctionalTestFixture fixture)
         var listResp = await client.GetAsync($"/v1/time-blocks?from={from}&to={to}");
 
         listResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var blocks = await listResp.Content.ReadFromJsonAsync<List<TimeBlockDto>>();
+        var blocks = await listResp.ReadFromApiJsonAsync<List<TimeBlockDto>>();
         blocks.Should().NotBeNull();
         blocks!.Should().NotBeEmpty();
     }
@@ -81,7 +81,7 @@ public sealed class TimeBlockEndpointsTests(FunctionalTestFixture fixture)
             reason = "Delete test block"
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var block = await createResp.Content.ReadFromJsonAsync<TimeBlockDto>();
+        var block = await createResp.ReadFromApiJsonAsync<TimeBlockDto>();
 
         // Delete
         var deleteResp = await client.DeleteAsync($"/v1/time-blocks/{block!.Id}");
@@ -91,7 +91,7 @@ public sealed class TimeBlockEndpointsTests(FunctionalTestFixture fixture)
         var from = Uri.EscapeDataString(start.AddHours(-1).ToString("o"));
         var to = Uri.EscapeDataString(start.AddHours(3).ToString("o"));
         var listResp = await client.GetAsync($"/v1/time-blocks?from={from}&to={to}");
-        var blocks = await listResp.Content.ReadFromJsonAsync<List<TimeBlockDto>>();
+        var blocks = await listResp.ReadFromApiJsonAsync<List<TimeBlockDto>>();
         blocks!.Should().NotContain(b => b.Id == block.Id);
     }
 
@@ -123,7 +123,7 @@ public sealed class TimeBlockEndpointsTests(FunctionalTestFixture fixture)
             $"/v1/booking-types/{BookingTypeSlug}/availability?from={from}&to={to}");
 
         availResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var availability = await availResp.Content.ReadFromJsonAsync<AvailabilityDto>();
+        var availability = await availResp.ReadFromApiJsonAsync<AvailabilityDto>();
         availability.Should().NotBeNull();
 
         // Verify no slots overlap with the time block

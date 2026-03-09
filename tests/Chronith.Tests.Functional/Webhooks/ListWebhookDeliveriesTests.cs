@@ -24,7 +24,7 @@ public sealed class ListWebhookDeliveriesTests(FunctionalTestFixture fixture)
         var response = await client.GetAsync($"/v1/webhooks/{webhookId}/deliveries");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<PagedResultDto<WebhookDeliveryDto>>();
+        var body = await response.ReadFromApiJsonAsync<PagedResultDto<WebhookDeliveryDto>>();
         body!.TotalCount.Should().Be(3);
         body.Items.Should().HaveCount(3);
     }
@@ -82,7 +82,7 @@ public sealed class ListWebhookDeliveriesTests(FunctionalTestFixture fixture)
         var response = await client.GetAsync($"/v1/webhooks/{webhookId}/deliveries?page=2&pageSize=10");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<PagedResultDto<WebhookDeliveryDto>>();
+        var body = await response.ReadFromApiJsonAsync<PagedResultDto<WebhookDeliveryDto>>();
         body!.TotalCount.Should().BeGreaterThanOrEqualTo(25);
         body.Items.Should().HaveCount(10);
     }

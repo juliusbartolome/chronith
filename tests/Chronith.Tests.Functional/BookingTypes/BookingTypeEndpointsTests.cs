@@ -36,7 +36,7 @@ public sealed class BookingTypeEndpointsTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<BookingTypeDto>();
+        var body = await response.ReadFromApiJsonAsync<BookingTypeDto>();
         body.Should().NotBeNull();
         body!.Slug.Should().Be(slug);
         body.Capacity.Should().Be(3);
@@ -55,7 +55,7 @@ public sealed class BookingTypeEndpointsTests(FunctionalTestFixture fixture)
         var response = await client.GetAsync($"{BaseUrl}/{slug}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<BookingTypeDto>();
+        var body = await response.ReadFromApiJsonAsync<BookingTypeDto>();
         body!.Slug.Should().Be(slug);
     }
 
@@ -70,7 +70,7 @@ public sealed class BookingTypeEndpointsTests(FunctionalTestFixture fixture)
         var response = await client.GetAsync(BaseUrl);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<IReadOnlyList<BookingTypeDto>>();
+        var body = await response.ReadFromApiJsonAsync<IReadOnlyList<BookingTypeDto>>();
         body.Should().NotBeNull();
         body!.Count.Should().BeGreaterThan(0);
     }
@@ -94,7 +94,7 @@ public sealed class BookingTypeEndpointsTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<BookingTypeDto>();
+        var body = await response.ReadFromApiJsonAsync<BookingTypeDto>();
         body!.Name.Should().Be("Updated Name");
         body.Capacity.Should().Be(10);
     }
