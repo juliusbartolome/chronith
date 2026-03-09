@@ -42,6 +42,9 @@ public sealed class ChronithDbContext : DbContext
     public DbSet<TenantAuthConfigEntity> TenantAuthConfigs => Set<TenantAuthConfigEntity>();
     public DbSet<RecurrenceRuleEntity> RecurrenceRules => Set<RecurrenceRuleEntity>();
 
+    // No global query filter: idempotency keys have no IsDeleted; cleaned up via TTL
+    public DbSet<IdempotencyKeyEntity> IdempotencyKeys => Set<IdempotencyKeyEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("chronith");

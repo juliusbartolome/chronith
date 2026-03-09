@@ -62,6 +62,7 @@ public static class DependencyInjection
         services.AddScoped<ICustomerRefreshTokenRepository, CustomerRefreshTokenRepository>();
         services.AddScoped<ITenantAuthConfigRepository, TenantAuthConfigRepository>();
         services.AddScoped<IRecurrenceRuleRepository, RecurrenceRuleRepository>();
+        services.AddScoped<IIdempotencyKeyRepository, IdempotencyKeyRepository>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IOidcTokenValidator, OidcTokenValidator>();
         services.AddHostedService<WebhookDispatcherService>();
@@ -69,6 +70,7 @@ public static class DependencyInjection
         services.AddHostedService<NotificationDispatcherService>();
         services.AddHostedService<ReminderSchedulerService>();
         services.AddHostedService<RecurringBookingGeneratorService>();
+        services.AddHostedService<IdempotencyCleanupService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
         {
@@ -79,6 +81,7 @@ public static class DependencyInjection
         services.Configure<NotificationDispatcherOptions>(configuration.GetSection("NotificationDispatcher"));
         services.Configure<ReminderSchedulerOptions>(configuration.GetSection("ReminderScheduler"));
         services.Configure<RecurringBookingGeneratorOptions>(configuration.GetSection("RecurringBookings"));
+        services.Configure<IdempotencyCleanupOptions>(configuration.GetSection("IdempotencyCleanup"));
 
         // Notification channels
         services.Configure<SmtpOptions>(configuration.GetSection("Notifications:Smtp"));
