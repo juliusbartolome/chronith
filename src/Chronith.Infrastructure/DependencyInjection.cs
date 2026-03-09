@@ -1,5 +1,6 @@
 using Chronith.Application.Interfaces;
 using Chronith.Application.Options;
+using Chronith.Application.Services;
 using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Caching;
 using Chronith.Infrastructure.Notifications;
@@ -61,6 +62,7 @@ public static class DependencyInjection
         services.AddScoped<ICustomerRefreshTokenRepository, CustomerRefreshTokenRepository>();
         services.AddScoped<ITenantAuthConfigRepository, TenantAuthConfigRepository>();
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IOidcTokenValidator, OidcTokenValidator>();
         services.AddHostedService<WebhookDispatcherService>();
         services.AddHostedService<WaitlistPromotionService>();
         services.AddHostedService<NotificationDispatcherService>();

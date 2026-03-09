@@ -7,6 +7,9 @@ public interface ITokenService
     /// <summary>Creates a 15-minute JWT access token for the given user.</summary>
     string CreateAccessToken(TenantUser user);
 
+    /// <summary>Creates a 15-minute JWT access token for the given customer.</summary>
+    string CreateCustomerAccessToken(Customer customer);
+
     /// <summary>
     /// Creates a new opaque refresh token.
     /// Returns (rawToken, tokenHash) — store the hash, return the raw token to the client.
