@@ -21,7 +21,7 @@ public sealed class ListWebhookDeliveriesTests(FunctionalTestFixture fixture)
         await SeedData.SeedOutboxEntriesAsync(db, webhookId, count: 3);
 
         var client = fixture.CreateClient("TenantAdmin");
-        var response = await client.GetAsync($"/webhooks/{webhookId}/deliveries");
+        var response = await client.GetAsync($"/v1/webhooks/{webhookId}/deliveries");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<PagedResultDto<WebhookDeliveryDto>>();
@@ -38,7 +38,7 @@ public sealed class ListWebhookDeliveriesTests(FunctionalTestFixture fixture)
         var webhookId = await SeedData.SeedWebhookAsync(db, bookingTypeId);
 
         var client = fixture.CreateClient("TenantStaff");
-        var response = await client.GetAsync($"/webhooks/{webhookId}/deliveries");
+        var response = await client.GetAsync($"/v1/webhooks/{webhookId}/deliveries");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -52,7 +52,7 @@ public sealed class ListWebhookDeliveriesTests(FunctionalTestFixture fixture)
         var webhookId = await SeedData.SeedWebhookAsync(db, bookingTypeId);
 
         var client = fixture.CreateClient("Customer");
-        var response = await client.GetAsync($"/webhooks/{webhookId}/deliveries");
+        var response = await client.GetAsync($"/v1/webhooks/{webhookId}/deliveries");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -64,7 +64,7 @@ public sealed class ListWebhookDeliveriesTests(FunctionalTestFixture fixture)
         await SeedData.SeedTenantAsync(db);
 
         var client = fixture.CreateClient("TenantAdmin");
-        var response = await client.GetAsync($"/webhooks/{Guid.NewGuid()}/deliveries");
+        var response = await client.GetAsync($"/v1/webhooks/{Guid.NewGuid()}/deliveries");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -79,7 +79,7 @@ public sealed class ListWebhookDeliveriesTests(FunctionalTestFixture fixture)
         await SeedData.SeedOutboxEntriesAsync(db, webhookId, count: 25);
 
         var client = fixture.CreateClient("TenantAdmin");
-        var response = await client.GetAsync($"/webhooks/{webhookId}/deliveries?page=2&pageSize=10");
+        var response = await client.GetAsync($"/v1/webhooks/{webhookId}/deliveries?page=2&pageSize=10");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<PagedResultDto<WebhookDeliveryDto>>();

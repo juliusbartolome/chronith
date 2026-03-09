@@ -18,8 +18,8 @@ public sealed class WebhookEndpointsTests(FunctionalTestFixture fixture)
         await SeedData.SeedBookingTypeAsync(db, BookingTypeSlug);
     }
 
-    private string WebhooksUrl => $"/booking-types/{BookingTypeSlug}/webhooks";
-    private string WebhookUrl(Guid id) => $"/booking-types/{BookingTypeSlug}/webhooks/{id}";
+    private string WebhooksUrl => $"/v1/booking-types/{BookingTypeSlug}/webhooks";
+    private string WebhookUrl(Guid id) => $"/v1/booking-types/{BookingTypeSlug}/webhooks/{id}";
 
     [Fact]
     public async Task CreateWebhook_AsAdmin_Returns201WithId()

@@ -58,7 +58,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("Customer");
 
         var response = await client.PostAsJsonAsync(
-            $"/booking-types/{FreeBookingSlug}/bookings",
+            $"/v1/booking-types/{FreeBookingSlug}/bookings",
             new
             {
                 startTime = "2026-08-01T09:00:00Z",
@@ -80,7 +80,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("Customer");
 
         var response = await client.PostAsJsonAsync(
-            $"/booking-types/{FreeBookingSlug}/bookings",
+            $"/v1/booking-types/{FreeBookingSlug}/bookings",
             new
             {
                 startTime = "2026-08-01T10:00:00Z",
@@ -103,7 +103,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("Customer");
 
         var response = await client.PostAsJsonAsync(
-            $"/booking-types/{AutoStubSlug}/bookings",
+            $"/v1/booking-types/{AutoStubSlug}/bookings",
             new
             {
                 startTime = "2026-08-02T09:00:00Z",
@@ -125,7 +125,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("Customer");
 
         var response = await client.PostAsJsonAsync(
-            $"/booking-types/{AutoStubSlug}/bookings",
+            $"/v1/booking-types/{AutoStubSlug}/bookings",
             new
             {
                 startTime = "2026-08-02T10:00:00Z",
@@ -148,7 +148,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("Customer");
 
         var response = await client.PostAsJsonAsync(
-            $"/booking-types/{AutoStubSlug}/bookings",
+            $"/v1/booking-types/{AutoStubSlug}/bookings",
             new
             {
                 startTime = "2026-08-02T11:00:00Z",
@@ -173,7 +173,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("Customer");
 
         var response = await client.PostAsJsonAsync(
-            $"/booking-types/{ManualSlug}/bookings",
+            $"/v1/booking-types/{ManualSlug}/bookings",
             new
             {
                 startTime = "2026-08-03T09:00:00Z",
@@ -194,7 +194,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("Customer");
 
         var response = await client.PostAsJsonAsync(
-            $"/booking-types/{ManualSlug}/bookings",
+            $"/v1/booking-types/{ManualSlug}/bookings",
             new
             {
                 startTime = "2026-08-03T10:00:00Z",

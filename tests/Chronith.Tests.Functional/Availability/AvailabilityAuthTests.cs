@@ -16,7 +16,7 @@ public sealed class AvailabilityAuthTests(FunctionalTestFixture fixture)
         await SeedData.SeedBookingTypeAsync(db, Slug);
     }
 
-    private string Url => $"/booking-types/{Slug}/availability?from=2026-04-01T00:00:00Z&to=2026-04-07T00:00:00Z";
+    private string Url => $"/v1/booking-types/{Slug}/availability?from=2026-04-01T00:00:00Z&to=2026-04-07T00:00:00Z";
 
     // TenantAdmin, TenantStaff, Customer → 200; TenantPaymentService → 403; anon → 401
     [Theory]

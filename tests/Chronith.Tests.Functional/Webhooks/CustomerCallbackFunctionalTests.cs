@@ -22,7 +22,7 @@ public sealed class CustomerCallbackFunctionalTests(FunctionalTestFixture fixtur
 
         // Update booking type to set a CustomerCallbackUrl via PUT
         var adminClient = fixture.CreateClient("TenantAdmin");
-        var updateResponse = await adminClient.PutAsJsonAsync($"/booking-types/{slug}", new
+        var updateResponse = await adminClient.PutAsJsonAsync($"/v1/booking-types/{slug}", new
         {
             name = "CB Func Type",
             capacity = 5,
@@ -45,7 +45,7 @@ public sealed class CustomerCallbackFunctionalTests(FunctionalTestFixture fixtur
 
         // Create booking
         var customerClient = fixture.CreateClient("Customer");
-        var createResp = await customerClient.PostAsJsonAsync($"/booking-types/{slug}/bookings", new
+        var createResp = await customerClient.PostAsJsonAsync($"/v1/booking-types/{slug}/bookings", new
         {
             startTime = "2027-08-01T09:00:00Z",
             customerEmail = $"cb-func-{Guid.NewGuid():N}@example.com"
@@ -56,14 +56,14 @@ public sealed class CustomerCallbackFunctionalTests(FunctionalTestFixture fixtur
 
         // Pay → PendingVerification
         var staffClient = fixture.CreateClient("TenantStaff");
-        var payResp = await staffClient.PostAsJsonAsync($"/bookings/{booking!.Id}/pay", new
+        var payResp = await staffClient.PostAsJsonAsync($"/v1/bookings/{booking!.Id}/pay", new
         {
             bookingTypeSlug = slug
         });
         payResp.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // Confirm → Confirmed (triggers outbox handler)
-        var confirmResp = await staffClient.PostAsJsonAsync($"/bookings/{booking.Id}/confirm", new
+        var confirmResp = await staffClient.PostAsJsonAsync($"/v1/bookings/{booking.Id}/confirm", new
         {
             bookingTypeSlug = slug
         });

@@ -23,7 +23,7 @@ public sealed class TenantMetricsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.GetAsync("/tenant/metrics");
+        var response = await client.GetAsync("/v1/tenant/metrics");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -40,7 +40,7 @@ public sealed class TenantMetricsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantStaff");
 
-        var response = await client.GetAsync("/tenant/metrics");
+        var response = await client.GetAsync("/v1/tenant/metrics");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -51,7 +51,7 @@ public sealed class TenantMetricsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("Customer");
 
-        var response = await client.GetAsync("/tenant/metrics");
+        var response = await client.GetAsync("/v1/tenant/metrics");
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -67,7 +67,7 @@ public sealed class TenantMetricsTests(FunctionalTestFixture fixture)
         await SeedData.SeedBookingAsync(db, bookingTypeId, now, now.AddHours(1));
 
         var client = fixture.CreateClient("TenantAdmin");
-        var response = await client.GetAsync("/tenant/metrics");
+        var response = await client.GetAsync("/v1/tenant/metrics");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<TenantMetricsDto>();

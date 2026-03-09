@@ -9,7 +9,7 @@ namespace Chronith.Tests.Functional.BookingTypes;
 [Collection("Functional")]
 public sealed class BookingTypeEndpointsTests(FunctionalTestFixture fixture)
 {
-    private const string BaseUrl = "/booking-types";
+    private const string BaseUrl = "/v1/booking-types";
 
     [Fact]
     public async Task CreateBookingType_AsAdmin_Returns201WithBody()

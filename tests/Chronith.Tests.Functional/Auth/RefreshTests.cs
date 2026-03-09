@@ -16,14 +16,14 @@ public class RefreshTests(FunctionalTestFixture fixture)
         var slug = "ref-" + Guid.NewGuid().ToString("N")[..8];
         var email = $"ref-{Guid.NewGuid():N}@example.com";
 
-        var reg = await client.PostAsJsonAsync("/auth/register", new
+        var reg = await client.PostAsJsonAsync("/v1/auth/register", new
         {
             tenantName = "T", tenantSlug = slug, timeZoneId = "UTC",
             email, password = "Password123"
         });
         var tokens = await reg.Content.ReadFromJsonAsync<AuthTokenDto>();
 
-        var response = await client.PostAsJsonAsync("/auth/refresh",
+        var response = await client.PostAsJsonAsync("/v1/auth/refresh",
             new { refreshToken = tokens!.RefreshToken });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -39,7 +39,7 @@ public class RefreshTests(FunctionalTestFixture fixture)
         var slug = "refr-" + Guid.NewGuid().ToString("N")[..8];
         var email = $"refr-{Guid.NewGuid():N}@example.com";
 
-        var reg = await client.PostAsJsonAsync("/auth/register", new
+        var reg = await client.PostAsJsonAsync("/v1/auth/register", new
         {
             tenantName = "T", tenantSlug = slug, timeZoneId = "UTC",
             email, password = "Password123"
@@ -47,10 +47,10 @@ public class RefreshTests(FunctionalTestFixture fixture)
         var tokens = await reg.Content.ReadFromJsonAsync<AuthTokenDto>();
 
         // Use it once
-        await client.PostAsJsonAsync("/auth/refresh", new { refreshToken = tokens!.RefreshToken });
+        await client.PostAsJsonAsync("/v1/auth/refresh", new { refreshToken = tokens!.RefreshToken });
 
         // Use it again — should fail
-        var second = await client.PostAsJsonAsync("/auth/refresh",
+        var second = await client.PostAsJsonAsync("/v1/auth/refresh",
             new { refreshToken = tokens.RefreshToken });
 
         second.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -60,7 +60,7 @@ public class RefreshTests(FunctionalTestFixture fixture)
     public async Task Refresh_WithInvalidToken_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.PostAsJsonAsync("/auth/refresh",
+        var response = await client.PostAsJsonAsync("/v1/auth/refresh",
             new { refreshToken = "not-a-real-token" });
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

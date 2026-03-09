@@ -26,7 +26,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.PostAsJsonAsync($"/booking-types/{BookingTypeSlug}/bookings", new
+        var response = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/bookings", new
         {
             startTime = $"2026-05-{10 + new Random().Next(0, 10):00}T09:00:00Z",
             customerEmail = $"{role.ToLower()}-{Guid.NewGuid():N}@example.com"
@@ -39,7 +39,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateAnonymousClient();
-        var response = await client.PostAsJsonAsync($"/booking-types/{BookingTypeSlug}/bookings", new { });
+        var response = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/bookings", new { });
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -53,7 +53,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.GetAsync($"/booking-types/{BookingTypeSlug}/bookings");
+        var response = await client.GetAsync($"/v1/booking-types/{BookingTypeSlug}/bookings");
         response.StatusCode.Should().Be(expected);
     }
 
@@ -62,7 +62,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync($"/booking-types/{BookingTypeSlug}/bookings");
+        var response = await client.GetAsync($"/v1/booking-types/{BookingTypeSlug}/bookings");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -80,7 +80,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
             DateTimeOffset.UtcNow.AddDays(1), DateTimeOffset.UtcNow.AddDays(1).AddHours(1));
 
         var client = fixture.CreateClient(role);
-        var response = await client.GetAsync($"/bookings/{bookingId}");
+        var response = await client.GetAsync($"/v1/bookings/{bookingId}");
         response.StatusCode.Should().Be(expected);
     }
 
@@ -88,7 +88,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
     public async Task GetBooking_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync($"/bookings/{Guid.NewGuid()}");
+        var response = await client.GetAsync($"/v1/bookings/{Guid.NewGuid()}");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -98,7 +98,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
     public async Task CancelBooking_PaymentSvc_ReturnsForbidden(string role, HttpStatusCode expected)
     {
         var client = fixture.CreateClient(role);
-        var response = await client.PostAsJsonAsync($"/bookings/{Guid.NewGuid()}/cancel", new { });
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{Guid.NewGuid()}/cancel", new { });
         response.StatusCode.Should().Be(expected);
     }
 
@@ -106,7 +106,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
     public async Task CancelBooking_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.PostAsJsonAsync($"/bookings/{Guid.NewGuid()}/cancel", new { });
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{Guid.NewGuid()}/cancel", new { });
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -117,7 +117,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
     public async Task ConfirmBooking_NonStaff_ReturnsForbidden(string role, HttpStatusCode expected)
     {
         var client = fixture.CreateClient(role);
-        var response = await client.PostAsJsonAsync($"/bookings/{Guid.NewGuid()}/confirm", new { });
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{Guid.NewGuid()}/confirm", new { });
         response.StatusCode.Should().Be(expected);
     }
 
@@ -125,7 +125,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
     public async Task ConfirmBooking_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.PostAsJsonAsync($"/bookings/{Guid.NewGuid()}/confirm", new { });
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{Guid.NewGuid()}/confirm", new { });
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -135,7 +135,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
     public async Task PayBooking_Customer_ReturnsForbidden(string role, HttpStatusCode expected)
     {
         var client = fixture.CreateClient(role);
-        var response = await client.PostAsJsonAsync($"/bookings/{Guid.NewGuid()}/pay", new { });
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{Guid.NewGuid()}/pay", new { });
         response.StatusCode.Should().Be(expected);
     }
 
@@ -143,7 +143,7 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
     public async Task PayBooking_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.PostAsJsonAsync($"/bookings/{Guid.NewGuid()}/pay", new { });
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{Guid.NewGuid()}/pay", new { });
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }

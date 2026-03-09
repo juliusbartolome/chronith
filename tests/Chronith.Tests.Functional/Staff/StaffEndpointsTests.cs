@@ -26,7 +26,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.PostAsJsonAsync("/staff", new
+        var response = await client.PostAsJsonAsync("/v1/staff", new
         {
             name = "Alice Test",
             email = $"alice-{Guid.NewGuid():N}@example.com",
@@ -52,7 +52,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
 
         // Create a staff member first
         var uniqueEmail = $"list-staff-{Guid.NewGuid():N}@example.com";
-        var createResp = await client.PostAsJsonAsync("/staff", new
+        var createResp = await client.PostAsJsonAsync("/v1/staff", new
         {
             name = "List Test Staff",
             email = uniqueEmail,
@@ -62,7 +62,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
         var created = await createResp.Content.ReadFromJsonAsync<StaffMemberDto>();
 
         // List and verify
-        var listResp = await client.GetAsync("/staff");
+        var listResp = await client.GetAsync("/v1/staff");
         listResp.StatusCode.Should().Be(HttpStatusCode.OK);
         var staffList = await listResp.Content.ReadFromJsonAsync<List<StaffMemberDto>>();
         staffList.Should().NotBeNull();
@@ -76,7 +76,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
         var adminClient = fixture.CreateClient("TenantAdmin");
 
         // Create via admin
-        var createResp = await adminClient.PostAsJsonAsync("/staff", new
+        var createResp = await adminClient.PostAsJsonAsync("/v1/staff", new
         {
             name = "Get Test Staff",
             email = $"get-staff-{Guid.NewGuid():N}@example.com",
@@ -87,7 +87,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
 
         // Get as TenantStaff role
         var staffClient = fixture.CreateClient("TenantStaff");
-        var getResp = await staffClient.GetAsync($"/staff/{created!.Id}");
+        var getResp = await staffClient.GetAsync($"/v1/staff/{created!.Id}");
         getResp.StatusCode.Should().Be(HttpStatusCode.OK);
         var staff = await getResp.Content.ReadFromJsonAsync<StaffMemberDto>();
         staff.Should().NotBeNull();
@@ -102,7 +102,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("TenantAdmin");
 
         // Create
-        var createResp = await client.PostAsJsonAsync("/staff", new
+        var createResp = await client.PostAsJsonAsync("/v1/staff", new
         {
             name = "Original Name",
             email = $"update-staff-{Guid.NewGuid():N}@example.com",
@@ -112,7 +112,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
         var created = await createResp.Content.ReadFromJsonAsync<StaffMemberDto>();
 
         // Update
-        var updateResp = await client.PutAsJsonAsync($"/staff/{created!.Id}", new
+        var updateResp = await client.PutAsJsonAsync($"/v1/staff/{created!.Id}", new
         {
             name = "Updated Name",
             email = created.Email,
@@ -136,7 +136,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("TenantAdmin");
 
         // Create
-        var createResp = await client.PostAsJsonAsync("/staff", new
+        var createResp = await client.PostAsJsonAsync("/v1/staff", new
         {
             name = "Delete Test Staff",
             email = $"delete-staff-{Guid.NewGuid():N}@example.com",
@@ -146,11 +146,11 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
         var created = await createResp.Content.ReadFromJsonAsync<StaffMemberDto>();
 
         // Delete
-        var deleteResp = await client.DeleteAsync($"/staff/{created!.Id}");
+        var deleteResp = await client.DeleteAsync($"/v1/staff/{created!.Id}");
         deleteResp.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Verify it's gone from list
-        var listResp = await client.GetAsync("/staff");
+        var listResp = await client.GetAsync("/v1/staff");
         var staffList = await listResp.Content.ReadFromJsonAsync<List<StaffMemberDto>>();
         staffList!.Should().NotContain(s => s.Id == created.Id);
     }
@@ -162,7 +162,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("TenantAdmin");
 
         // Create a staff member
-        var staffResp = await client.PostAsJsonAsync("/staff", new
+        var staffResp = await client.PostAsJsonAsync("/v1/staff", new
         {
             name = "Assign Test Staff",
             email = $"assign-staff-{Guid.NewGuid():N}@example.com",
@@ -179,7 +179,7 @@ public sealed class StaffEndpointsTests(FunctionalTestFixture fixture)
             BookingStatus.Confirmed);
 
         // Assign staff
-        var assignResp = await client.PostAsJsonAsync($"/bookings/{bookingId}/assign-staff", new
+        var assignResp = await client.PostAsJsonAsync($"/v1/bookings/{bookingId}/assign-staff", new
         {
             staffMemberId = staff!.Id
         });

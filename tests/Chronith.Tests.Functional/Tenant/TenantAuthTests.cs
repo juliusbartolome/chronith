@@ -20,7 +20,7 @@ public sealed class TenantAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
-        var response = await client.GetAsync("/tenant");
+        var response = await client.GetAsync("/v1/tenant");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -32,7 +32,7 @@ public sealed class TenantAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.GetAsync("/tenant");
+        var response = await client.GetAsync("/v1/tenant");
         response.StatusCode.Should().Be(expected);
     }
 
@@ -40,7 +40,7 @@ public sealed class TenantAuthTests(FunctionalTestFixture fixture)
     public async Task GetTenant_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync("/tenant");
+        var response = await client.GetAsync("/v1/tenant");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }

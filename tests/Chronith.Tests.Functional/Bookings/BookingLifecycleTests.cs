@@ -25,7 +25,7 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("Customer");
 
-        var response = await client.PostAsJsonAsync($"/booking-types/{BookingTypeSlug}/bookings", new
+        var response = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/bookings", new
         {
             startTime = "2026-06-10T09:00:00Z",
             customerEmail = $"lifecycle-{Guid.NewGuid():N}@example.com"
@@ -44,7 +44,7 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
 
         // Step 1: Create booking as Customer
         var customerClient = fixture.CreateClient("Customer");
-        var createResp = await customerClient.PostAsJsonAsync($"/booking-types/{BookingTypeSlug}/bookings", new
+        var createResp = await customerClient.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/bookings", new
         {
             startTime = "2026-06-11T10:00:00Z",
             customerEmail = $"lifecycle2-{Guid.NewGuid():N}@example.com"
@@ -56,7 +56,7 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
         // Step 2: Confirm as Staff (requires PendingVerification — first pay to move to PendingVerification)
         // Per domain: PendingPayment → pay → PendingVerification → confirm → Confirmed
         var staffClient = fixture.CreateClient("TenantStaff");
-        var payResp = await staffClient.PostAsJsonAsync($"/bookings/{booking!.Id}/pay", new
+        var payResp = await staffClient.PostAsJsonAsync($"/v1/bookings/{booking!.Id}/pay", new
         {
             bookingTypeSlug = BookingTypeSlug
         });
@@ -64,7 +64,7 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
         var paidBooking = await payResp.Content.ReadFromJsonAsync<BookingDto>();
         paidBooking!.Status.Should().Be(BookingStatus.PendingVerification);
 
-        var confirmResp = await staffClient.PostAsJsonAsync($"/bookings/{booking.Id}/confirm", new
+        var confirmResp = await staffClient.PostAsJsonAsync($"/v1/bookings/{booking.Id}/confirm", new
         {
             bookingTypeSlug = BookingTypeSlug
         });
@@ -79,7 +79,7 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
 
         var client = fixture.CreateClient("Customer");
-        var createResp = await client.PostAsJsonAsync($"/booking-types/{BookingTypeSlug}/bookings", new
+        var createResp = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/bookings", new
         {
             startTime = "2026-06-12T14:00:00Z",
             customerEmail = $"lifecycle3-{Guid.NewGuid():N}@example.com"
@@ -87,7 +87,7 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var booking = await createResp.Content.ReadFromJsonAsync<BookingDto>();
 
-        var cancelResp = await client.PostAsJsonAsync($"/bookings/{booking!.Id}/cancel", new
+        var cancelResp = await client.PostAsJsonAsync($"/v1/bookings/{booking!.Id}/cancel", new
         {
             bookingTypeSlug = BookingTypeSlug
         });
@@ -102,14 +102,14 @@ public sealed class BookingLifecycleTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
 
         var client = fixture.CreateClient("TenantAdmin");
-        var createResp = await client.PostAsJsonAsync($"/booking-types/{BookingTypeSlug}/bookings", new
+        var createResp = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/bookings", new
         {
             startTime = "2026-06-13T08:00:00Z",
             customerEmail = $"get-check-{Guid.NewGuid():N}@example.com"
         });
         var booking = await createResp.Content.ReadFromJsonAsync<BookingDto>();
 
-        var getResp = await client.GetAsync($"/bookings/{booking!.Id}");
+        var getResp = await client.GetAsync($"/v1/bookings/{booking!.Id}");
         getResp.StatusCode.Should().Be(HttpStatusCode.OK);
         var fetched = await getResp.Content.ReadFromJsonAsync<BookingDto>();
         fetched!.Id.Should().Be(booking.Id);

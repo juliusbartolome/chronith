@@ -9,8 +9,8 @@ namespace Chronith.Tests.Functional.ApiKeys;
 [Collection("Functional")]
 public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
 {
-    private const string ApiKeysUrl = "/tenant/api-keys";
-    private string ApiKeyUrl(Guid id) => $"/tenant/api-keys/{id}";
+    private const string ApiKeysUrl = "/v1/tenant/api-keys";
+    private string ApiKeyUrl(Guid id) => $"/v1/tenant/api-keys/{id}";
 
     private async Task EnsureSeedAsync()
     {
@@ -155,7 +155,7 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
 
         var client = fixture.CreateClient("TenantAdmin");
         var nonExistentId = Guid.NewGuid();
-        var response = await client.DeleteAsync($"/tenant/api-keys/{nonExistentId}");
+        var response = await client.DeleteAsync($"/v1/tenant/api-keys/{nonExistentId}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

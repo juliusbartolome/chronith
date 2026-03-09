@@ -17,13 +17,13 @@ public class LoginTests(FunctionalTestFixture fixture)
         var password = "Password123";
         var slug = "login-" + Guid.NewGuid().ToString("N")[..8];
 
-        await client.PostAsJsonAsync("/auth/register", new
+        await client.PostAsJsonAsync("/v1/auth/register", new
         {
             tenantName = "Login Test", tenantSlug = slug, timeZoneId = "UTC",
             email, password
         });
 
-        var response = await client.PostAsJsonAsync("/auth/login", new { email, password, tenantSlug = slug });
+        var response = await client.PostAsJsonAsync("/v1/auth/login", new { email, password, tenantSlug = slug });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<AuthTokenDto>();
@@ -38,13 +38,13 @@ public class LoginTests(FunctionalTestFixture fixture)
         var slug = "lp-" + Guid.NewGuid().ToString("N")[..8];
         var email = $"lp-{Guid.NewGuid():N}@example.com";
 
-        await client.PostAsJsonAsync("/auth/register", new
+        await client.PostAsJsonAsync("/v1/auth/register", new
         {
             tenantName = "Test", tenantSlug = slug, timeZoneId = "UTC",
             email, password = "Password123"
         });
 
-        var response = await client.PostAsJsonAsync("/auth/login",
+        var response = await client.PostAsJsonAsync("/v1/auth/login",
             new { email, password = "WrongPass1", tenantSlug = slug });
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -56,13 +56,13 @@ public class LoginTests(FunctionalTestFixture fixture)
         var client = fixture.CreateAnonymousClient();
         var slug = "lu-" + Guid.NewGuid().ToString("N")[..8];
 
-        await client.PostAsJsonAsync("/auth/register", new
+        await client.PostAsJsonAsync("/v1/auth/register", new
         {
             tenantName = "Test", tenantSlug = slug, timeZoneId = "UTC",
             email = $"lu-{Guid.NewGuid():N}@example.com", password = "Password123"
         });
 
-        var response = await client.PostAsJsonAsync("/auth/login",
+        var response = await client.PostAsJsonAsync("/v1/auth/login",
             new { email = "nobody@example.com", password = "Password123", tenantSlug = slug });
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);

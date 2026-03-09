@@ -15,7 +15,7 @@ public class MeTests(FunctionalTestFixture fixture)
         var slug = "me-" + Guid.NewGuid().ToString("N")[..8];
         var email = $"me-{Guid.NewGuid():N}@example.com";
 
-        var reg = await client.PostAsJsonAsync("/auth/register", new
+        var reg = await client.PostAsJsonAsync("/v1/auth/register", new
         {
             tenantName = "Me Test", tenantSlug = slug, timeZoneId = "UTC",
             email, password = "Password123"
@@ -31,7 +31,7 @@ public class MeTests(FunctionalTestFixture fixture)
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var response = await client.GetAsync("/auth/me");
+        var response = await client.GetAsync("/v1/auth/me");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<UserProfileDto>();
@@ -43,7 +43,7 @@ public class MeTests(FunctionalTestFixture fixture)
     public async Task GetMe_WithNoAuth_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync("/auth/me");
+        var response = await client.GetAsync("/v1/auth/me");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -55,10 +55,10 @@ public class MeTests(FunctionalTestFixture fixture)
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         var newEmail = $"updated-{Guid.NewGuid():N}@example.com";
 
-        var response = await client.PatchAsJsonAsync("/auth/me", new { email = newEmail });
+        var response = await client.PatchAsJsonAsync("/v1/auth/me", new { email = newEmail });
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var getMe = await client.GetAsync("/auth/me");
+        var getMe = await client.GetAsync("/v1/auth/me");
         var body = await getMe.Content.ReadFromJsonAsync<UserProfileDto>();
         body!.Email.Should().Be(newEmail);
     }
