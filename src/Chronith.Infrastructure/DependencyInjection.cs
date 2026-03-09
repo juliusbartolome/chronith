@@ -57,6 +57,9 @@ public static class DependencyInjection
         services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
         services.AddScoped<ITenantUserRepository, TenantUserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<ICustomerRefreshTokenRepository, CustomerRefreshTokenRepository>();
+        services.AddScoped<ITenantAuthConfigRepository, TenantAuthConfigRepository>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddHostedService<WebhookDispatcherService>();
         services.AddHostedService<WaitlistPromotionService>();

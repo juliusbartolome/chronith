@@ -1,0 +1,54 @@
+using Chronith.Infrastructure.Persistence.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Chronith.Infrastructure.Persistence.Configurations;
+
+public sealed class CustomerConfiguration : IEntityTypeConfiguration<CustomerEntity>
+{
+    public void Configure(EntityTypeBuilder<CustomerEntity> builder)
+    {
+        builder.ToTable("customers", "chronith");
+
+        builder.HasKey(c => c.Id);
+
+        builder.Property(c => c.Email)
+            .IsRequired()
+            .HasMaxLength(200);
+
+        builder.Property(c => c.PasswordHash)
+            .HasMaxLength(200);
+
+        builder.Property(c => c.Name)
+            .IsRequired()
+            .HasMaxLength(200);
+
+        builder.Property(c => c.Phone)
+            .HasMaxLength(50);
+
+        builder.Property(c => c.ExternalId)
+            .HasMaxLength(200);
+
+        builder.Property(c => c.AuthProvider)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.Property(c => c.CreatedAt)
+            .IsRequired();
+
+        builder.Property(c => c.RowVersion)
+            .IsRowVersion()
+            .IsConcurrencyToken();
+
+        // Unique email per tenant (soft-delete aware)
+        builder.HasIndex(c => new { c.TenantId, c.Email })
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false");
+
+        // External ID lookup
+        builder.HasIndex(c => new { c.TenantId, c.ExternalId })
+            .HasFilter("\"ExternalId\" IS NOT NULL AND \"IsDeleted\" = false");
+
+        builder.HasIndex(c => new { c.TenantId, c.IsDeleted });
+    }
+}
