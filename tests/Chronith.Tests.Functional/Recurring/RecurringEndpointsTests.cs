@@ -4,7 +4,6 @@ using Chronith.Application.DTOs;
 using Chronith.Domain.Enums;
 using Chronith.Tests.Functional.Fixtures;
 using Chronith.Tests.Functional.Helpers;
-using Microsoft.EntityFrameworkCore;
 
 namespace Chronith.Tests.Functional.Recurring;
 

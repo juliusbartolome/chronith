@@ -49,13 +49,15 @@ public sealed class RecurringBookingGeneratorService(
             "Processing {RuleCount} active recurrence rules for horizon {From} to {To}",
             rules.Count, today, horizon);
 
+        // TODO: Create bookings from computed occurrences (deferred to future task).
+        // Currently this service only computes and logs occurrences for observability.
         foreach (var rule in rules)
         {
             var occurrences = rule.ComputeOccurrences(today, horizon);
 
             foreach (var occurrence in occurrences)
             {
-                logger.LogInformation(
+                logger.LogDebug(
                     "Recurrence rule {RuleId} (Tenant {TenantId}, BookingType {BookingTypeId}): " +
                     "occurrence on {OccurrenceDate}",
                     rule.Id, rule.TenantId, rule.BookingTypeId, occurrence);

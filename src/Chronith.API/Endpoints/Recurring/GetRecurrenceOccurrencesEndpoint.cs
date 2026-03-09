@@ -1,5 +1,6 @@
 using Chronith.Application.Queries.Recurring;
 using FastEndpoints;
+using FluentValidation;
 using MediatR;
 
 namespace Chronith.API.Endpoints.Recurring;
@@ -13,6 +14,19 @@ public sealed class GetRecurrenceOccurrencesRequest
 
     [QueryParam]
     public DateOnly To { get; set; }
+}
+
+public sealed class GetRecurrenceOccurrencesRequestValidator : Validator<GetRecurrenceOccurrencesRequest>
+{
+    public GetRecurrenceOccurrencesRequestValidator()
+    {
+        RuleFor(x => x.From).Must(f => f != default).WithMessage("'From' query parameter is required.");
+        RuleFor(x => x.To).Must(t => t != default).WithMessage("'To' query parameter is required.");
+        RuleFor(x => x.To)
+            .GreaterThanOrEqualTo(x => x.From)
+            .When(x => x.From != default && x.To != default)
+            .WithMessage("'To' must be on or after 'From'.");
+    }
 }
 
 public sealed class GetRecurrenceOccurrencesEndpoint(ISender sender)

@@ -29,7 +29,11 @@ public sealed class CreateRecurrenceRuleValidator : AbstractValidator<CreateRecu
     public CreateRecurrenceRuleValidator()
     {
         RuleFor(x => x.BookingTypeSlug).NotEmpty();
+        RuleFor(x => x.Frequency).IsInEnum();
         RuleFor(x => x.Interval).GreaterThanOrEqualTo(1);
+        RuleFor(x => x.MaxOccurrences)
+            .GreaterThanOrEqualTo(1)
+            .When(x => x.MaxOccurrences.HasValue);
         RuleFor(x => x.SeriesEnd)
             .Must((cmd, end) => !end.HasValue || end.Value >= cmd.SeriesStart)
             .WithMessage("SeriesEnd cannot be before SeriesStart.");
