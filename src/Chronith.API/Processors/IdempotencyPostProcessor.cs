@@ -36,8 +36,8 @@ public sealed class IdempotencyPostProcessor : IGlobalPostProcessor
 
             // Step 1: Read captured response from captureStream
             captureStream.Position = 0;
-            var responseBody = await new StreamReader(captureStream, Encoding.UTF8, leaveOpen: true)
-                .ReadToEndAsync(ct);
+            using var streamReader = new StreamReader(captureStream, Encoding.UTF8, leaveOpen: true);
+            var responseBody = await streamReader.ReadToEndAsync(ct);
 
             var responseContentType = httpContext.Response.ContentType ?? "application/json";
 
