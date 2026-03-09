@@ -9,6 +9,7 @@ public sealed class IdempotencyKeyEntity
     public string RequestHash { get; set; } = string.Empty;
     public int ResponseStatusCode { get; set; }
     public string ResponseBody { get; set; } = string.Empty;
+    public string ResponseContentType { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
 }

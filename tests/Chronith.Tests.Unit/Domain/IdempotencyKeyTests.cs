@@ -15,13 +15,14 @@ public sealed class IdempotencyKeyTests
         var requestHash = "abc123hash";
         var responseStatusCode = 201;
         var responseBody = """{"id":"some-id"}""";
+        var responseContentType = "application/json";
         var ttl = TimeSpan.FromHours(24);
         var before = DateTimeOffset.UtcNow;
 
         // Act
         var idempotencyKey = IdempotencyKey.Create(
             tenantId, key, endpointRoute, requestHash,
-            responseStatusCode, responseBody, ttl);
+            responseStatusCode, responseBody, responseContentType, ttl);
 
         var after = DateTimeOffset.UtcNow;
 
@@ -33,8 +34,43 @@ public sealed class IdempotencyKeyTests
         idempotencyKey.RequestHash.Should().Be(requestHash);
         idempotencyKey.ResponseStatusCode.Should().Be(responseStatusCode);
         idempotencyKey.ResponseBody.Should().Be(responseBody);
+        idempotencyKey.ResponseContentType.Should().Be(responseContentType);
         idempotencyKey.CreatedAt.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
         idempotencyKey.ExpiresAt.Should().BeOnOrAfter(before.Add(ttl)).And.BeOnOrBefore(after.Add(ttl));
+    }
+
+    [Fact]
+    public void Create_DefaultsContentTypeToEmpty()
+    {
+        // Arrange & Act
+        var idempotencyKey = IdempotencyKey.Create(
+            Guid.NewGuid(), "key", "route", "hash", 201, "{}", "", TimeSpan.FromHours(1));
+
+        // Assert
+        idempotencyKey.ResponseContentType.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Hydrate_SetsResponseContentType()
+    {
+        // Arrange
+        var contentType = "text/plain";
+
+        // Act
+        var key = IdempotencyKey.Hydrate(
+            id: Guid.NewGuid(),
+            tenantId: Guid.NewGuid(),
+            key: "key",
+            endpointRoute: "route",
+            requestHash: "hash",
+            responseStatusCode: 200,
+            responseBody: "{}",
+            responseContentType: contentType,
+            createdAt: DateTimeOffset.UtcNow,
+            expiresAt: DateTimeOffset.UtcNow.AddHours(1));
+
+        // Assert
+        key.ResponseContentType.Should().Be(contentType);
     }
 
     [Fact]
@@ -43,7 +79,7 @@ public sealed class IdempotencyKeyTests
         // Arrange
         var hash = "same-hash-value";
         var idempotencyKey = IdempotencyKey.Create(
-            Guid.NewGuid(), "key", "route", hash, 201, "{}", TimeSpan.FromHours(1));
+            Guid.NewGuid(), "key", "route", hash, 201, "{}", "application/json", TimeSpan.FromHours(1));
 
         // Act
         var result = idempotencyKey.MatchesRequest(hash);
@@ -57,7 +93,7 @@ public sealed class IdempotencyKeyTests
     {
         // Arrange
         var idempotencyKey = IdempotencyKey.Create(
-            Guid.NewGuid(), "key", "route", "original-hash", 201, "{}", TimeSpan.FromHours(1));
+            Guid.NewGuid(), "key", "route", "original-hash", 201, "{}", "application/json", TimeSpan.FromHours(1));
 
         // Act
         var result = idempotencyKey.MatchesRequest("different-hash");
@@ -78,6 +114,7 @@ public sealed class IdempotencyKeyTests
             requestHash: "hash",
             responseStatusCode: 200,
             responseBody: "{}",
+            responseContentType: "application/json",
             createdAt: DateTimeOffset.UtcNow.AddHours(-2),
             expiresAt: DateTimeOffset.UtcNow.AddHours(-1));
 
@@ -93,7 +130,7 @@ public sealed class IdempotencyKeyTests
     {
         // Arrange
         var idempotencyKey = IdempotencyKey.Create(
-            Guid.NewGuid(), "key", "route", "hash", 200, "{}", TimeSpan.FromHours(24));
+            Guid.NewGuid(), "key", "route", "hash", 200, "{}", "application/json", TimeSpan.FromHours(24));
 
         // Act
         var result = idempotencyKey.IsExpired();

@@ -8,7 +8,7 @@ namespace Chronith.Infrastructure.Services;
 
 public sealed class IdempotencyCleanupService(
     IServiceScopeFactory scopeFactory,
-    IOptions<IdempotencyCleanupOptions> options,
+    IOptions<IdempotencyOptions> options,
     ILogger<IdempotencyCleanupService> logger)
     : BackgroundService
 {

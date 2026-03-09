@@ -23,9 +23,16 @@ public sealed class IdempotencyKeyConfiguration : IEntityTypeConfiguration<Idemp
             .IsRequired();
 
         builder.Property(k => k.ResponseBody)
-            .HasColumnType("jsonb");
+            .HasColumnType("text")
+            .HasMaxLength(65536);
+
+        builder.Property(k => k.ResponseContentType)
+            .IsRequired()
+            .HasMaxLength(256);
 
         builder.HasIndex(k => new { k.TenantId, k.Key, k.EndpointRoute })
             .IsUnique();
+
+        builder.HasIndex(k => k.ExpiresAt);
     }
 }

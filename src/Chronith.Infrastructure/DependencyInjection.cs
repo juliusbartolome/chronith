@@ -81,7 +81,7 @@ public static class DependencyInjection
         services.Configure<NotificationDispatcherOptions>(configuration.GetSection("NotificationDispatcher"));
         services.Configure<ReminderSchedulerOptions>(configuration.GetSection("ReminderScheduler"));
         services.Configure<RecurringBookingGeneratorOptions>(configuration.GetSection("RecurringBookings"));
-        services.Configure<IdempotencyCleanupOptions>(configuration.GetSection("IdempotencyCleanup"));
+        services.Configure<IdempotencyOptions>(configuration.GetSection("Idempotency"));
 
         // Notification channels
         services.Configure<SmtpOptions>(configuration.GetSection("Notifications:Smtp"));

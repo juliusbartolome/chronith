@@ -51,7 +51,7 @@ public sealed class IdempotencyPreProcessor : IGlobalPreProcessor
             {
                 // Replay cached response
                 httpContext.Response.StatusCode = existing.ResponseStatusCode;
-                httpContext.Response.ContentType = "application/json";
+                httpContext.Response.ContentType = existing.ResponseContentType;
                 await httpContext.Response.WriteAsync(existing.ResponseBody, ct);
                 await httpContext.Response.CompleteAsync();
                 return;

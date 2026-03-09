@@ -14,6 +14,7 @@ internal static class IdempotencyKeyEntityMapper
         RequestHash = k.RequestHash,
         ResponseStatusCode = k.ResponseStatusCode,
         ResponseBody = k.ResponseBody,
+        ResponseContentType = k.ResponseContentType,
         CreatedAt = k.CreatedAt,
         ExpiresAt = k.ExpiresAt
     };
@@ -22,5 +23,5 @@ internal static class IdempotencyKeyEntityMapper
         IdempotencyKey.Hydrate(
             e.Id, e.TenantId, e.Key, e.EndpointRoute,
             e.RequestHash, e.ResponseStatusCode, e.ResponseBody,
-            e.CreatedAt, e.ExpiresAt);
+            e.ResponseContentType, e.CreatedAt, e.ExpiresAt);
 }
