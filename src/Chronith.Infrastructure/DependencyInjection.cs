@@ -1,5 +1,6 @@
 using Chronith.Application.Interfaces;
 using Chronith.Application.Options;
+using Chronith.Application.Services;
 using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Caching;
 using Chronith.Infrastructure.Notifications;
@@ -57,11 +58,19 @@ public static class DependencyInjection
         services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
         services.AddScoped<ITenantUserRepository, TenantUserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<ICustomerRefreshTokenRepository, CustomerRefreshTokenRepository>();
+        services.AddScoped<ITenantAuthConfigRepository, TenantAuthConfigRepository>();
+        services.AddScoped<IRecurrenceRuleRepository, RecurrenceRuleRepository>();
+        services.AddScoped<IIdempotencyKeyRepository, IdempotencyKeyRepository>();
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IOidcTokenValidator, OidcTokenValidator>();
         services.AddHostedService<WebhookDispatcherService>();
         services.AddHostedService<WaitlistPromotionService>();
         services.AddHostedService<NotificationDispatcherService>();
         services.AddHostedService<ReminderSchedulerService>();
+        services.AddHostedService<RecurringBookingGeneratorService>();
+        services.AddHostedService<IdempotencyCleanupService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
         {
@@ -71,6 +80,8 @@ public static class DependencyInjection
         services.Configure<WaitlistPromotionOptions>(configuration.GetSection("WaitlistPromotion"));
         services.Configure<NotificationDispatcherOptions>(configuration.GetSection("NotificationDispatcher"));
         services.Configure<ReminderSchedulerOptions>(configuration.GetSection("ReminderScheduler"));
+        services.Configure<RecurringBookingGeneratorOptions>(configuration.GetSection("RecurringBookings"));
+        services.Configure<IdempotencyOptions>(configuration.GetSection("Idempotency"));
 
         // Notification channels
         services.Configure<SmtpOptions>(configuration.GetSection("Notifications:Smtp"));

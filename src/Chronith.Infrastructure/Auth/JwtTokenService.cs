@@ -25,7 +25,30 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
             new Claim("tenant_id", user.TenantId.ToString()),
             new Claim("email", user.Email),
             new Claim("chronith_role", user.Role.ToString()),
-            new Claim(ClaimTypes.Role, user.AuthorizationRole),
+            new Claim("role", user.AuthorizationRole),
+        };
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(AccessTokenMinutes),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public string CreateCustomerAccessToken(Customer customer)
+    {
+        var signingKey = configuration["Jwt:SigningKey"]!;
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, customer.Id.ToString()),
+            new Claim("tenant_id", customer.TenantId.ToString()),
+            new Claim("customer_id", customer.Id.ToString()),
+            new Claim("email", customer.Email),
+            new Claim("role", "Customer"),
         };
 
         var token = new JwtSecurityToken(

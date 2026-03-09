@@ -63,5 +63,17 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
         builder.Property(b => b.CustomFields)
             .HasColumnType("jsonb")
             .IsRequired(false);
+
+        builder.HasOne<CustomerEntity>()
+            .WithMany()
+            .HasForeignKey(b => b.CustomerAccountId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
+        builder.HasOne<RecurrenceRuleEntity>()
+            .WithMany()
+            .HasForeignKey(b => b.RecurrenceRuleId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
     }
 }

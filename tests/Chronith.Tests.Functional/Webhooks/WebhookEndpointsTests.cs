@@ -18,8 +18,8 @@ public sealed class WebhookEndpointsTests(FunctionalTestFixture fixture)
         await SeedData.SeedBookingTypeAsync(db, BookingTypeSlug);
     }
 
-    private string WebhooksUrl => $"/booking-types/{BookingTypeSlug}/webhooks";
-    private string WebhookUrl(Guid id) => $"/booking-types/{BookingTypeSlug}/webhooks/{id}";
+    private string WebhooksUrl => $"/v1/booking-types/{BookingTypeSlug}/webhooks";
+    private string WebhookUrl(Guid id) => $"/v1/booking-types/{BookingTypeSlug}/webhooks/{id}";
 
     [Fact]
     public async Task CreateWebhook_AsAdmin_Returns201WithId()
@@ -34,7 +34,7 @@ public sealed class WebhookEndpointsTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var webhook = await response.Content.ReadFromJsonAsync<WebhookDto>();
+        var webhook = await response.ReadFromApiJsonAsync<WebhookDto>();
         webhook.Should().NotBeNull();
         webhook!.Id.Should().NotBeEmpty();
         webhook.Url.Should().Be("https://example.com/hook");
@@ -53,12 +53,12 @@ public sealed class WebhookEndpointsTests(FunctionalTestFixture fixture)
             secret = "test-secret-at-least-16chars"
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<WebhookDto>();
+        var created = await createResp.ReadFromApiJsonAsync<WebhookDto>();
 
         // List and verify it appears
         var listResp = await client.GetAsync(WebhooksUrl);
         listResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var webhooks = await listResp.Content.ReadFromJsonAsync<List<WebhookDto>>();
+        var webhooks = await listResp.ReadFromApiJsonAsync<List<WebhookDto>>();
         webhooks.Should().NotBeNull();
         webhooks!.Should().Contain(w => w.Id == created!.Id);
     }
@@ -76,7 +76,7 @@ public sealed class WebhookEndpointsTests(FunctionalTestFixture fixture)
             secret = "secret-for-delete-test"
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<WebhookDto>();
+        var created = await createResp.ReadFromApiJsonAsync<WebhookDto>();
 
         // Delete it
         var deleteResp = await client.DeleteAsync(WebhookUrl(created!.Id));
@@ -93,12 +93,12 @@ public sealed class WebhookEndpointsTests(FunctionalTestFixture fixture)
         // Create
         var createResp = await client.PostAsJsonAsync(WebhooksUrl, new { url = hookUrl, secret = "secret-full-flow-ok" });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var webhook = await createResp.Content.ReadFromJsonAsync<WebhookDto>();
+        var webhook = await createResp.ReadFromApiJsonAsync<WebhookDto>();
         webhook.Should().NotBeNull();
 
         // List — should contain the new webhook
         var listResp = await client.GetAsync(WebhooksUrl);
-        var list = await listResp.Content.ReadFromJsonAsync<List<WebhookDto>>();
+        var list = await listResp.ReadFromApiJsonAsync<List<WebhookDto>>();
         list!.Should().Contain(w => w.Id == webhook!.Id);
 
         // Delete

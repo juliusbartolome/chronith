@@ -24,7 +24,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("Customer");
 
-        var response = await client.PostAsJsonAsync("/staff", new
+        var response = await client.PostAsJsonAsync("/v1/staff", new
         {
             name = "Forbidden Staff",
             email = "forbidden@example.com",
@@ -39,7 +39,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
     {
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.PostAsJsonAsync("/staff", new
+        var response = await client.PostAsJsonAsync("/v1/staff", new
         {
             name = "Anon Staff",
             email = "anon@example.com",
@@ -57,7 +57,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.GetAsync("/staff");
+        var response = await client.GetAsync("/v1/staff");
         response.StatusCode.Should().Be(expected);
     }
 
@@ -65,7 +65,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
     public async Task ListStaff_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync("/staff");
+        var response = await client.GetAsync("/v1/staff");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -77,7 +77,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.GetAsync($"/staff/{Guid.NewGuid()}");
+        var response = await client.GetAsync($"/v1/staff/{Guid.NewGuid()}");
         response.StatusCode.Should().Be(expected);
     }
 
@@ -85,7 +85,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
     public async Task GetStaff_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync($"/staff/{Guid.NewGuid()}");
+        var response = await client.GetAsync($"/v1/staff/{Guid.NewGuid()}");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -98,7 +98,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.PutAsJsonAsync($"/staff/{Guid.NewGuid()}", new
+        var response = await client.PutAsJsonAsync($"/v1/staff/{Guid.NewGuid()}", new
         {
             name = "Forbidden Update",
             email = "no@example.com",
@@ -111,7 +111,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
     public async Task UpdateStaff_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.PutAsJsonAsync($"/staff/{Guid.NewGuid()}", new
+        var response = await client.PutAsJsonAsync($"/v1/staff/{Guid.NewGuid()}", new
         {
             name = "Anon",
             email = "no@example.com",
@@ -129,7 +129,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.DeleteAsync($"/staff/{Guid.NewGuid()}");
+        var response = await client.DeleteAsync($"/v1/staff/{Guid.NewGuid()}");
         response.StatusCode.Should().Be(expected);
     }
 
@@ -137,7 +137,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
     public async Task DeleteStaff_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.DeleteAsync($"/staff/{Guid.NewGuid()}");
+        var response = await client.DeleteAsync($"/v1/staff/{Guid.NewGuid()}");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -149,7 +149,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.PostAsJsonAsync($"/bookings/{Guid.NewGuid()}/assign-staff", new
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{Guid.NewGuid()}/assign-staff", new
         {
             staffMemberId = Guid.NewGuid()
         });
@@ -160,7 +160,7 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
     public async Task AssignStaff_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.PostAsJsonAsync($"/bookings/{Guid.NewGuid()}/assign-staff", new
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{Guid.NewGuid()}/assign-staff", new
         {
             staffMemberId = Guid.NewGuid()
         });

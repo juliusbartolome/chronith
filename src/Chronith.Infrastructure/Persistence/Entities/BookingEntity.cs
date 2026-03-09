@@ -18,6 +18,8 @@ public sealed class BookingEntity
     public string? CheckoutUrl { get; set; }
     public Guid? StaffMemberId { get; set; }
     public string? CustomFields { get; set; }
+    public Guid? CustomerAccountId { get; set; }
+    public Guid? RecurrenceRuleId { get; set; }
     public bool IsDeleted { get; set; }
     public uint RowVersion { get; set; }
 

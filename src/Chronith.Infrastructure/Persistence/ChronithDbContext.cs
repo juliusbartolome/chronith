@@ -37,6 +37,13 @@ public sealed class ChronithDbContext : DbContext
     // background services which require cross-tenant access.
     public DbSet<TenantNotificationConfigEntity> TenantNotificationConfigs => Set<TenantNotificationConfigEntity>();
     public DbSet<BookingReminderEntity> BookingReminders => Set<BookingReminderEntity>();
+    public DbSet<CustomerEntity> Customers => Set<CustomerEntity>();
+    public DbSet<CustomerRefreshTokenEntity> CustomerRefreshTokens => Set<CustomerRefreshTokenEntity>();
+    public DbSet<TenantAuthConfigEntity> TenantAuthConfigs => Set<TenantAuthConfigEntity>();
+    public DbSet<RecurrenceRuleEntity> RecurrenceRules => Set<RecurrenceRuleEntity>();
+
+    // No global query filter: idempotency keys have no IsDeleted; cleaned up via TTL
+    public DbSet<IdempotencyKeyEntity> IdempotencyKeys => Set<IdempotencyKeyEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,5 +68,11 @@ public sealed class ChronithDbContext : DbContext
 
         modelBuilder.Entity<TimeBlockEntity>()
             .HasQueryFilter(t => !t.IsDeleted && t.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<CustomerEntity>()
+            .HasQueryFilter(c => !c.IsDeleted && c.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<RecurrenceRuleEntity>()
+            .HasQueryFilter(r => !r.IsDeleted && r.TenantId == _tenantContext.TenantId);
     }
 }

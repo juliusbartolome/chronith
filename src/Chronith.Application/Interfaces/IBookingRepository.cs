@@ -50,6 +50,12 @@ public interface IBookingRepository
     /// </summary>
     Task<Booking?> GetByPaymentReferenceAsync(Guid tenantId, string paymentReference, CancellationToken ct = default);
 
+    /// <summary>
+    /// Returns all bookings for a specific customer (identified by CustomerId string field) within a tenant.
+    /// </summary>
+    Task<IReadOnlyList<Booking>> GetByCustomerIdAsync(
+        Guid tenantId, string customerId, CancellationToken ct = default);
+
     Task<BookingMetrics> GetMetricsAsync(
         Guid tenantId, DateTimeOffset monthStartUtc, CancellationToken ct = default);
 

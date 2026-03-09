@@ -36,14 +36,14 @@ public sealed class BookingRescheduleTests(FunctionalTestFixture fixture)
         // Reschedule
         var newStart = DateTimeOffset.UtcNow.AddDays(12);
         var newEnd = newStart.AddHours(1);
-        var response = await client.PostAsJsonAsync($"/bookings/{bookingId}/reschedule", new
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{bookingId}/reschedule", new
         {
             newStart,
             newEnd
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.Start.Should().BeCloseTo(newStart, TimeSpan.FromSeconds(1));
         booking.End.Should().BeCloseTo(newEnd, TimeSpan.FromSeconds(1));
@@ -65,7 +65,7 @@ public sealed class BookingRescheduleTests(FunctionalTestFixture fixture)
 
         // Attempt reschedule
         var newStart = DateTimeOffset.UtcNow.AddDays(14);
-        var response = await client.PostAsJsonAsync($"/bookings/{bookingId}/reschedule", new
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{bookingId}/reschedule", new
         {
             newStart,
             newEnd = newStart.AddHours(1)
@@ -90,7 +90,7 @@ public sealed class BookingRescheduleTests(FunctionalTestFixture fixture)
 
         // Reschedule own booking
         var newStart = DateTimeOffset.UtcNow.AddDays(16);
-        var response = await client.PostAsJsonAsync($"/bookings/{bookingId}/reschedule", new
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{bookingId}/reschedule", new
         {
             newStart,
             newEnd = newStart.AddHours(1)

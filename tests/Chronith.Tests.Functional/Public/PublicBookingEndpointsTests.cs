@@ -26,10 +26,10 @@ public sealed class PublicBookingEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.GetAsync($"/public/{TenantSlug}/booking-types");
+        var response = await client.GetAsync($"/v1/public/{TenantSlug}/booking-types");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var types = await response.Content.ReadFromJsonAsync<List<BookingTypeDto>>();
+        var types = await response.ReadFromApiJsonAsync<List<BookingTypeDto>>();
         types.Should().NotBeNull();
         types!.Should().Contain(bt => bt.Slug == BookingTypeSlug);
     }
@@ -40,10 +40,10 @@ public sealed class PublicBookingEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.GetAsync($"/public/{TenantSlug}/booking-types/{BookingTypeSlug}");
+        var response = await client.GetAsync($"/v1/public/{TenantSlug}/booking-types/{BookingTypeSlug}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var bt = await response.Content.ReadFromJsonAsync<BookingTypeDto>();
+        var bt = await response.ReadFromApiJsonAsync<BookingTypeDto>();
         bt.Should().NotBeNull();
         bt!.Slug.Should().Be(BookingTypeSlug);
     }
@@ -57,10 +57,10 @@ public sealed class PublicBookingEndpointsTests(FunctionalTestFixture fixture)
         var from = Uri.EscapeDataString("2026-04-06T00:00:00Z");
         var to = Uri.EscapeDataString("2026-04-07T00:00:00Z");
         var response = await client.GetAsync(
-            $"/public/{TenantSlug}/booking-types/{BookingTypeSlug}/availability?from={from}&to={to}");
+            $"/v1/public/{TenantSlug}/booking-types/{BookingTypeSlug}/availability?from={from}&to={to}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var availability = await response.Content.ReadFromJsonAsync<AvailabilityDto>();
+        var availability = await response.ReadFromApiJsonAsync<AvailabilityDto>();
         availability.Should().NotBeNull();
         availability!.Slots.Should().NotBeEmpty();
     }
@@ -79,10 +79,10 @@ public sealed class PublicBookingEndpointsTests(FunctionalTestFixture fixture)
         };
 
         var response = await client.PostAsJsonAsync(
-            $"/public/{TenantSlug}/booking-types/{BookingTypeSlug}/bookings", payload);
+            $"/v1/public/{TenantSlug}/booking-types/{BookingTypeSlug}/bookings", payload);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
         booking!.CustomerEmail.Should().Be("public-customer@example.com");
     }
@@ -100,7 +100,7 @@ public sealed class PublicBookingEndpointsTests(FunctionalTestFixture fixture)
         };
 
         var response = await client.PostAsJsonAsync(
-            "/public/nonexistent-tenant/booking-types/some-type/bookings", payload);
+            "/v1/public/nonexistent-tenant/booking-types/some-type/bookings", payload);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -113,10 +113,10 @@ public sealed class PublicBookingEndpointsTests(FunctionalTestFixture fixture)
         await SeedData.SeedStaffMemberAsync(db, "Public Staff", "public-staff@example.com");
 
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync($"/public/{TenantSlug}/staff");
+        var response = await client.GetAsync($"/v1/public/{TenantSlug}/staff");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var staff = await response.Content.ReadFromJsonAsync<List<StaffMemberDto>>();
+        var staff = await response.ReadFromApiJsonAsync<List<StaffMemberDto>>();
         staff.Should().NotBeNull();
         staff!.Should().NotBeEmpty();
     }
@@ -136,10 +136,10 @@ public sealed class PublicBookingEndpointsTests(FunctionalTestFixture fixture)
         };
 
         var response = await client.PostAsJsonAsync(
-            $"/public/{TenantSlug}/booking-types/{BookingTypeSlug}/waitlist", payload);
+            $"/v1/public/{TenantSlug}/booking-types/{BookingTypeSlug}/waitlist", payload);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var entry = await response.Content.ReadFromJsonAsync<WaitlistEntryDto>();
+        var entry = await response.ReadFromApiJsonAsync<WaitlistEntryDto>();
         entry.Should().NotBeNull();
         entry!.CustomerId.Should().Be("public-waitlist-cust-1");
     }

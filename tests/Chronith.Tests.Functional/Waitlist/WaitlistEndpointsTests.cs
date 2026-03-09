@@ -27,14 +27,14 @@ public sealed class WaitlistEndpointsTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("Customer");
 
         var start = DateTimeOffset.UtcNow.AddDays(20);
-        var response = await client.PostAsJsonAsync($"/booking-types/{BookingTypeSlug}/waitlist", new
+        var response = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/waitlist", new
         {
             desiredStart = start,
             desiredEnd = start.AddHours(1)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var entry = await response.Content.ReadFromJsonAsync<WaitlistEntryDto>();
+        var entry = await response.ReadFromApiJsonAsync<WaitlistEntryDto>();
         entry.Should().NotBeNull();
         entry!.Status.Should().Be(WaitlistStatus.Waiting);
         entry.CustomerId.Should().Be(TestConstants.CustomerUserId);
@@ -48,7 +48,7 @@ public sealed class WaitlistEndpointsTests(FunctionalTestFixture fixture)
         // Join as customer first
         var customerClient = fixture.CreateClient("Customer");
         var start = DateTimeOffset.UtcNow.AddDays(21);
-        var joinResp = await customerClient.PostAsJsonAsync($"/booking-types/{BookingTypeSlug}/waitlist", new
+        var joinResp = await customerClient.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/waitlist", new
         {
             desiredStart = start,
             desiredEnd = start.AddHours(1)
@@ -60,10 +60,10 @@ public sealed class WaitlistEndpointsTests(FunctionalTestFixture fixture)
         var from = Uri.EscapeDataString(start.AddHours(-1).ToString("o"));
         var to = Uri.EscapeDataString(start.AddHours(2).ToString("o"));
         var listResp = await adminClient.GetAsync(
-            $"/booking-types/{BookingTypeSlug}/waitlist?from={from}&to={to}");
+            $"/v1/booking-types/{BookingTypeSlug}/waitlist?from={from}&to={to}");
 
         listResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var entries = await listResp.Content.ReadFromJsonAsync<List<WaitlistEntryDto>>();
+        var entries = await listResp.ReadFromApiJsonAsync<List<WaitlistEntryDto>>();
         entries.Should().NotBeNull();
         entries!.Should().NotBeEmpty();
     }
@@ -76,16 +76,16 @@ public sealed class WaitlistEndpointsTests(FunctionalTestFixture fixture)
 
         // Join first
         var start = DateTimeOffset.UtcNow.AddDays(22);
-        var joinResp = await client.PostAsJsonAsync($"/booking-types/{BookingTypeSlug}/waitlist", new
+        var joinResp = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/waitlist", new
         {
             desiredStart = start,
             desiredEnd = start.AddHours(1)
         });
         joinResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var entry = await joinResp.Content.ReadFromJsonAsync<WaitlistEntryDto>();
+        var entry = await joinResp.ReadFromApiJsonAsync<WaitlistEntryDto>();
 
         // Remove
-        var deleteResp = await client.DeleteAsync($"/waitlist/{entry!.Id}");
+        var deleteResp = await client.DeleteAsync($"/v1/waitlist/{entry!.Id}");
         deleteResp.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
@@ -108,10 +108,10 @@ public sealed class WaitlistEndpointsTests(FunctionalTestFixture fixture)
 
         // Accept the offer as customer
         var client = fixture.CreateClient("Customer");
-        var acceptResp = await client.PostAsJsonAsync($"/waitlist/{entryId}/accept", new { });
+        var acceptResp = await client.PostAsJsonAsync($"/v1/waitlist/{entryId}/accept", new { });
 
         acceptResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var accepted = await acceptResp.Content.ReadFromJsonAsync<WaitlistEntryDto>();
+        var accepted = await acceptResp.ReadFromApiJsonAsync<WaitlistEntryDto>();
         accepted.Should().NotBeNull();
         accepted!.Status.Should().Be(WaitlistStatus.Converted);
     }

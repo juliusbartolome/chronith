@@ -52,11 +52,14 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
             await _postgres.DisposeAsync();
     }
 
-    public HttpClient CreateClient(string role, string? userId = null) =>
-        CreateClientWithToken(TestJwtFactory.CreateToken(role, userId ?? RoleToUserId(role)));
+    public HttpClient CreateClient(string role, string? userId = null, Guid? tenantId = null) =>
+        CreateClientWithToken(TestJwtFactory.CreateToken(role, userId ?? RoleToUserId(role), tenantId));
 
     public HttpClient CreateAnonymousClient() =>
         Factory.CreateClient();
+
+    public HttpClient CreateClientWithCustomerToken(string customerId, Guid? tenantId = null) =>
+        CreateClientWithToken(TestJwtFactory.CreateCustomerToken(customerId, tenantId));
 
     private HttpClient CreateClientWithToken(string token)
     {

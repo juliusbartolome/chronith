@@ -7,7 +7,7 @@ namespace Chronith.Tests.Functional.BookingTypes;
 [Collection("Functional")]
 public sealed class BookingTypeAuthTests(FunctionalTestFixture fixture)
 {
-    private const string BaseUrl = "/booking-types";
+    private const string BaseUrl = "/v1/booking-types";
     private const string Slug = "auth-test-type";
 
     private async Task EnsureSeedAsync()

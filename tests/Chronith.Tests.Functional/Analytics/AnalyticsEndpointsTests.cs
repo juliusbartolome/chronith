@@ -49,10 +49,10 @@ public sealed class AnalyticsEndpointsTests(FunctionalTestFixture fixture)
 
         var from = Uri.EscapeDataString("2026-04-07T00:00:00Z");
         var to = Uri.EscapeDataString("2026-04-15T00:00:00Z");
-        var response = await client.GetAsync($"/analytics/bookings?from={from}&to={to}&groupBy=day");
+        var response = await client.GetAsync($"/v1/analytics/bookings?from={from}&to={to}&groupBy=day");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var analytics = await response.Content.ReadFromJsonAsync<BookingAnalyticsDto>();
+        var analytics = await response.ReadFromApiJsonAsync<BookingAnalyticsDto>();
         analytics.Should().NotBeNull();
         analytics!.Total.Should().BeGreaterThanOrEqualTo(4);
         analytics.ByStatus.Should().ContainKey("confirmed");
@@ -68,10 +68,10 @@ public sealed class AnalyticsEndpointsTests(FunctionalTestFixture fixture)
 
         var from = Uri.EscapeDataString("2026-04-07T00:00:00Z");
         var to = Uri.EscapeDataString("2026-04-15T00:00:00Z");
-        var response = await client.GetAsync($"/analytics/revenue?from={from}&to={to}&groupBy=day");
+        var response = await client.GetAsync($"/v1/analytics/revenue?from={from}&to={to}&groupBy=day");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var analytics = await response.Content.ReadFromJsonAsync<RevenueAnalyticsDto>();
+        var analytics = await response.ReadFromApiJsonAsync<RevenueAnalyticsDto>();
         analytics.Should().NotBeNull();
         analytics!.TotalCentavos.Should().BeGreaterThanOrEqualTo(25_000);
         analytics.Currency.Should().Be("PHP");
@@ -87,10 +87,10 @@ public sealed class AnalyticsEndpointsTests(FunctionalTestFixture fixture)
 
         var from = Uri.EscapeDataString("2026-04-07T00:00:00Z");
         var to = Uri.EscapeDataString("2026-04-15T00:00:00Z");
-        var response = await client.GetAsync($"/analytics/utilization?from={from}&to={to}");
+        var response = await client.GetAsync($"/v1/analytics/utilization?from={from}&to={to}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var analytics = await response.Content.ReadFromJsonAsync<UtilizationAnalyticsDto>();
+        var analytics = await response.ReadFromApiJsonAsync<UtilizationAnalyticsDto>();
         analytics.Should().NotBeNull();
         analytics!.ByBookingType.Should().Contain(bt => bt.Slug == BookingTypeSlug);
     }
@@ -103,10 +103,10 @@ public sealed class AnalyticsEndpointsTests(FunctionalTestFixture fixture)
 
         var from = Uri.EscapeDataString("2026-04-01T00:00:00Z");
         var to = Uri.EscapeDataString("2026-05-01T00:00:00Z");
-        var response = await client.GetAsync($"/analytics/bookings?from={from}&to={to}&groupBy=month");
+        var response = await client.GetAsync($"/v1/analytics/bookings?from={from}&to={to}&groupBy=month");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var analytics = await response.Content.ReadFromJsonAsync<BookingAnalyticsDto>();
+        var analytics = await response.ReadFromApiJsonAsync<BookingAnalyticsDto>();
         analytics.Should().NotBeNull();
         analytics!.TimeSeries.Should().Contain(ts => ts.Date == "2026-04");
     }

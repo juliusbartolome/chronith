@@ -37,13 +37,13 @@ public sealed class WebhookDeliveryTests(FunctionalTestFixture fixture)
 
         // Act: confirm the booking as TenantAdmin
         var client = fixture.CreateClient("TenantAdmin");
-        var response = await client.PostAsJsonAsync($"/bookings/{bookingId}/confirm", new
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{bookingId}/confirm", new
         {
             bookingTypeSlug = WithWebhookSlug
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var confirmed = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var confirmed = await response.ReadFromApiJsonAsync<BookingDto>();
         confirmed!.Status.Should().Be(BookingStatus.Confirmed);
 
         // Assert: a WebhookOutboxEntry row exists for this booking (filter to webhook category only)
@@ -77,13 +77,13 @@ public sealed class WebhookDeliveryTests(FunctionalTestFixture fixture)
 
         // Act: confirm the booking as TenantAdmin (no webhook seeded for this booking type)
         var client = fixture.CreateClient("TenantAdmin");
-        var response = await client.PostAsJsonAsync($"/bookings/{bookingId}/confirm", new
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{bookingId}/confirm", new
         {
             bookingTypeSlug = WithoutWebhookSlug
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var confirmed = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var confirmed = await response.ReadFromApiJsonAsync<BookingDto>();
         confirmed!.Status.Should().Be(BookingStatus.Confirmed);
 
         // Assert: no WebhookOutboxEntry for this booking (filter to webhook category only)

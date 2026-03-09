@@ -1,5 +1,6 @@
 using Chronith.API.HealthChecks;
 using Chronith.API.Middleware;
+using Chronith.API.Processors;
 using Chronith.Application;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Options;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.Options;
 using NSwag;
 using Serilog;
 using System.Globalization;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -148,7 +150,21 @@ app.Use(async (ctx, next) =>
     await next();
 });
 
-app.UseFastEndpoints(c => { c.Errors.UseProblemDetails(); });
+app.UseMiddleware<VersionRedirectMiddleware>();
+
+app.UseMiddleware<RequestBodyHashMiddleware>();
+
+app.UseFastEndpoints(c =>
+{
+    c.Endpoints.RoutePrefix = "v1";
+    c.Errors.UseProblemDetails();
+    c.Serializer.Options.Converters.Add(new JsonStringEnumConverter());
+    c.Endpoints.Configurator = ep =>
+    {
+        ep.PreProcessor<IdempotencyPreProcessor>(Order.Before);
+        ep.PostProcessor<IdempotencyPostProcessor>(Order.After);
+    };
+});
 
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Name == "database" });

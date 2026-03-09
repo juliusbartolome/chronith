@@ -30,7 +30,7 @@ public sealed class ICalFeedTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
 
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync($"/booking-types/{BookingTypeSlug}/calendar.ics");
+        var response = await client.GetAsync($"/v1/booking-types/{BookingTypeSlug}/calendar.ics");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.Should().Be("text/calendar");
@@ -51,7 +51,7 @@ public sealed class ICalFeedTests(FunctionalTestFixture fixture)
     public async Task ICalFeed_WithUnknownSlug_Returns404()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync("/booking-types/nonexistent-slug/calendar.ics");
+        var response = await client.GetAsync("/v1/booking-types/nonexistent-slug/calendar.ics");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -70,7 +70,7 @@ public sealed class ICalFeedTests(FunctionalTestFixture fixture)
             BookingStatus.Cancelled, "ical-cust-empty");
 
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync($"/booking-types/{slug}/calendar.ics");
+        var response = await client.GetAsync($"/v1/booking-types/{slug}/calendar.ics");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
