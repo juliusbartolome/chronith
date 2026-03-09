@@ -235,4 +235,103 @@ public sealed class RecurrenceRuleTests
         }, options => options.WithStrictOrdering());
         occurrences.All(d => d >= from && d <= to).Should().BeTrue();
     }
+
+    [Fact]
+    public void Create_IntervalLessThan1_Throws()
+    {
+        var act = () => CreateRule(
+            RecurrenceFrequency.Daily,
+            interval: 0,
+            seriesStart: new DateOnly(2026, 1, 1));
+
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithParameterName("interval");
+    }
+
+    [Fact]
+    public void Create_SeriesEndBeforeSeriesStart_Throws()
+    {
+        var act = () => CreateRule(
+            RecurrenceFrequency.Daily,
+            interval: 1,
+            seriesStart: new DateOnly(2026, 6, 1),
+            seriesEnd: new DateOnly(2026, 1, 1));
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("seriesEnd");
+    }
+
+    [Fact]
+    public void Weekly_MonWed_MaxOccurrences3_StopsMidWeek()
+    {
+        // Arrange: weekly Mon+Wed, max 3 occurrences
+        var rule = CreateRule(
+            RecurrenceFrequency.Weekly,
+            interval: 1,
+            seriesStart: new DateOnly(2026, 1, 5), // Monday
+            maxOccurrences: 3,
+            daysOfWeek: new[] { DayOfWeek.Monday, DayOfWeek.Wednesday });
+
+        // Act
+        var from = new DateOnly(2026, 1, 5);
+        var to = new DateOnly(2026, 2, 28);
+        var occurrences = rule.ComputeOccurrences(from, to);
+
+        // Assert: Mon 5, Wed 7, Mon 12 — stops after 3
+        occurrences.Should().HaveCount(3);
+        occurrences.Should().BeEquivalentTo(new[]
+        {
+            new DateOnly(2026, 1, 5),
+            new DateOnly(2026, 1, 7),
+            new DateOnly(2026, 1, 12),
+        }, options => options.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void Weekly_EmptyDaysOfWeek_BehavesSameAsNull()
+    {
+        // Arrange: weekly with empty DaysOfWeek list (should behave like null — step by week)
+        var rule = CreateRule(
+            RecurrenceFrequency.Weekly,
+            interval: 1,
+            seriesStart: new DateOnly(2026, 1, 5), // Monday
+            daysOfWeek: Array.Empty<DayOfWeek>());
+
+        // Act
+        var from = new DateOnly(2026, 1, 5);
+        var to = new DateOnly(2026, 1, 25);
+        var occurrences = rule.ComputeOccurrences(from, to);
+
+        // Assert: Jan 5, 12, 19 (step by 7 days each)
+        occurrences.Should().BeEquivalentTo(new[]
+        {
+            new DateOnly(2026, 1, 5),
+            new DateOnly(2026, 1, 12),
+            new DateOnly(2026, 1, 19),
+        }, options => options.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void MaxOccurrences_WithWindowedFrom_CountsFromSeriesStart()
+    {
+        // Arrange: daily, max 5, starts Jan 1
+        var rule = CreateRule(
+            RecurrenceFrequency.Daily,
+            interval: 1,
+            seriesStart: new DateOnly(2026, 1, 1),
+            maxOccurrences: 5);
+
+        // Act: query from Jan 4 — occurrences 1-3 (Jan 1-3) are before window
+        var from = new DateOnly(2026, 1, 4);
+        var to = new DateOnly(2026, 12, 31);
+        var occurrences = rule.ComputeOccurrences(from, to);
+
+        // Assert: only Jan 4, Jan 5 in window (occurrences 4 and 5 of 5 total)
+        occurrences.Should().HaveCount(2);
+        occurrences.Should().BeEquivalentTo(new[]
+        {
+            new DateOnly(2026, 1, 4),
+            new DateOnly(2026, 1, 5),
+        }, options => options.WithStrictOrdering());
+    }
 }

@@ -18,6 +18,8 @@ public sealed class RecurrenceRule
 
     internal RecurrenceRule() { }
 
+    private const int MaxSafetyOccurrences = 10_000;
+
     public static RecurrenceRule Create(
         Guid tenantId,
         Guid bookingTypeId,
@@ -28,6 +30,11 @@ public sealed class RecurrenceRule
         DateOnly? seriesEnd,
         int? maxOccurrences)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(interval, 1);
+
+        if (seriesEnd.HasValue && seriesEnd.Value < seriesStart)
+            throw new ArgumentException("SeriesEnd cannot be before SeriesStart.", nameof(seriesEnd));
+
         return new RecurrenceRule
         {
             Id = Guid.NewGuid(),
@@ -94,6 +101,8 @@ public sealed class RecurrenceRule
                 {
                     if (MaxOccurrences.HasValue && totalEmitted >= MaxOccurrences.Value)
                         break;
+                    if (totalEmitted >= MaxSafetyOccurrences)
+                        break;
 
                     if (cursor >= from)
                         results.Add(cursor);
@@ -110,6 +119,9 @@ public sealed class RecurrenceRule
                 var weekStart = SeriesStart;
                 while (weekStart <= effectiveEnd)
                 {
+                    if (totalEmitted >= MaxSafetyOccurrences)
+                        break;
+
                     if (DaysOfWeek is { Count: > 0 })
                     {
                         foreach (var day in DaysOfWeek.OrderBy(d => d))
@@ -156,6 +168,8 @@ public sealed class RecurrenceRule
                     if (candidate > effectiveEnd)
                         break;
                     if (MaxOccurrences.HasValue && totalEmitted >= MaxOccurrences.Value)
+                        break;
+                    if (totalEmitted >= MaxSafetyOccurrences)
                         break;
 
                     if (candidate >= from)
