@@ -1,5 +1,5 @@
 /**
- * availability.js — Load test for GET /booking-types/{slug}/availability
+ * availability.js — Load test for GET /v1/booking-types/{slug}/availability
  *
  * 100 VUs for 60 seconds.
  * Threshold: p95 response time < 100 ms.
@@ -30,7 +30,7 @@ const SLUG = __ENV.BOOKING_TYPE_SLUG || "test-type";
 export default function () {
   const from = "2026-04-01T00:00:00Z";
   const to = "2026-04-08T00:00:00Z";
-  const url = `${baseUrl()}/booking-types/${SLUG}/availability?from=${from}&to=${to}`;
+  const url = `${baseUrl()}/v1/booking-types/${SLUG}/availability?from=${from}&to=${to}`;
 
   const res = http.get(url, { headers: authHeader("Customer") });
 

@@ -21,7 +21,7 @@ public sealed class VersionRedirectMiddleware(RequestDelegate next)
             ? context.Request.QueryString.Value
             : string.Empty;
 
-        context.Response.StatusCode = StatusCodes.Status301MovedPermanently;
+        context.Response.StatusCode = StatusCodes.Status308PermanentRedirect;
         context.Response.Headers.Location = $"/v1{path}{queryString}";
     }
 }

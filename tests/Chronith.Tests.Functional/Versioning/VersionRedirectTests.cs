@@ -28,13 +28,13 @@ public sealed class VersionRedirectTests(FunctionalTestFixture fixture)
     [InlineData("/payments")]
     [InlineData("/integrations/ical")]
     [InlineData("/public/booking-types")]
-    public async Task UnversionedRoute_Returns301_WithV1LocationHeader(string path)
+    public async Task UnversionedRoute_Returns308_WithV1LocationHeader(string path)
     {
         var client = CreateNonRedirectingClient();
 
         var response = await client.GetAsync(path);
 
-        response.StatusCode.Should().Be(HttpStatusCode.MovedPermanently);
+        response.StatusCode.Should().Be((HttpStatusCode)308);
         response.Headers.Location!.ToString().Should().Be($"/v1{path}");
     }
 
@@ -45,7 +45,7 @@ public sealed class VersionRedirectTests(FunctionalTestFixture fixture)
 
         var response = await client.GetAsync("/booking-types?page=1&size=10");
 
-        response.StatusCode.Should().Be(HttpStatusCode.MovedPermanently);
+        response.StatusCode.Should().Be((HttpStatusCode)308);
         response.Headers.Location!.ToString().Should().Be("/v1/booking-types?page=1&size=10");
     }
 
@@ -69,6 +69,18 @@ public sealed class VersionRedirectTests(FunctionalTestFixture fixture)
         // /v1/health-check won't exist, but we should NOT get a 301 redirect
         var response = await client.GetAsync("/v1/booking-types");
 
-        response.StatusCode.Should().NotBe(HttpStatusCode.MovedPermanently);
+        response.StatusCode.Should().NotBe((HttpStatusCode)308);
+    }
+
+    [Fact]
+    public async Task UnversionedRoute_Post_Returns308_WithV1LocationHeader()
+    {
+        var client = CreateNonRedirectingClient();
+
+        var content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json");
+        var response = await client.PostAsync("/booking-types/test-type/bookings", content);
+
+        response.StatusCode.Should().Be((HttpStatusCode)308);
+        response.Headers.Location!.ToString().Should().Be("/v1/booking-types/test-type/bookings");
     }
 }
