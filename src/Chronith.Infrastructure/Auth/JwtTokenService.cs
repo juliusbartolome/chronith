@@ -36,6 +36,29 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    public string CreateCustomerAccessToken(Customer customer)
+    {
+        var signingKey = configuration["Jwt:SigningKey"]!;
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, customer.Id.ToString()),
+            new Claim("tenant_id", customer.TenantId.ToString()),
+            new Claim("customer_id", customer.Id.ToString()),
+            new Claim("email", customer.Email),
+            new Claim(ClaimTypes.Role, "Customer"),
+        };
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(AccessTokenMinutes),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
     public (string RawToken, string TokenHash) CreateRefreshToken()
     {
         var raw = Guid.NewGuid().ToString("N"); // 32-char lowercase hex, no dashes

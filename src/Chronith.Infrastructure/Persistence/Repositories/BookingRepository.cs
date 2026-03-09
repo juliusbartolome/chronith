@@ -92,6 +92,19 @@ public sealed class BookingRepository : IBookingRepository
         return results.Select(r => (r.Start, r.End)).ToList();
     }
 
+    public async Task<IReadOnlyList<Booking>> GetByCustomerIdAsync(
+        Guid tenantId, string customerId, CancellationToken ct = default)
+    {
+        var entities = await _db.Bookings
+            .AsNoTracking()
+            .Include(b => b.StatusChanges)
+            .Where(b => b.TenantId == tenantId && b.CustomerId == customerId)
+            .OrderByDescending(b => b.Start)
+            .ToListAsync(ct);
+
+        return entities.Select(BookingEntityMapper.ToDomain).ToList();
+    }
+
     public async Task<BookingMetrics> GetMetricsAsync(
         Guid tenantId, DateTimeOffset monthStartUtc, CancellationToken ct = default)
     {
