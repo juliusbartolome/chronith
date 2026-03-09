@@ -1,3 +1,4 @@
+using Chronith.Application.Constants;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
@@ -15,7 +16,6 @@ public sealed class CustomerLoginCommandHandler(
     IUnitOfWork unitOfWork)
     : IRequestHandler<CustomerLoginCommand, CustomerAuthTokenDto>
 {
-    private static readonly TimeSpan RefreshTokenTtl = TimeSpan.FromDays(30);
 
     public async Task<CustomerAuthTokenDto> Handle(
         CustomerLoginCommand request, CancellationToken cancellationToken)
@@ -39,7 +39,7 @@ public sealed class CustomerLoginCommandHandler(
         customerRepository.Update(customer);
 
         var (rawToken, tokenHash) = tokenService.CreateRefreshToken();
-        var refreshToken = CustomerRefreshToken.Create(customer.Id, tokenHash, RefreshTokenTtl);
+        var refreshToken = CustomerRefreshToken.Create(customer.Id, tokenHash, CustomerAuthConstants.RefreshTokenTtl);
         await refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

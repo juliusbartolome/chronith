@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Chronith.Application.Services;
@@ -9,17 +10,23 @@ namespace Chronith.Infrastructure.Auth;
 
 public sealed class OidcTokenValidator : IOidcTokenValidator
 {
+    private static readonly ConcurrentDictionary<string, ConfigurationManager<OpenIdConnectConfiguration>>
+        ConfigManagers = new();
+
     public async Task<OidcValidationResult> ValidateAsync(
         string idToken, string issuer, string clientId, string? audience,
         CancellationToken ct = default)
     {
         try
         {
-            var metadataAddress = issuer.TrimEnd('/') + "/.well-known/openid-configuration";
-            var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-                metadataAddress,
-                new OpenIdConnectConfigurationRetriever(),
-                new HttpDocumentRetriever());
+            var configManager = ConfigManagers.GetOrAdd(issuer, key =>
+            {
+                var metadataAddress = key.TrimEnd('/') + "/.well-known/openid-configuration";
+                return new ConfigurationManager<OpenIdConnectConfiguration>(
+                    metadataAddress,
+                    new OpenIdConnectConfigurationRetriever(),
+                    new HttpDocumentRetriever());
+            });
 
             var config = await configManager.GetConfigurationAsync(ct);
 
