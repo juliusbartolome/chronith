@@ -61,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<ICustomerRefreshTokenRepository, CustomerRefreshTokenRepository>();
         services.AddScoped<ITenantAuthConfigRepository, TenantAuthConfigRepository>();
+        services.AddScoped<IRecurrenceRuleRepository, RecurrenceRuleRepository>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IOidcTokenValidator, OidcTokenValidator>();
         services.AddHostedService<WebhookDispatcherService>();

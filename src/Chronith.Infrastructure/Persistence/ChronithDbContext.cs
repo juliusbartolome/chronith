@@ -40,6 +40,7 @@ public sealed class ChronithDbContext : DbContext
     public DbSet<CustomerEntity> Customers => Set<CustomerEntity>();
     public DbSet<CustomerRefreshTokenEntity> CustomerRefreshTokens => Set<CustomerRefreshTokenEntity>();
     public DbSet<TenantAuthConfigEntity> TenantAuthConfigs => Set<TenantAuthConfigEntity>();
+    public DbSet<RecurrenceRuleEntity> RecurrenceRules => Set<RecurrenceRuleEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,5 +68,8 @@ public sealed class ChronithDbContext : DbContext
 
         modelBuilder.Entity<CustomerEntity>()
             .HasQueryFilter(c => !c.IsDeleted && c.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<RecurrenceRuleEntity>()
+            .HasQueryFilter(r => !r.IsDeleted && r.TenantId == _tenantContext.TenantId);
     }
 }
