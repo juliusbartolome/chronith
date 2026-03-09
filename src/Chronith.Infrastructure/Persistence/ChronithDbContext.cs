@@ -37,6 +37,9 @@ public sealed class ChronithDbContext : DbContext
     // background services which require cross-tenant access.
     public DbSet<TenantNotificationConfigEntity> TenantNotificationConfigs => Set<TenantNotificationConfigEntity>();
     public DbSet<BookingReminderEntity> BookingReminders => Set<BookingReminderEntity>();
+    public DbSet<CustomerEntity> Customers => Set<CustomerEntity>();
+    public DbSet<CustomerRefreshTokenEntity> CustomerRefreshTokens => Set<CustomerRefreshTokenEntity>();
+    public DbSet<TenantAuthConfigEntity> TenantAuthConfigs => Set<TenantAuthConfigEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,5 +64,8 @@ public sealed class ChronithDbContext : DbContext
 
         modelBuilder.Entity<TimeBlockEntity>()
             .HasQueryFilter(t => !t.IsDeleted && t.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<CustomerEntity>()
+            .HasQueryFilter(c => !c.IsDeleted && c.TenantId == _tenantContext.TenantId);
     }
 }
