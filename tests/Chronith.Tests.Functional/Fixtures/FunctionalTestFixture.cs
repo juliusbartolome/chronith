@@ -58,6 +58,9 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
     public HttpClient CreateAnonymousClient() =>
         Factory.CreateClient();
 
+    public HttpClient CreateClientWithCustomerToken(string customerId) =>
+        CreateClientWithToken(TestJwtFactory.CreateCustomerToken(customerId));
+
     private HttpClient CreateClientWithToken(string token)
     {
         var client = Factory.CreateClient();

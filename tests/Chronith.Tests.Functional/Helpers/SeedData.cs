@@ -242,4 +242,55 @@ public static class SeedData
         await db.SaveChangesAsync();
         return id;
     }
+
+    public static async Task<Guid> SeedCustomerAsync(
+        ChronithDbContext db,
+        Guid? id = null,
+        string email = "seeded-customer@example.com",
+        string name = "Seeded Customer",
+        string passwordHash = "$2a$11$dummyhashforseeding00000000000000000000000000000")
+    {
+        var customerId = id ?? Guid.NewGuid();
+        db.Customers.Add(new CustomerEntity
+        {
+            Id = customerId,
+            TenantId = TestConstants.TenantId,
+            Email = email,
+            Name = name,
+            PasswordHash = passwordHash,
+            AuthProvider = "BuiltIn",
+            IsEmailVerified = false,
+            IsActive = true,
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            LastLoginAt = null
+        });
+        await db.SaveChangesAsync();
+        return customerId;
+    }
+
+    public static async Task<Guid> SeedTenantAuthConfigAsync(
+        ChronithDbContext db,
+        bool allowBuiltIn = true,
+        bool magicLink = false,
+        string? oidcIssuer = null,
+        string? oidcClientId = null,
+        string? oidcAudience = null)
+    {
+        var id = Guid.NewGuid();
+        db.TenantAuthConfigs.Add(new TenantAuthConfigEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            AllowBuiltInAuth = allowBuiltIn,
+            OidcIssuer = oidcIssuer,
+            OidcClientId = oidcClientId,
+            OidcAudience = oidcAudience,
+            MagicLinkEnabled = magicLink,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
 }
