@@ -68,6 +68,7 @@ public static class DependencyInjection
         services.AddHostedService<WaitlistPromotionService>();
         services.AddHostedService<NotificationDispatcherService>();
         services.AddHostedService<ReminderSchedulerService>();
+        services.AddHostedService<RecurringBookingGeneratorService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
         {
@@ -77,6 +78,7 @@ public static class DependencyInjection
         services.Configure<WaitlistPromotionOptions>(configuration.GetSection("WaitlistPromotion"));
         services.Configure<NotificationDispatcherOptions>(configuration.GetSection("NotificationDispatcher"));
         services.Configure<ReminderSchedulerOptions>(configuration.GetSection("ReminderScheduler"));
+        services.Configure<RecurringBookingGeneratorOptions>(configuration.GetSection("RecurringBookings"));
 
         // Notification channels
         services.Configure<SmtpOptions>(configuration.GetSection("Notifications:Smtp"));

@@ -22,9 +22,26 @@ public sealed class RecurrenceRuleRepository(ChronithDbContext db) : IRecurrence
         return entities.Select(e => e.ToDomain()).ToList().AsReadOnly();
     }
 
+    public async Task<IReadOnlyList<RecurrenceRule>> GetAllAsync(CancellationToken ct = default)
+    {
+        var entities = await db.RecurrenceRules.AsNoTracking()
+            .ToListAsync(ct);
+        return entities.Select(e => e.ToDomain()).ToList().AsReadOnly();
+    }
+
     public async Task AddAsync(RecurrenceRule rule, CancellationToken ct = default) =>
         await db.RecurrenceRules.AddAsync(rule.ToEntity(), ct);
 
     public void Update(RecurrenceRule rule) =>
         db.RecurrenceRules.Update(rule.ToEntity());
+
+    public async Task<IReadOnlyList<RecurrenceRule>> GetAllActiveAcrossTenantsAsync(CancellationToken ct = default)
+    {
+        var entities = await db.RecurrenceRules
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(r => !r.IsDeleted)
+            .ToListAsync(ct);
+        return entities.Select(e => e.ToDomain()).ToList().AsReadOnly();
+    }
 }

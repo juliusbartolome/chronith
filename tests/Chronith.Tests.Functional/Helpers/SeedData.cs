@@ -298,4 +298,33 @@ public static class SeedData
         await db.SaveChangesAsync();
         return id;
     }
+
+    public static async Task<Guid> SeedRecurrenceRuleAsync(
+        ChronithDbContext db,
+        Guid bookingTypeId,
+        string frequency = "Weekly",
+        int interval = 1,
+        int[]? daysOfWeek = null,
+        DateOnly? seriesStart = null,
+        DateOnly? seriesEnd = null,
+        int? maxOccurrences = null)
+    {
+        var id = Guid.NewGuid();
+        db.RecurrenceRules.Add(new RecurrenceRuleEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            BookingTypeId = bookingTypeId,
+            Frequency = frequency,
+            Interval = interval,
+            DaysOfWeek = daysOfWeek,
+            SeriesStart = seriesStart ?? DateOnly.FromDateTime(DateTime.UtcNow),
+            SeriesEnd = seriesEnd,
+            MaxOccurrences = maxOccurrences,
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
 }
