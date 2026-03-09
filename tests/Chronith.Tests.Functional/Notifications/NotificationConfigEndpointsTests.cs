@@ -24,7 +24,7 @@ public sealed class NotificationConfigEndpointsTests(FunctionalTestFixture fixtu
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.PutAsJsonAsync("/tenant/notifications/email", new
+        var response = await client.PutAsJsonAsync("/v1/tenant/notifications/email", new
         {
             settings = "{\"smtpHost\":\"smtp.example.com\",\"smtpPort\":587}"
         });
@@ -44,7 +44,7 @@ public sealed class NotificationConfigEndpointsTests(FunctionalTestFixture fixtu
         var client = fixture.CreateClient("TenantAdmin");
 
         // Create initial config
-        var createResp = await client.PutAsJsonAsync("/tenant/notifications/sms", new
+        var createResp = await client.PutAsJsonAsync("/v1/tenant/notifications/sms", new
         {
             settings = "{\"accountSid\":\"AC000\",\"authToken\":\"tok\"}"
         });
@@ -52,7 +52,7 @@ public sealed class NotificationConfigEndpointsTests(FunctionalTestFixture fixtu
         var created = await createResp.Content.ReadFromJsonAsync<TenantNotificationConfigDto>();
 
         // Update same channel
-        var updateResp = await client.PutAsJsonAsync("/tenant/notifications/sms", new
+        var updateResp = await client.PutAsJsonAsync("/v1/tenant/notifications/sms", new
         {
             settings = "{\"accountSid\":\"AC111\",\"authToken\":\"tok2\"}"
         });
@@ -73,12 +73,12 @@ public sealed class NotificationConfigEndpointsTests(FunctionalTestFixture fixtu
         var client = fixture.CreateClient("TenantAdmin");
 
         // Ensure at least one config exists
-        await client.PutAsJsonAsync("/tenant/notifications/push", new
+        await client.PutAsJsonAsync("/v1/tenant/notifications/push", new
         {
             settings = "{\"projectId\":\"my-project\"}"
         });
 
-        var response = await client.GetAsync("/tenant/notifications");
+        var response = await client.GetAsync("/v1/tenant/notifications");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var configs = await response.Content.ReadFromJsonAsync<List<TenantNotificationConfigDto>>();
         configs.Should().NotBeNull();
@@ -92,17 +92,17 @@ public sealed class NotificationConfigEndpointsTests(FunctionalTestFixture fixtu
         var client = fixture.CreateClient("TenantAdmin");
 
         // Create config first
-        await client.PutAsJsonAsync("/tenant/notifications/email", new
+        await client.PutAsJsonAsync("/v1/tenant/notifications/email", new
         {
             settings = "{\"smtpHost\":\"smtp.example.com\"}"
         });
 
         // Disable
-        var deleteResp = await client.DeleteAsync("/tenant/notifications/email");
+        var deleteResp = await client.DeleteAsync("/v1/tenant/notifications/email");
         deleteResp.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Verify it's disabled (still in list but IsEnabled = false)
-        var listResp = await client.GetAsync("/tenant/notifications");
+        var listResp = await client.GetAsync("/v1/tenant/notifications");
         var configs = await listResp.Content.ReadFromJsonAsync<List<TenantNotificationConfigDto>>();
         var emailConfig = configs!.FirstOrDefault(c => c.ChannelType == "email");
         emailConfig.Should().NotBeNull();

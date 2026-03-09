@@ -37,7 +37,7 @@ public sealed class WebhookDeliveryTests(FunctionalTestFixture fixture)
 
         // Act: confirm the booking as TenantAdmin
         var client = fixture.CreateClient("TenantAdmin");
-        var response = await client.PostAsJsonAsync($"/bookings/{bookingId}/confirm", new
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{bookingId}/confirm", new
         {
             bookingTypeSlug = WithWebhookSlug
         });
@@ -77,7 +77,7 @@ public sealed class WebhookDeliveryTests(FunctionalTestFixture fixture)
 
         // Act: confirm the booking as TenantAdmin (no webhook seeded for this booking type)
         var client = fixture.CreateClient("TenantAdmin");
-        var response = await client.PostAsJsonAsync($"/bookings/{bookingId}/confirm", new
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{bookingId}/confirm", new
         {
             bookingTypeSlug = WithoutWebhookSlug
         });

@@ -148,7 +148,13 @@ app.Use(async (ctx, next) =>
     await next();
 });
 
-app.UseFastEndpoints(c => { c.Errors.UseProblemDetails(); });
+app.UseMiddleware<VersionRedirectMiddleware>();
+
+app.UseFastEndpoints(c =>
+{
+    c.Endpoints.RoutePrefix = "v1";
+    c.Errors.UseProblemDetails();
+});
 
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Name == "database" });

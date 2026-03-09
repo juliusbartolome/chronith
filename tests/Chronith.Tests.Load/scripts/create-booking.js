@@ -1,5 +1,5 @@
 /**
- * create-booking.js — Load test for POST /booking-types/{slug}/bookings
+ * create-booking.js — Load test for POST /v1/booking-types/{slug}/bookings
  *
  * 50 VUs for 30 seconds, each VU posting unique bookings.
  * Threshold: p95 response time < 200 ms.
@@ -53,7 +53,7 @@ export default function () {
   const slotIndex = (__VU * 100 + __ITER) % BASE_SLOTS.length;
   const slot = BASE_SLOTS[slotIndex];
 
-  const url = `${baseUrl()}/booking-types/${SLUG}/bookings`;
+  const url = `${baseUrl()}/v1/booking-types/${SLUG}/bookings`;
   const payload = JSON.stringify({
     startTime: slot.start,
     customerEmail: `k6-${__VU}-${__ITER}@example.com`,

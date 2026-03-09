@@ -16,9 +16,9 @@ public sealed class WebhookAuthTests(FunctionalTestFixture fixture)
         await SeedData.SeedBookingTypeAsync(db, BookingTypeSlug);
     }
 
-    private string ListUrl => $"/booking-types/{BookingTypeSlug}/webhooks";
-    private string CreateUrl => $"/booking-types/{BookingTypeSlug}/webhooks";
-    private string DeleteUrl(Guid id) => $"/booking-types/{BookingTypeSlug}/webhooks/{id}";
+    private string ListUrl => $"/v1/booking-types/{BookingTypeSlug}/webhooks";
+    private string CreateUrl => $"/v1/booking-types/{BookingTypeSlug}/webhooks";
+    private string DeleteUrl(Guid id) => $"/v1/booking-types/{BookingTypeSlug}/webhooks/{id}";
 
     // GET /booking-types/{slug}/webhooks — Admin → 200; others → 403; anon → 401
     [Theory]

@@ -28,7 +28,7 @@ public sealed class NotificationAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.GetAsync("/tenant/notifications");
+        var response = await client.GetAsync("/v1/tenant/notifications");
         response.StatusCode.Should().Be(expected);
     }
 
@@ -36,7 +36,7 @@ public sealed class NotificationAuthTests(FunctionalTestFixture fixture)
     public async Task ListNotificationConfigs_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync("/tenant/notifications");
+        var response = await client.GetAsync("/v1/tenant/notifications");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -51,7 +51,7 @@ public sealed class NotificationAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.PutAsJsonAsync("/tenant/notifications/email", new
+        var response = await client.PutAsJsonAsync("/v1/tenant/notifications/email", new
         {
             settings = "{\"smtpHost\":\"smtp.example.com\"}"
         });
@@ -62,7 +62,7 @@ public sealed class NotificationAuthTests(FunctionalTestFixture fixture)
     public async Task UpdateNotificationConfig_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.PutAsJsonAsync("/tenant/notifications/email", new
+        var response = await client.PutAsJsonAsync("/v1/tenant/notifications/email", new
         {
             settings = "{\"smtpHost\":\"smtp.example.com\"}"
         });
@@ -80,7 +80,7 @@ public sealed class NotificationAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.DeleteAsync("/tenant/notifications/email");
+        var response = await client.DeleteAsync("/v1/tenant/notifications/email");
         response.StatusCode.Should().Be(expected);
     }
 
@@ -88,7 +88,7 @@ public sealed class NotificationAuthTests(FunctionalTestFixture fixture)
     public async Task DisableNotificationChannel_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.DeleteAsync("/tenant/notifications/email");
+        var response = await client.DeleteAsync("/v1/tenant/notifications/email");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }

@@ -21,7 +21,7 @@ public sealed class TenantEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.GetAsync("/tenant");
+        var response = await client.GetAsync("/v1/tenant");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var tenant = await response.Content.ReadFromJsonAsync<TenantDto>();

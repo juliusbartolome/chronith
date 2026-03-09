@@ -30,7 +30,7 @@ public sealed class PaymentWebhookAuthTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.PostAsync("/webhooks/payments/Stub", WebhookBody());
+        var response = await client.PostAsync("/v1/webhooks/payments/Stub", WebhookBody());
 
         // AllowAnonymous means no 401
         ((int)response.StatusCode).Should().NotBe(401,
@@ -43,7 +43,7 @@ public sealed class PaymentWebhookAuthTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.PostAsync("/webhooks/payments/Stub", WebhookBody());
+        var response = await client.PostAsync("/v1/webhooks/payments/Stub", WebhookBody());
 
         ((int)response.StatusCode).Should().NotBe(403,
             "the webhook endpoint is AllowAnonymous and should not check roles");
@@ -59,7 +59,7 @@ public sealed class PaymentWebhookAuthTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
 
-        var response = await client.PostAsync("/webhooks/payments/Stub", WebhookBody());
+        var response = await client.PostAsync("/v1/webhooks/payments/Stub", WebhookBody());
 
         ((int)response.StatusCode).Should().NotBe(401);
         ((int)response.StatusCode).Should().NotBe(403,
@@ -72,7 +72,7 @@ public sealed class PaymentWebhookAuthTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.PostAsync("/webhooks/payments/UnknownProvider", WebhookBody());
+        var response = await client.PostAsync("/v1/webhooks/payments/UnknownProvider", WebhookBody());
 
         // Unknown provider should not return auth errors — it should be a domain/processing error
         ((int)response.StatusCode).Should().NotBe(401);

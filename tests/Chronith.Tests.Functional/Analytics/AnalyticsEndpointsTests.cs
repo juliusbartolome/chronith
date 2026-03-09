@@ -49,7 +49,7 @@ public sealed class AnalyticsEndpointsTests(FunctionalTestFixture fixture)
 
         var from = Uri.EscapeDataString("2026-04-07T00:00:00Z");
         var to = Uri.EscapeDataString("2026-04-15T00:00:00Z");
-        var response = await client.GetAsync($"/analytics/bookings?from={from}&to={to}&groupBy=day");
+        var response = await client.GetAsync($"/v1/analytics/bookings?from={from}&to={to}&groupBy=day");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var analytics = await response.Content.ReadFromJsonAsync<BookingAnalyticsDto>();
@@ -68,7 +68,7 @@ public sealed class AnalyticsEndpointsTests(FunctionalTestFixture fixture)
 
         var from = Uri.EscapeDataString("2026-04-07T00:00:00Z");
         var to = Uri.EscapeDataString("2026-04-15T00:00:00Z");
-        var response = await client.GetAsync($"/analytics/revenue?from={from}&to={to}&groupBy=day");
+        var response = await client.GetAsync($"/v1/analytics/revenue?from={from}&to={to}&groupBy=day");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var analytics = await response.Content.ReadFromJsonAsync<RevenueAnalyticsDto>();
@@ -87,7 +87,7 @@ public sealed class AnalyticsEndpointsTests(FunctionalTestFixture fixture)
 
         var from = Uri.EscapeDataString("2026-04-07T00:00:00Z");
         var to = Uri.EscapeDataString("2026-04-15T00:00:00Z");
-        var response = await client.GetAsync($"/analytics/utilization?from={from}&to={to}");
+        var response = await client.GetAsync($"/v1/analytics/utilization?from={from}&to={to}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var analytics = await response.Content.ReadFromJsonAsync<UtilizationAnalyticsDto>();
@@ -103,7 +103,7 @@ public sealed class AnalyticsEndpointsTests(FunctionalTestFixture fixture)
 
         var from = Uri.EscapeDataString("2026-04-01T00:00:00Z");
         var to = Uri.EscapeDataString("2026-05-01T00:00:00Z");
-        var response = await client.GetAsync($"/analytics/bookings?from={from}&to={to}&groupBy=month");
+        var response = await client.GetAsync($"/v1/analytics/bookings?from={from}&to={to}&groupBy=month");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var analytics = await response.Content.ReadFromJsonAsync<BookingAnalyticsDto>();

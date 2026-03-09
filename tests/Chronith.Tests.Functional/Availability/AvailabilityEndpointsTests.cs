@@ -19,7 +19,7 @@ public sealed class AvailabilityEndpointsTests(FunctionalTestFixture fixture)
 
         var client = fixture.CreateClient("Customer");
         // Monday 2026-04-06 to Sunday 2026-04-12, UTC
-        var url = $"/booking-types/{slug}/availability?from=2026-04-06T00:00:00Z&to=2026-04-12T23:59:59Z";
+        var url = $"/v1/booking-types/{slug}/availability?from=2026-04-06T00:00:00Z&to=2026-04-12T23:59:59Z";
         var response = await client.GetAsync(url);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -36,7 +36,7 @@ public sealed class AvailabilityEndpointsTests(FunctionalTestFixture fixture)
         await SeedData.SeedTenantAsync(db);
 
         var client = fixture.CreateClient("Customer");
-        var url = $"/booking-types/does-not-exist-{Guid.NewGuid():N}/availability?from=2026-04-06T00:00:00Z&to=2026-04-12T23:59:59Z";
+        var url = $"/v1/booking-types/does-not-exist-{Guid.NewGuid():N}/availability?from=2026-04-06T00:00:00Z&to=2026-04-12T23:59:59Z";
         var response = await client.GetAsync(url);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

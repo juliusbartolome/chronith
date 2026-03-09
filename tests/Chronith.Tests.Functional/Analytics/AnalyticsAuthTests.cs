@@ -34,7 +34,7 @@ public sealed class AnalyticsAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.GetAsync($"/analytics/bookings{BuildQueryString()}");
+        var response = await client.GetAsync($"/v1/analytics/bookings{BuildQueryString()}");
         response.StatusCode.Should().Be(expected);
     }
 
@@ -42,7 +42,7 @@ public sealed class AnalyticsAuthTests(FunctionalTestFixture fixture)
     public async Task GetBookingAnalytics_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync($"/analytics/bookings{BuildQueryString()}");
+        var response = await client.GetAsync($"/v1/analytics/bookings{BuildQueryString()}");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -57,7 +57,7 @@ public sealed class AnalyticsAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.GetAsync($"/analytics/revenue{BuildQueryString()}");
+        var response = await client.GetAsync($"/v1/analytics/revenue{BuildQueryString()}");
         response.StatusCode.Should().Be(expected);
     }
 
@@ -65,7 +65,7 @@ public sealed class AnalyticsAuthTests(FunctionalTestFixture fixture)
     public async Task GetRevenueAnalytics_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync($"/analytics/revenue{BuildQueryString()}");
+        var response = await client.GetAsync($"/v1/analytics/revenue{BuildQueryString()}");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -80,7 +80,7 @@ public sealed class AnalyticsAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.GetAsync($"/analytics/utilization{BuildQueryString()}");
+        var response = await client.GetAsync($"/v1/analytics/utilization{BuildQueryString()}");
         response.StatusCode.Should().Be(expected);
     }
 
@@ -88,7 +88,7 @@ public sealed class AnalyticsAuthTests(FunctionalTestFixture fixture)
     public async Task GetUtilizationAnalytics_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.GetAsync($"/analytics/utilization{BuildQueryString()}");
+        var response = await client.GetAsync($"/v1/analytics/utilization{BuildQueryString()}");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }

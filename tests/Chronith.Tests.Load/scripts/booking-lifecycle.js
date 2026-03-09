@@ -48,7 +48,7 @@ export default function () {
 
   // ── Step 1: Create booking (Customer role) ──────────────────────────────
   const createRes = http.post(
-    `${base}/booking-types/${SLUG}/bookings`,
+    `${base}/v1/booking-types/${SLUG}/bookings`,
     JSON.stringify({
       startTime: slot.start,
       customerEmail: `lifecycle-${__VU}-${__ITER}@example.com`,
@@ -75,7 +75,7 @@ export default function () {
 
   // ── Step 2: Pay booking (Payment service role) ────────────────────────
   const payRes = http.post(
-    `${base}/bookings/${bookingId}/pay`,
+    `${base}/v1/bookings/${bookingId}/pay`,
     JSON.stringify({ bookingTypeSlug: SLUG }),
     {
       headers: {
@@ -91,7 +91,7 @@ export default function () {
 
   // ── Step 3: Confirm booking (Staff role) ───────────────────────────────
   const confirmRes = http.post(
-    `${base}/bookings/${bookingId}/confirm`,
+    `${base}/v1/bookings/${bookingId}/confirm`,
     JSON.stringify({ bookingTypeSlug: SLUG }),
     {
       headers: {
@@ -106,7 +106,7 @@ export default function () {
   });
 
   // ── Step 4: Get booking (Admin role) ──────────────────────────────────
-  const getRes = http.get(`${base}/bookings/${bookingId}`, {
+  const getRes = http.get(`${base}/v1/bookings/${bookingId}`, {
     headers: authHeader("TenantAdmin"),
   });
 
