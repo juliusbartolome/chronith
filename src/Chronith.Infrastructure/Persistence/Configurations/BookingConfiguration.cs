@@ -69,5 +69,11 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
             .HasForeignKey(b => b.CustomerAccountId)
             .OnDelete(DeleteBehavior.SetNull)
             .IsRequired(false);
+
+        builder.HasOne<RecurrenceRuleEntity>()
+            .WithMany()
+            .HasForeignKey(b => b.RecurrenceRuleId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
     }
 }
