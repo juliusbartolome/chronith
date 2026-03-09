@@ -77,6 +77,27 @@ public sealed class RecurrenceRule
         CreatedAt = createdAt
     };
 
+    public void Update(
+        RecurrenceFrequency frequency,
+        int interval,
+        IReadOnlyList<DayOfWeek>? daysOfWeek,
+        DateOnly seriesStart,
+        DateOnly? seriesEnd,
+        int? maxOccurrences)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(interval, 1);
+
+        if (seriesEnd.HasValue && seriesEnd.Value < seriesStart)
+            throw new ArgumentException("SeriesEnd cannot be before SeriesStart.", nameof(seriesEnd));
+
+        Frequency = frequency;
+        Interval = interval;
+        DaysOfWeek = daysOfWeek;
+        SeriesStart = seriesStart;
+        SeriesEnd = seriesEnd;
+        MaxOccurrences = maxOccurrences;
+    }
+
     public void SoftDelete() => IsDeleted = true;
 
     /// <summary>
