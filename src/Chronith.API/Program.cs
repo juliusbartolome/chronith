@@ -1,5 +1,6 @@
 using Chronith.API.HealthChecks;
 using Chronith.API.Middleware;
+using Chronith.API.Processors;
 using Chronith.Application;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Options;
@@ -154,6 +155,11 @@ app.UseFastEndpoints(c =>
 {
     c.Endpoints.RoutePrefix = "v1";
     c.Errors.UseProblemDetails();
+    c.Endpoints.Configurator = ep =>
+    {
+        ep.PreProcessor<IdempotencyPreProcessor>(Order.Before);
+        ep.PostProcessor<IdempotencyPostProcessor>(Order.After);
+    };
 });
 
 app.MapHealthChecks("/health/live");
