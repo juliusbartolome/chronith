@@ -9,7 +9,6 @@ namespace Chronith.Tests.Functional.CustomerAuth;
 public sealed class CustomerBookingsTests(FunctionalTestFixture fixture)
 {
     private const string TenantSlug = "cust-bookings";
-    private const string BookingTypeSlug = "cust-book-type";
 
     private async Task EnsureSeedAsync()
     {

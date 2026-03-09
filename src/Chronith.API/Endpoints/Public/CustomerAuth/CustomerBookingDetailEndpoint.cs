@@ -1,7 +1,5 @@
-using System.Security.Claims;
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.CustomerAuth.GetCustomerBookingDetail;
-using Chronith.Domain.Exceptions;
 using FastEndpoints;
 using MediatR;
 
@@ -25,9 +23,7 @@ public sealed class CustomerBookingDetailEndpoint(ISender sender)
 
     public override async Task HandleAsync(CustomerBookingDetailRequest req, CancellationToken ct)
     {
-        var customerId = User.FindFirstValue("customer_id")
-            ?? throw new UnauthorizedException("Missing customer_id claim");
-        var customerGuid = Guid.Parse(customerId);
+        var customerGuid = User.GetCustomerIdFromClaims();
 
         var result = await sender.Send(new GetCustomerBookingDetailQuery(customerGuid, req.Id), ct);
         await Send.OkAsync(result, ct);

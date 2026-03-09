@@ -277,6 +277,11 @@ public static class SeedData
         string? oidcClientId = null,
         string? oidcAudience = null)
     {
+        // Idempotent — return existing id if already seeded for this tenant
+        var existing = db.TenantAuthConfigs.IgnoreQueryFilters()
+            .FirstOrDefault(c => c.TenantId == TestConstants.TenantId);
+        if (existing is not null) return existing.Id;
+
         var id = Guid.NewGuid();
         db.TenantAuthConfigs.Add(new TenantAuthConfigEntity
         {
