@@ -1,3 +1,4 @@
+using System.Text;
 using Chronith.API.HealthChecks;
 using Chronith.API.Middleware;
 using Chronith.API.Processors;
@@ -7,6 +8,7 @@ using Chronith.Infrastructure;
 using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Persistence;
 using Chronith.Infrastructure.Telemetry;
+using Microsoft.IdentityModel.Tokens;
 using FastEndpoints;
 using FastEndpoints.Security;
 using FastEndpoints.Swagger;
@@ -51,12 +53,35 @@ builder.Services.AddCors(options =>
 var healthChecksBuilder = builder.Services
     .AddApplication()
     .AddInfrastructure(builder.Configuration)
-    .AddAuthenticationJwtBearer(s => { s.SigningKey = builder.Configuration["Jwt:SigningKey"]!; })
+    .AddAuthenticationJwtBearer(s =>
+    {
+        // Primary signing key for token generation and fallback validation
+        var primaryKey = builder.Configuration["Jwt:SigningKey"]!;
+
+        // If Jwt:SigningKeys is configured, use the first entry as primary
+        var configuredKeys = builder.Configuration.GetSection("Jwt:SigningKeys").Get<string[]>();
+        s.SigningKey = configuredKeys is { Length: > 0 } ? configuredKeys[0] : primaryKey;
+    })
     .AddAuthorization()
     .AddFastEndpoints()
     .AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database")
     .AddCheck<BackgroundServiceHealthCheck>("background-services");
+
+// Wire multi-key JWT validation: all keys in Jwt:SigningKeys are accepted for signature verification
+// This supports zero-downtime key rotation — tokens signed with old keys remain valid.
+builder.Services.PostConfigure<Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions>(
+    Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
+    options =>
+    {
+        var primaryKey = builder.Configuration["Jwt:SigningKey"]!;
+        var configuredKeys = builder.Configuration.GetSection("Jwt:SigningKeys").Get<string[]>();
+        var allKeys = configuredKeys is { Length: > 0 } ? configuredKeys : [primaryKey];
+
+        options.TokenValidationParameters.IssuerSigningKeys = allKeys
+            .Select(k => (SecurityKey)new SymmetricSecurityKey(Encoding.UTF8.GetBytes(k)))
+            .ToList();
+    });
 
 if (builder.Configuration.GetValue<bool>("Redis:Enabled"))
 {
