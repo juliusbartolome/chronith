@@ -43,10 +43,33 @@ services:
     volumes:
       - ./docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
 
+  pgbouncer:
+    image: bitnami/pgbouncer:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_PORT: "5432"
+      POSTGRESQL_DATABASE: chronith
+      POSTGRESQL_USERNAME: chronith
+      POSTGRESQL_PASSWORD: chronith
+      PGBOUNCER_PORT: "5432"
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_MAX_CLIENT_CONN: "200"
+      PGBOUNCER_DEFAULT_POOL_SIZE: "20"
+      PGBOUNCER_MIN_POOL_SIZE: "5"
+      PGBOUNCER_RESERVE_POOL_SIZE: "5"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U chronith"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   chronith-api:
     build: .
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -54,7 +77,7 @@ services:
         condition: service_started
     environment:
       Database__Provider: PostgreSQL
-      Database__ConnectionString: "Host=postgres;Port=5432;Database=chronith;Username=chronith;Password=chronith"
+      Database__ConnectionString: "Host=pgbouncer;Port=5432;Database=chronith;Username=chronith;Password=chronith"
       Jwt__SigningKey: "change-me-in-production-at-least-32-chars"
       ASPNETCORE_URLS: "http://+:8080"
       Payments__Provider: "Stub"
