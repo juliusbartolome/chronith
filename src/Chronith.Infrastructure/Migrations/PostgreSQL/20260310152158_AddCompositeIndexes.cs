@@ -24,7 +24,8 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                 name: "ix_idempotency_lookup",
                 schema: "chronith",
                 table: "idempotency_keys",
-                columns: new[] { "TenantId", "Key", "EndpointRoute" });
+                columns: new[] { "TenantId", "Key", "EndpointRoute" },
+                unique: true);
 
             migrationBuilder.RenameIndex(
                 name: "IX_customers_TenantId_Email",

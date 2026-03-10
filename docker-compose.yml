@@ -72,7 +72,7 @@ services:
         condition: service_started
     environment:
       Database__Provider: PostgreSQL
-      Database__ConnectionString: "Host=pgbouncer;Port=6432;Database=chronith;Username=chronith;Password=chronith"
+      Database__ConnectionString: "Host=pgbouncer;Port=6432;Database=chronith;Username=chronith;Password=chronith;Pooling=false"
       Jwt__SigningKey: "change-me-in-production-at-least-32-chars"
       ASPNETCORE_URLS: "http://+:8080"
       Payments__Provider: "Stub"
