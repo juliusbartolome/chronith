@@ -13,6 +13,7 @@ using Chronith.Infrastructure.RateLimiting;
 using Chronith.Infrastructure.Security;
 using Chronith.Infrastructure.Services;
 using Chronith.Infrastructure.Services.Audit;
+using Chronith.Infrastructure.Services.Notifications;
 using Chronith.Infrastructure.Telemetry;
 using Chronith.Infrastructure.TenantContext;
 using Microsoft.AspNetCore.Http;
@@ -68,6 +69,8 @@ public static class DependencyInjection
         services.AddScoped<IIdempotencyKeyRepository, IdempotencyKeyRepository>();
         services.AddScoped<IAuditEntryRepository, AuditEntryRepository>();
         services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
+        services.AddScoped<IDefaultTemplateSeeder, DefaultTemplateSeeder>();
+        services.AddSingleton<ITemplateRenderer, TemplateRenderer>();
         services.AddScoped<IAuditSnapshotResolver, BookingSnapshotResolver>();
         services.AddScoped<IAuditSnapshotResolver, BookingTypeSnapshotResolver>();
         services.AddScoped<IAuditSnapshotResolver, StaffMemberSnapshotResolver>();
