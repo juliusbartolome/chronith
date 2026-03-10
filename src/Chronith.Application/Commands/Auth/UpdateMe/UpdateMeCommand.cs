@@ -10,6 +10,6 @@ public sealed record UpdateMeCommand(
     string? NewPassword) : IRequest<UserProfileDto>, IAuditable
 {
     public Guid EntityId => UserId;
-    public string EntityType => "Tenant";
+    public string EntityType => "TenantUser";
     public string Action => "Update";
 }

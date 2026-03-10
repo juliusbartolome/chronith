@@ -10,8 +10,6 @@ namespace Chronith.Tests.Functional.Audit;
 [Collection("Functional")]
 public sealed class AuditEndpointsTests(FunctionalTestFixture fixture)
 {
-    private const string BookingTypeSlug = "audit-endpoints-type";
-
     private async Task<(Guid EntryId1, Guid EntryId2)> EnsureSeedAsync()
     {
         await using var db = SeedData.CreateDbContext(fixture.Factory);
