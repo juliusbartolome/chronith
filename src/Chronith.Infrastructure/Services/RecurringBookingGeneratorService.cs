@@ -9,6 +9,7 @@ namespace Chronith.Infrastructure.Services;
 public sealed class RecurringBookingGeneratorService(
     IServiceScopeFactory scopeFactory,
     IOptions<RecurringBookingGeneratorOptions> options,
+    IBackgroundServiceHealthTracker healthTracker,
     ILogger<RecurringBookingGeneratorService> logger)
     : BackgroundService
 {
@@ -19,6 +20,7 @@ public sealed class RecurringBookingGeneratorService(
             try
             {
                 await GenerateBookingsAsync(stoppingToken);
+                healthTracker.RecordSuccess(nameof(RecurringBookingGeneratorService));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

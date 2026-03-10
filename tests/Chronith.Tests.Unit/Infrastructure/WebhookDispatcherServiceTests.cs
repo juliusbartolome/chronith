@@ -53,8 +53,9 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
 
         var options = Options.Create(new WebhookDispatcherOptions { DispatchIntervalSeconds = 1, HttpTimeoutSeconds = 5 });
         var logger = Substitute.For<ILogger<WebhookDispatcherService>>();
+        var healthTracker = Substitute.For<IBackgroundServiceHealthTracker>();
 
-        var sut = new WebhookDispatcherService(scopeFactory, httpClientFactory, options, logger);
+        var sut = new WebhookDispatcherService(scopeFactory, httpClientFactory, options, healthTracker, logger);
 
         return (sut, outboxRepo, webhookRepo, httpHandler);
     }

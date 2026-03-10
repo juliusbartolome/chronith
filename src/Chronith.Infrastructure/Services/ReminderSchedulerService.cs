@@ -14,6 +14,7 @@ namespace Chronith.Infrastructure.Services;
 public sealed class ReminderSchedulerService(
     IServiceScopeFactory scopeFactory,
     IOptions<ReminderSchedulerOptions> options,
+    IBackgroundServiceHealthTracker healthTracker,
     ILogger<ReminderSchedulerService> logger)
     : BackgroundService
 {
@@ -24,6 +25,7 @@ public sealed class ReminderSchedulerService(
             try
             {
                 await CheckRemindersAsync(stoppingToken);
+                healthTracker.RecordSuccess(nameof(ReminderSchedulerService));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

@@ -122,6 +122,7 @@ public static class DependencyInjection
         // Telemetry
         services.AddMetrics();
         services.AddSingleton<ChronithMetrics>();
+        services.AddSingleton<IBackgroundServiceHealthTracker, BackgroundServiceHealthTracker>();
 
         // Redis (optional)
         var redisEnabled = configuration.GetValue<bool>("Redis:Enabled");

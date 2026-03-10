@@ -15,6 +15,7 @@ public sealed class NotificationDispatcherService(
     IServiceScopeFactory scopeFactory,
     NotificationChannelFactory channelFactory,
     IOptions<NotificationDispatcherOptions> options,
+    IBackgroundServiceHealthTracker healthTracker,
     ILogger<NotificationDispatcherService> logger)
     : BackgroundService
 {
@@ -28,6 +29,7 @@ public sealed class NotificationDispatcherService(
             try
             {
                 await DispatchBatchAsync(stoppingToken);
+                healthTracker.RecordSuccess(nameof(NotificationDispatcherService));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
