@@ -15,6 +15,7 @@ public sealed class WebhookDispatcherService(
     IServiceScopeFactory scopeFactory,
     IHttpClientFactory httpClientFactory,
     IOptions<WebhookDispatcherOptions> options,
+    IBackgroundServiceHealthTracker healthTracker,
     ILogger<WebhookDispatcherService> logger)
     : BackgroundService
 {
@@ -25,6 +26,7 @@ public sealed class WebhookDispatcherService(
             try
             {
                 await DispatchBatchAsync(stoppingToken);
+                healthTracker.RecordSuccess(nameof(WebhookDispatcherService));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

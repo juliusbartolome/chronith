@@ -122,6 +122,10 @@ public static class DependencyInjection
         // Telemetry
         services.AddMetrics();
         services.AddSingleton<ChronithMetrics>();
+        services.AddSingleton<IBackgroundServiceHealthTracker, BackgroundServiceHealthTracker>();
+        services.AddSingleton<TenantIdEnricher>();
+        services.AddSingleton<UserIdEnricher>();
+        services.AddSingleton<CorrelationIdEnricher>();
 
         // Redis (optional)
         var redisEnabled = configuration.GetValue<bool>("Redis:Enabled");

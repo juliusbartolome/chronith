@@ -30,14 +30,20 @@ var observabilityOptions = builder.Configuration
     .GetSection(ObservabilityOptions.SectionName)
     .Get<ObservabilityOptions>() ?? new ObservabilityOptions();
 
-builder.Services
+var healthChecksBuilder = builder.Services
     .AddApplication()
     .AddInfrastructure(builder.Configuration)
     .AddAuthenticationJwtBearer(s => { s.SigningKey = builder.Configuration["Jwt:SigningKey"]!; })
     .AddAuthorization()
     .AddFastEndpoints()
     .AddHealthChecks()
-    .AddCheck<DatabaseHealthCheck>("database");
+    .AddCheck<DatabaseHealthCheck>("database")
+    .AddCheck<BackgroundServiceHealthCheck>("background-services");
+
+if (builder.Configuration.GetValue<bool>("Redis:Enabled"))
+{
+    healthChecksBuilder.AddCheck<RedisHealthCheck>("redis");
+}
 
 var otelBuilder = builder.Services.AddOpenTelemetry()
     .ConfigureResource(r => r.AddService(observabilityOptions.ServiceName));
@@ -146,7 +152,11 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
-builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
+builder.Host.UseSerilog((ctx, sp, cfg) => cfg
+    .ReadFrom.Configuration(ctx.Configuration)
+    .Enrich.With(sp.GetRequiredService<TenantIdEnricher>())
+    .Enrich.With(sp.GetRequiredService<UserIdEnricher>())
+    .Enrich.With(sp.GetRequiredService<CorrelationIdEnricher>()));
 
 var app = builder.Build();
 
@@ -158,6 +168,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseExceptionHandler(ExceptionHandlingMiddleware.Configure);
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseAuthentication()
    .UseAuthorization();
 
@@ -204,7 +215,25 @@ app.UseFastEndpoints(c =>
 });
 
 app.MapHealthChecks("/health/live");
-app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Name == "database" });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = c => c.Name is "database" or "background-services" or "redis",
+    ResponseWriter = async (ctx, report) =>
+    {
+        ctx.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description,
+            }),
+        });
+        await ctx.Response.WriteAsync(result);
+    },
+});
 
 if (observabilityOptions.EnableMetrics)
 {

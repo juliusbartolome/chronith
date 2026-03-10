@@ -9,6 +9,7 @@ namespace Chronith.Infrastructure.Services;
 public sealed class AuditRetentionService(
     IServiceScopeFactory scopeFactory,
     IOptions<AuditRetentionOptions> options,
+    IBackgroundServiceHealthTracker healthTracker,
     ILogger<AuditRetentionService> logger)
     : BackgroundService
 {
@@ -19,6 +20,7 @@ public sealed class AuditRetentionService(
             try
             {
                 await PurgeExpiredEntriesAsync(stoppingToken);
+                healthTracker.RecordSuccess(nameof(AuditRetentionService));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

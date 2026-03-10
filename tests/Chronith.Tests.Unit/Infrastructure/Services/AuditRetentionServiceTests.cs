@@ -41,8 +41,9 @@ public sealed class AuditRetentionServiceTests
         });
 
         var logger = Substitute.For<ILogger<AuditRetentionService>>();
+        var healthTracker = Substitute.For<IBackgroundServiceHealthTracker>();
 
-        var sut = new AuditRetentionService(scopeFactory, options, logger);
+        var sut = new AuditRetentionService(scopeFactory, options, healthTracker, logger);
 
         return (sut, auditRepo);
     }
