@@ -12,6 +12,7 @@ using Chronith.Infrastructure.Providers;
 using Chronith.Infrastructure.RateLimiting;
 using Chronith.Infrastructure.Services;
 using Chronith.Infrastructure.Services.Audit;
+using Chronith.Infrastructure.Telemetry;
 using Chronith.Infrastructure.TenantContext;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -117,6 +118,10 @@ public static class DependencyInjection
 
         // Rate limiting
         services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
+
+        // Telemetry
+        services.AddMetrics();
+        services.AddSingleton<ChronithMetrics>();
 
         // Redis (optional)
         var redisEnabled = configuration.GetValue<bool>("Redis:Enabled");

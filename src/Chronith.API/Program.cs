@@ -7,6 +7,7 @@ using Chronith.Application.Options;
 using Chronith.Infrastructure;
 using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Persistence;
+using Chronith.Infrastructure.Telemetry;
 using FastEndpoints;
 using FastEndpoints.Security;
 using FastEndpoints.Swagger;
@@ -15,12 +16,19 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NSwag;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var observabilityOptions = builder.Configuration
+    .GetSection(ObservabilityOptions.SectionName)
+    .Get<ObservabilityOptions>() ?? new ObservabilityOptions();
 
 builder.Services
     .AddApplication()
@@ -30,6 +38,35 @@ builder.Services
     .AddFastEndpoints()
     .AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database");
+
+var otelBuilder = builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService(observabilityOptions.ServiceName));
+
+if (observabilityOptions.EnableTracing)
+{
+    otelBuilder.WithTracing(tracing =>
+    {
+        tracing
+            .AddSource(ChronithActivitySource.Name)
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddOtlpExporter(o => o.Endpoint = new Uri(observabilityOptions.OtlpEndpoint));
+    });
+}
+
+if (observabilityOptions.EnableMetrics)
+{
+    otelBuilder.WithMetrics(metrics =>
+    {
+        metrics
+            .AddMeter(ChronithMetrics.MeterName)
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter(o => o.Endpoint = new Uri(observabilityOptions.OtlpEndpoint))
+            .AddPrometheusExporter();
+    });
+}
 
 builder.Services.SwaggerDocument(o =>
 {
@@ -168,6 +205,11 @@ app.UseFastEndpoints(c =>
 
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Name == "database" });
+
+if (observabilityOptions.EnableMetrics)
+{
+    app.MapPrometheusScrapingEndpoint("/metrics");
+}
 
 app.Run();
 

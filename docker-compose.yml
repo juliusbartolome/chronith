@@ -21,6 +21,28 @@ services:
       timeout: 5s
       retries: 5
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+
   chronith-api:
     build: .
     depends_on:
@@ -28,6 +50,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     environment:
       Database__Provider: PostgreSQL
       Database__ConnectionString: "Host=postgres;Port=5432;Database=chronith;Username=chronith;Password=chronith"
@@ -39,6 +63,10 @@ services:
       Webhooks__HttpTimeoutSeconds: "10"
       Redis__Enabled: "true"
       Redis__ConnectionString: "redis:6379"
+      Observability__OtlpEndpoint: "http://jaeger:4317"
+      Observability__ServiceName: "chronith-api"
+      Observability__EnableTracing: "true"
+      Observability__EnableMetrics: "true"
 
 volumes:
   postgres_data:
