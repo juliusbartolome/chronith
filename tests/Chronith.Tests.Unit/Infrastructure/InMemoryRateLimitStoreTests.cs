@@ -8,9 +8,12 @@ namespace Chronith.Tests.Unit.Infrastructure;
 public class InMemoryRateLimitStoreTests
 {
     [Fact]
-    public void GetPermitLimit_WithNoOverride_ReturnsDefault()
+    public void GetPermitLimit_WithNoOverride_ReturnsAuthenticatedDefault()
     {
-        var options = new RateLimitingOptions { DefaultPermitLimit = 300 };
+        var options = new RateLimitingOptions
+        {
+            Authenticated = new PolicyConfig { PermitLimit = 300, WindowSeconds = 60 }
+        };
         var store = new InMemoryRateLimitStore(Options.Create(options));
 
         var limit = store.GetPermitLimit("any-tenant-id");
@@ -24,10 +27,10 @@ public class InMemoryRateLimitStoreTests
         const string tenantId = "tenant-abc";
         var options = new RateLimitingOptions
         {
-            DefaultPermitLimit = 300,
-            TenantOverrides = new Dictionary<string, TenantRateLimitOverride>
+            Authenticated = new PolicyConfig { PermitLimit = 300, WindowSeconds = 60 },
+            TenantOverrides = new Dictionary<string, TenantOverride>
             {
-                [tenantId] = new TenantRateLimitOverride { PermitLimit = 1000 }
+                [tenantId] = new TenantOverride { PermitLimit = 1000 }
             }
         };
         var store = new InMemoryRateLimitStore(Options.Create(options));
@@ -38,14 +41,14 @@ public class InMemoryRateLimitStoreTests
     }
 
     [Fact]
-    public void GetPermitLimit_WithUnknownTenant_ReturnsDefault()
+    public void GetPermitLimit_WithUnknownTenant_ReturnsAuthenticatedDefault()
     {
         var options = new RateLimitingOptions
         {
-            DefaultPermitLimit = 300,
-            TenantOverrides = new Dictionary<string, TenantRateLimitOverride>
+            Authenticated = new PolicyConfig { PermitLimit = 300, WindowSeconds = 60 },
+            TenantOverrides = new Dictionary<string, TenantOverride>
             {
-                ["other-tenant"] = new TenantRateLimitOverride { PermitLimit = 1000 }
+                ["other-tenant"] = new TenantOverride { PermitLimit = 1000 }
             }
         };
         var store = new InMemoryRateLimitStore(Options.Create(options));
