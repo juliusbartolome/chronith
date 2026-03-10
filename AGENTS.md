@@ -18,6 +18,7 @@ Read it fully before making any changes.
 | Database        | PostgreSQL 17                                                             |
 | Cache           | Redis 8 (StackExchange.Redis)                                             |
 | Auth            | JWT (HMAC symmetric) + API Key (`X-Api-Key`)                              |
+| Observability   | OpenTelemetry (traces + metrics, OTLP export)                             |
 | Logging         | Serilog (console sink)                                                    |
 | Notifications   | MailKit (SMTP), Twilio (SMS), FirebaseAdmin (push)                        |
 | Payments        | Pluggable `IPaymentProvider` (Stub / PayMongo)                            |
@@ -379,13 +380,13 @@ git checkout develop && git pull && git branch -d {branch-name}
 | v0.4    | `v0.4.0` | JWT + API key auth, Redis caching, customer callbacks, rate limiting                                                                                                        |
 | v0.5    | `v0.5.0` | Payment/pricing integration, PayMongo provider, free booking flow                                                                                                           |
 | v0.6    | —        | Staff management, lifecycle enhancements (reschedule, waitlist, time blocks, custom fields), notifications (email/SMS/push), analytics, public booking endpoints, iCal feed |
+| v0.8    | —        | Audit logging, OpenTelemetry observability, security hardening, database optimization, notification templates                                                                |
 
 ### Upcoming — Design Docs
 
 | Version | Design Doc                                      | Focus                  |
 | ------- | ----------------------------------------------- | ---------------------- |
 | v0.7    | `docs/plans/2026-03-07-chronith-v0.7-design.md` | Next planned milestone |
-| v0.8    | `docs/plans/2026-03-07-chronith-v0.8-design.md` | —                      |
 | v0.9    | `docs/plans/2026-03-07-chronith-v0.9-design.md` | —                      |
 | v1.0    | `docs/plans/2026-03-07-chronith-v1.0-design.md` | Production release     |
 
