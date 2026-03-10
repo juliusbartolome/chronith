@@ -14,6 +14,7 @@ namespace Chronith.Infrastructure.Services;
 public sealed class NotificationDispatcherService(
     IServiceScopeFactory scopeFactory,
     NotificationChannelFactory channelFactory,
+    ITemplateRenderer templateRenderer,
     IOptions<NotificationDispatcherOptions> options,
     IBackgroundServiceHealthTracker healthTracker,
     ILogger<NotificationDispatcherService> logger)
@@ -45,6 +46,7 @@ public sealed class NotificationDispatcherService(
         using var scope = scopeFactory.CreateScope();
         var outboxRepo = scope.ServiceProvider.GetRequiredService<IWebhookOutboxRepository>();
         var configRepo = scope.ServiceProvider.GetRequiredService<INotificationConfigRepository>();
+        var templateRepo = scope.ServiceProvider.GetRequiredService<INotificationTemplateRepository>();
 
         var pending = await outboxRepo.GetPendingByCategoryAsync(
             OutboxCategory.Notification, 50, ct);
@@ -53,13 +55,14 @@ public sealed class NotificationDispatcherService(
 
         foreach (var entry in pending)
         {
-            await DispatchNotificationAsync(entry, configRepo, outboxRepo, ct);
+            await DispatchNotificationAsync(entry, configRepo, templateRepo, outboxRepo, ct);
         }
     }
 
     private async Task DispatchNotificationAsync(
         PendingOutboxEntry entry,
         INotificationConfigRepository configRepo,
+        INotificationTemplateRepository templateRepo,
         IWebhookOutboxRepository outboxRepo,
         CancellationToken ct)
     {
@@ -104,10 +107,45 @@ public sealed class NotificationDispatcherService(
             var status = payload.GetProperty("status").GetString() ?? string.Empty;
             var bookingTypeSlug = payload.GetProperty("bookingTypeSlug").GetString() ?? string.Empty;
 
+            // Build context dictionary for template rendering
+            var context = new Dictionary<string, string>
+            {
+                ["customer_name"] = TryGetStringProperty(payload, "customerName") ?? customerEmail,
+                ["customer_email"] = customerEmail,
+                ["booking_type_slug"] = bookingTypeSlug,
+                ["status"] = status,
+                ["event_type"] = eventName,
+                ["booking_id"] = TryGetStringProperty(payload, "bookingId") ?? string.Empty,
+                ["booking_date"] = TryGetStringProperty(payload, "bookingDate") ?? string.Empty,
+                ["booking_time"] = TryGetStringProperty(payload, "bookingTime") ?? string.Empty,
+                ["staff_name"] = TryGetStringProperty(payload, "staffName") ?? string.Empty,
+                ["tenant_name"] = TryGetStringProperty(payload, "tenantName") ?? string.Empty,
+                ["expiry_hours"] = TryGetStringProperty(payload, "expiryHours") ?? string.Empty,
+            };
+
+            // Look up template for this event + channel type
+            var template = await templateRepo.GetByEventAndChannelAsync(
+                entry.TenantId, eventName, channelType, ct);
+
+            string subject;
+            string body;
+
+            if (template is not null)
+            {
+                subject = templateRenderer.Render(template.Subject ?? $"Booking {status} — {bookingTypeSlug}", context);
+                body = templateRenderer.Render(template.Body, context);
+            }
+            else
+            {
+                // Fallback when no template is configured
+                subject = $"Booking {status} — {bookingTypeSlug}";
+                body = $"Your booking for {bookingTypeSlug} is now {status}.";
+            }
+
             var message = new NotificationMessage(
                 Recipient: customerEmail,
-                Subject: $"Booking {status} — {bookingTypeSlug}",
-                Body: $"Your booking for {bookingTypeSlug} is now {status}.",
+                Subject: subject,
+                Body: body,
                 TemplateId: null,
                 Metadata: new Dictionary<string, string>
                 {
@@ -136,6 +174,11 @@ public sealed class NotificationDispatcherService(
         // "notification.booking_confirmed.email" → "email"
         var lastDot = eventType.LastIndexOf('.');
         return lastDot > 0 ? eventType[(lastDot + 1)..] : null;
+    }
+
+    private static string? TryGetStringProperty(JsonElement element, string propertyName)
+    {
+        return element.TryGetProperty(propertyName, out var prop) ? prop.GetString() : null;
     }
 
     private static async Task MarkFailureAsync(

@@ -12,6 +12,7 @@ public sealed class RegisterTenantCommandHandler(
     ITenantUserRepository userRepository,
     IRefreshTokenRepository refreshTokenRepository,
     ITokenService tokenService,
+    IDefaultTemplateSeeder templateSeeder,
     IUnitOfWork unitOfWork)
     : IRequestHandler<RegisterTenantCommand, AuthTokenDto>
 {
@@ -40,6 +41,9 @@ public sealed class RegisterTenantCommandHandler(
         await refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Seed default notification templates for this tenant
+        await templateSeeder.SeedAllAsync(tenant.Id, cancellationToken);
 
         var accessToken = tokenService.CreateAccessToken(user);
         return new AuthTokenDto(accessToken, rawToken);

@@ -28,7 +28,8 @@ public sealed class NotificationTemplateRepository(ChronithDbContext db)
             .FirstOrDefaultAsync(
                 t => t.TenantId == tenantId
                      && t.EventType == eventType
-                     && t.ChannelType == channelType,
+                     && t.ChannelType == channelType
+                     && t.IsActive,
                 ct);
 
         return entity?.ToDomain();
