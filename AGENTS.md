@@ -372,6 +372,8 @@ git checkout develop && git pull && git branch -d {branch-name}
 
 ### Completed Versions
 
+> **Note:** v0.8 was implemented before v0.7 intentionally. v0.8 ("Production Infrastructure") was prioritised first to establish observability, security hardening, and audit foundations that v0.7 features will build on. v0.7 remains in Upcoming.
+
 | Version | Tag      | Summary                                                                                                                                                                     |
 | ------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | v0.1    | —        | Core domain models, booking CRUD, tenant isolation                                                                                                                          |
@@ -438,3 +440,20 @@ act pull_request --workflows .github/workflows/ci.yml
 # Check PR review comments
 gh api repos/{owner}/{repo}/pulls/{number}/comments
 ```
+
+---
+
+## 11. Configuration Notes
+
+### EncryptionKey
+
+`Security:EncryptionKey` in `appsettings.json` must be a **Base64-encoded 32-byte (256-bit) key** used for AES-256-GCM encryption of sensitive notification settings.
+
+The placeholder value in `appsettings.json` (`AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=`) is **not safe for production**. Generate a new key before deploying:
+
+```bash
+# Generate a cryptographically random 32-byte key and base64-encode it
+openssl rand -base64 32
+```
+
+Set the result as `Security:EncryptionKey` via an environment variable or secrets manager — never commit a real key to source control.
