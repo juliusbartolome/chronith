@@ -45,6 +45,9 @@ public sealed class ChronithDbContext : DbContext
     // No global query filter: idempotency keys have no IsDeleted; cleaned up via TTL
     public DbSet<IdempotencyKeyEntity> IdempotencyKeys => Set<IdempotencyKeyEntity>();
 
+    // No global query filter: audit entries have no IsDeleted; filtered explicitly by TenantId.
+    public DbSet<AuditEntryEntity> AuditEntries => Set<AuditEntryEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("chronith");
