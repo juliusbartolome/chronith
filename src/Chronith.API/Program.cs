@@ -30,6 +30,27 @@ var observabilityOptions = builder.Configuration
     .GetSection(ObservabilityOptions.SectionName)
     .Get<ObservabilityOptions>() ?? new ObservabilityOptions();
 
+builder.Services.Configure<CspOptions>(builder.Configuration.GetSection(CspOptions.SectionName));
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        var corsConfig = builder.Configuration.GetSection(CorsOptions.SectionName).Get<CorsOptions>() ?? new();
+        if (corsConfig.AllowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(corsConfig.AllowedOrigins);
+            if (corsConfig.AllowCredentials)
+                policy.AllowCredentials();
+        }
+        else
+        {
+            policy.AllowAnyOrigin();
+        }
+        policy.WithHeaders(corsConfig.AllowedHeaders)
+              .WithExposedHeaders(corsConfig.ExposedHeaders);
+    });
+});
+
 var healthChecksBuilder = builder.Services
     .AddApplication()
     .AddInfrastructure(builder.Configuration)
@@ -169,6 +190,8 @@ using (var scope = app.Services.CreateScope())
 
 app.UseExceptionHandler(ExceptionHandlingMiddleware.Configure);
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseCors();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseAuthentication()
    .UseAuthorization();
 
