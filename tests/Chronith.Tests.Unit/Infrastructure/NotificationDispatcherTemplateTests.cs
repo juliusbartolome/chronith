@@ -44,7 +44,7 @@ public sealed class NotificationDispatcherTemplateTests
             .Returns(config);
 
         // Default: renderer just echoes the template body
-        templateRenderer.Render(Arg.Any<string>(), Arg.Any<Dictionary<string, string>>())
+        templateRenderer.Render(Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, string>>())
             .Returns(ci => ci.Arg<string>());
 
         var serviceProvider = Substitute.For<IServiceProvider>();
@@ -130,7 +130,7 @@ public sealed class NotificationDispatcherTemplateTests
 
         templateRenderer.Received(1).Render(
             template.Body,
-            Arg.Any<Dictionary<string, string>>());
+            Arg.Any<IReadOnlyDictionary<string, string>>());
     }
 
     [Fact]
@@ -143,7 +143,7 @@ public sealed class NotificationDispatcherTemplateTests
         var (sut, _, _, templateRepo, templateRenderer, channel) = BuildSut([entry]);
         templateRepo.GetByEventAndChannelAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(template);
-        templateRenderer.Render(Arg.Any<string>(), Arg.Any<Dictionary<string, string>>())
+        templateRenderer.Render(Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, string>>())
             .Returns("Hi Alice, your booking is confirmed.");
 
         await sut.DispatchBatchAsync(CancellationToken.None);
@@ -183,7 +183,7 @@ public sealed class NotificationDispatcherTemplateTests
         await sut.DispatchBatchAsync(CancellationToken.None);
 
         // When no template, renderer should not be called
-        templateRenderer.DidNotReceive().Render(Arg.Any<string>(), Arg.Any<Dictionary<string, string>>());
+        templateRenderer.DidNotReceive().Render(Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, string>>());
 
         // But channel should still be called with a fallback message
         await channel.Received(1).SendAsync(
@@ -198,14 +198,14 @@ public sealed class NotificationDispatcherTemplateTests
         var template = NotificationTemplate.Create(TenantId, "booking.confirmed", "email",
             "Subject", "Your booking for {{booking_type_slug}} is confirmed.");
 
-        Dictionary<string, string>? capturedContext = null;
+        IReadOnlyDictionary<string, string>? capturedContext = null;
         var (sut, _, _, templateRepo, templateRenderer, _) = BuildSut([entry]);
         templateRepo.GetByEventAndChannelAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(template);
-        templateRenderer.Render(Arg.Any<string>(), Arg.Any<Dictionary<string, string>>())
+        templateRenderer.Render(Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, string>>())
             .Returns(ci =>
             {
-                capturedContext = ci.Arg<Dictionary<string, string>>();
+                capturedContext = ci.Arg<IReadOnlyDictionary<string, string>>();
                 return "rendered";
             });
 
@@ -214,5 +214,12 @@ public sealed class NotificationDispatcherTemplateTests
         capturedContext.Should().NotBeNull();
         capturedContext!.Should().ContainKey("booking_type_slug");
         capturedContext["booking_type_slug"].Should().Be("massage-therapy");
+        capturedContext.Should().ContainKey("customer_name");
+        capturedContext.Should().ContainKey("customer_email");
+        capturedContext["customer_email"].Should().Be("customer@example.com");
+        capturedContext.Should().ContainKey("status");
+        capturedContext["status"].Should().Be("confirmed");
+        capturedContext.Should().ContainKey("event_type");
+        capturedContext["event_type"].Should().Be("booking.confirmed");
     }
 }

@@ -94,4 +94,18 @@ public sealed class TemplateRendererTests
 
         result.Should().Be("Eve, we confirm your booking. Thanks, Eve!");
     }
+
+    [Fact]
+    public void Render_ContextKeyDifferentCase_ReplacesPlaceholder()
+    {
+        var template = "Hello {{Customer_Name}}, your booking is confirmed.";
+        var context = new Dictionary<string, string>
+        {
+            ["customer_name"] = "Frank"
+        };
+
+        var result = _sut.Render(template, context);
+
+        result.Should().Be("Hello Frank, your booking is confirmed.");
+    }
 }

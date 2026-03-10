@@ -132,7 +132,7 @@ public sealed class NotificationDispatcherService(
 
             if (template is not null)
             {
-                subject = template.Subject ?? $"Booking {status} — {bookingTypeSlug}";
+                subject = templateRenderer.Render(template.Subject ?? $"Booking {status} — {bookingTypeSlug}", context);
                 body = templateRenderer.Render(template.Body, context);
             }
             else

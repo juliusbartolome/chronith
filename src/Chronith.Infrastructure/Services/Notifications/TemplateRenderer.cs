@@ -4,14 +4,14 @@ namespace Chronith.Infrastructure.Services.Notifications;
 
 public sealed class TemplateRenderer : ITemplateRenderer
 {
-    public string Render(string template, Dictionary<string, string> context)
+    public string Render(string template, IReadOnlyDictionary<string, string> context)
     {
         if (string.IsNullOrEmpty(template)) return template;
 
         var result = template;
         foreach (var (key, value) in context)
         {
-            result = result.Replace($"{{{{{key}}}}}", value ?? string.Empty);
+            result = result.Replace($"{{{{{key}}}}}", value ?? string.Empty, StringComparison.OrdinalIgnoreCase);
         }
         return result;
     }
