@@ -132,15 +132,22 @@ builder.Services.AddRateLimiter(options =>
     var rl = builder.Configuration.GetSection(RateLimitingOptions.SectionName).Get<RateLimitingOptions>() ?? new();
 
     options.AddPolicy("Authenticated", context =>
-        RateLimitPartition.GetSlidingWindowLimiter(
-            context.User.FindFirst("tenant_id")?.Value ?? "anonymous",
-            _ => new SlidingWindowRateLimiterOptions
-            {
-                PermitLimit = rl.Authenticated.PermitLimit,
-                Window = TimeSpan.FromSeconds(rl.Authenticated.WindowSeconds),
-                QueueLimit = rl.QueueLimit,
-                SegmentsPerWindow = 6,
-            }));
+    {
+        var tenantId = context.User.FindFirst("tenant_id")?.Value ?? "anonymous";
+        var limit = rl.TenantOverrides.TryGetValue(tenantId, out var o) && o.PermitLimit.HasValue
+            ? o.PermitLimit.Value
+            : rl.Authenticated.PermitLimit;
+        var window = rl.TenantOverrides.TryGetValue(tenantId, out var ow) && ow.WindowSeconds.HasValue
+            ? ow.WindowSeconds.Value
+            : rl.Authenticated.WindowSeconds;
+        return RateLimitPartition.GetSlidingWindowLimiter(tenantId, _ => new SlidingWindowRateLimiterOptions
+        {
+            PermitLimit = limit,
+            Window = TimeSpan.FromSeconds(window),
+            QueueLimit = rl.QueueLimit,
+            SegmentsPerWindow = 6,
+        });
+    });
 
     options.AddPolicy("Public", context =>
         RateLimitPartition.GetSlidingWindowLimiter(
@@ -165,15 +172,22 @@ builder.Services.AddRateLimiter(options =>
             }));
 
     options.AddPolicy("Export", context =>
-        RateLimitPartition.GetSlidingWindowLimiter(
-            context.User.FindFirst("tenant_id")?.Value ?? "anonymous",
-            _ => new SlidingWindowRateLimiterOptions
-            {
-                PermitLimit = rl.Export.PermitLimit,
-                Window = TimeSpan.FromSeconds(rl.Export.WindowSeconds),
-                QueueLimit = rl.QueueLimit,
-                SegmentsPerWindow = 6,
-            }));
+    {
+        var tenantId = context.User.FindFirst("tenant_id")?.Value ?? "anonymous";
+        var limit = rl.TenantOverrides.TryGetValue(tenantId, out var o) && o.PermitLimit.HasValue
+            ? o.PermitLimit.Value
+            : rl.Export.PermitLimit;
+        var window = rl.TenantOverrides.TryGetValue(tenantId, out var ow) && ow.WindowSeconds.HasValue
+            ? ow.WindowSeconds.Value
+            : rl.Export.WindowSeconds;
+        return RateLimitPartition.GetSlidingWindowLimiter(tenantId, _ => new SlidingWindowRateLimiterOptions
+        {
+            PermitLimit = limit,
+            Window = TimeSpan.FromSeconds(window),
+            QueueLimit = rl.QueueLimit,
+            SegmentsPerWindow = 6,
+        });
+    });
 
     options.RejectionStatusCode = 429;
     options.OnRejected = async (context, ct) =>

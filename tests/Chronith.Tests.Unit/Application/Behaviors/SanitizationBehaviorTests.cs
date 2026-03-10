@@ -8,6 +8,10 @@ public sealed class SanitizationBehaviorTests
 {
     // ── Test request types ─────────────────────────────────────────────────
 
+    // MutableRequest uses regular (non-init) setters so the behavior can mutate it.
+    // Real application commands use required init-only properties (see InitOnlyRequest below),
+    // which the behavior silently skips. Tests that verify sanitization logic must use
+    // MutableRequest to exercise the actual mutation path.
     private sealed class MutableRequest : IRequest<string>
     {
         public string Name { get; set; } = string.Empty;
