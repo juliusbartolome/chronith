@@ -31,6 +31,7 @@
     <ProjectReference Include="..\..\src\Chronith.Domain\Chronith.Domain.csproj" />
     <ProjectReference Include="..\..\src\Chronith.Application\Chronith.Application.csproj" />
     <ProjectReference Include="..\..\src\Chronith.Infrastructure\Chronith.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Chronith.API\Chronith.API.csproj" />
   </ItemGroup>
 
 </Project>
