@@ -20,7 +20,7 @@ public sealed class NotificationConfigRepository(
         if (entity is null) return null;
 
         // Decrypt settings before mapping to domain
-        entity.Settings = encryptionService.Decrypt(entity.Settings) ?? "{}";
+        entity.Settings = DecryptSettings(entity.Settings) ?? "{}";
         return TenantNotificationConfigEntityMapper.ToDomain(entity);
     }
 
@@ -34,7 +34,7 @@ public sealed class NotificationConfigRepository(
             .ToListAsync(ct);
 
         foreach (var e in entities)
-            e.Settings = encryptionService.Decrypt(e.Settings) ?? "{}";
+            e.Settings = DecryptSettings(e.Settings) ?? "{}";
 
         return entities.Select(TenantNotificationConfigEntityMapper.ToDomain).ToList();
     }
@@ -48,9 +48,28 @@ public sealed class NotificationConfigRepository(
             .ToListAsync(ct);
 
         foreach (var e in entities)
-            e.Settings = encryptionService.Decrypt(e.Settings) ?? "{}";
+            e.Settings = DecryptSettings(e.Settings) ?? "{}";
 
         return entities.Select(TenantNotificationConfigEntityMapper.ToDomain).ToList();
+    }
+
+    /// <summary>
+    /// Decrypts an encrypted settings value. If the value is not valid base64-encoded ciphertext
+    /// (e.g., a pre-migration plaintext JSON row), returns it as-is. The next write will encrypt it.
+    /// </summary>
+    private string? DecryptSettings(string? settings)
+    {
+        if (settings is null) return null;
+        try
+        {
+            return encryptionService.Decrypt(settings);
+        }
+        catch (FormatException)
+        {
+            // Legacy row: settings column contains plaintext JSON (pre-migration).
+            // Return as-is; next write will encrypt it.
+            return settings;
+        }
     }
 
     public async Task AddAsync(TenantNotificationConfig config, CancellationToken ct = default)

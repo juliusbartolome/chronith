@@ -119,7 +119,7 @@ public static class DependencyInjection
 
         // Encryption
         services.Configure<EncryptionOptions>(configuration.GetSection(EncryptionOptions.SectionName));
-        services.AddScoped<IEncryptionService, EncryptionService>();
+        services.AddSingleton<IEncryptionService, EncryptionService>();
 
         // Rate limiting
         services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));

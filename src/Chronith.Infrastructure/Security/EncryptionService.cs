@@ -17,6 +17,9 @@ public sealed class EncryptionService : IEncryptionService
     public EncryptionService(IOptions<EncryptionOptions> options)
     {
         _key = Convert.FromBase64String(options.Value.EncryptionKey);
+        if (_key.Length != 32)
+            throw new InvalidOperationException(
+                $"EncryptionKey must be exactly 32 bytes (256-bit). Got {_key.Length} bytes.");
     }
 
     public string? Encrypt(string? plaintext)

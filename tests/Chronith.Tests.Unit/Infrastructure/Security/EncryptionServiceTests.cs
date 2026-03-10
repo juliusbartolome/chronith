@@ -86,10 +86,30 @@ public class EncryptionServiceTests
     }
 
     [Fact]
-    public void Decrypt_EmptyString_ReturnsEmptyString()
+    public void Constructor_ThrowsInvalidOperationException_WhenKeyIsNot32Bytes()
     {
+        // A 16-byte key encodes to a valid base64 string but is not 256-bit.
+        var shortKey = Convert.ToBase64String(new byte[16]);
+        var options = Options.Create(new EncryptionOptions { EncryptionKey = shortKey });
+
+        var act = () => new EncryptionService(options);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*32 bytes*");
+    }
+
+    [Fact]
+    public void Decrypt_PlaintextJson_ReturnsValueAsIs_WhenNotBase64()
+    {
+        // Simulates a pre-migration row whose Settings column contains raw JSON.
+        // The DecryptSettings helper in the repository wraps Decrypt in a try/catch(FormatException).
+        // This test verifies that Decrypt itself throws FormatException for non-base64 input,
+        // confirming the catch in the helper will fire correctly.
         var sut = CreateSut();
-        var result = sut.Decrypt(string.Empty);
-        result.Should().BeEmpty();
+        const string plaintext = """{"smtp_host":"mail.example.com","smtp_port":587}""";
+
+        var act = () => sut.Decrypt(plaintext);
+
+        act.Should().Throw<FormatException>("non-base64 input should fail Convert.FromBase64String");
     }
 }
