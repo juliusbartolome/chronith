@@ -24,7 +24,7 @@ public sealed class PublicJoinWaitlistEndpoint(ISender sender, ITenantRepository
     {
         Post("/public/{tenantSlug}/booking-types/{slug}/waitlist");
         AllowAnonymous();
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Public"));
     }
 
     public override async Task HandleAsync(PublicJoinWaitlistRequest req, CancellationToken ct)

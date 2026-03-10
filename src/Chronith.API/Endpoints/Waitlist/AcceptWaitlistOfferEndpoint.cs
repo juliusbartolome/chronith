@@ -17,7 +17,7 @@ public sealed class AcceptWaitlistOfferEndpoint(ISender sender)
     {
         Post("/waitlist/{id}/accept");
         Roles("Customer");
-        Options(x => x.WithTags("Waitlist"));
+        Options(x => x.WithTags("Waitlist").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(AcceptWaitlistOfferRequest req, CancellationToken ct)

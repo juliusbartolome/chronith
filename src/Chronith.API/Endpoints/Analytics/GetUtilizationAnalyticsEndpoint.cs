@@ -21,7 +21,7 @@ public sealed class GetUtilizationAnalyticsEndpoint(ISender sender)
     {
         Get("/analytics/utilization");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Analytics"));
+        Options(x => x.WithTags("Analytics").RequireRateLimiting("Export"));
     }
 
     public override async Task HandleAsync(GetUtilizationAnalyticsRequest req, CancellationToken ct)

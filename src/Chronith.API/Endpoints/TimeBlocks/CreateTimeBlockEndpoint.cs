@@ -21,7 +21,7 @@ public sealed class CreateTimeBlockEndpoint(ISender sender)
     {
         Post("/time-blocks");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("TimeBlocks"));
+        Options(x => x.WithTags("TimeBlocks").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CreateTimeBlockRequest req, CancellationToken ct)

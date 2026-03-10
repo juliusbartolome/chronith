@@ -17,7 +17,7 @@ public sealed class GetAuditEntryByIdEndpoint(ISender sender)
     {
         Get("/audit/{id}");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Audit"));
+        Options(x => x.WithTags("Audit").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(GetAuditEntryByIdRequest req, CancellationToken ct)

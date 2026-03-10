@@ -19,7 +19,7 @@ public sealed class JoinWaitlistEndpoint(ISender sender)
     {
         Post("/booking-types/{bookingTypeSlug}/waitlist");
         Roles("Customer");
-        Options(x => x.WithTags("Waitlist"));
+        Options(x => x.WithTags("Waitlist").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(JoinWaitlistRequest req, CancellationToken ct)

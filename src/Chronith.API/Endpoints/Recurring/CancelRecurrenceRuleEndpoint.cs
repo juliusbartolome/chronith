@@ -16,7 +16,7 @@ public sealed class CancelRecurrenceRuleEndpoint(ISender sender)
     {
         Delete("/recurring/{id}");
         Roles("TenantAdmin", "TenantStaff", "Customer");
-        Options(x => x.WithTags("Recurring"));
+        Options(x => x.WithTags("Recurring").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CancelRecurrenceRuleRequest req, CancellationToken ct)

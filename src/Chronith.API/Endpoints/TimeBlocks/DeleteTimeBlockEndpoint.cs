@@ -16,7 +16,7 @@ public sealed class DeleteTimeBlockEndpoint(ISender sender)
     {
         Delete("/time-blocks/{id}");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("TimeBlocks"));
+        Options(x => x.WithTags("TimeBlocks").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(DeleteTimeBlockRequest req, CancellationToken ct)

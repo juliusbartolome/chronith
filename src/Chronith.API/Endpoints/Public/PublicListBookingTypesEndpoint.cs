@@ -14,7 +14,7 @@ public sealed class PublicListBookingTypesEndpoint(ISender sender, ITenantReposi
     {
         Get("/public/{tenantSlug}/booking-types");
         AllowAnonymous();
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Public"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

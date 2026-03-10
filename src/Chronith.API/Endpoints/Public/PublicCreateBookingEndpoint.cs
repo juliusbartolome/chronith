@@ -23,7 +23,7 @@ public sealed class PublicCreateBookingEndpoint(ISender sender, ITenantRepositor
     {
         Post("/public/{tenantSlug}/booking-types/{slug}/bookings");
         AllowAnonymous();
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Public"));
     }
 
     public override async Task HandleAsync(PublicCreateBookingRequest req, CancellationToken ct)

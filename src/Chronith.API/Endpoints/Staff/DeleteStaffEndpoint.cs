@@ -16,7 +16,7 @@ public sealed class DeleteStaffEndpoint(ISender sender)
     {
         Delete("/staff/{id}");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Staff"));
+        Options(x => x.WithTags("Staff").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(DeleteStaffRequest req, CancellationToken ct)

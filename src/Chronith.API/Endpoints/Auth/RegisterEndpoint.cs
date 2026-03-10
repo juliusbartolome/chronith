@@ -20,7 +20,7 @@ public sealed class RegisterEndpoint(ISender sender) : Endpoint<RegisterRequest,
     {
         Post("/auth/register");
         AllowAnonymous();
-        Options(x => x.WithTags("Auth"));
+        Options(x => x.WithTags("Auth").RequireRateLimiting("Auth"));
     }
 
     public override async Task HandleAsync(RegisterRequest req, CancellationToken ct)

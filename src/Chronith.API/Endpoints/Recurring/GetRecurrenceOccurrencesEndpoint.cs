@@ -36,7 +36,7 @@ public sealed class GetRecurrenceOccurrencesEndpoint(ISender sender)
     {
         Get("/recurring/{id}/occurrences");
         Roles("TenantAdmin", "TenantStaff", "Customer");
-        Options(x => x.WithTags("Recurring"));
+        Options(x => x.WithTags("Recurring").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(GetRecurrenceOccurrencesRequest req, CancellationToken ct)

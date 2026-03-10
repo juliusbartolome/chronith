@@ -12,7 +12,7 @@ public sealed class ListRecurrenceRulesEndpoint(ISender sender)
     {
         Get("/recurring");
         Roles("TenantAdmin", "TenantStaff");
-        Options(x => x.WithTags("Recurring"));
+        Options(x => x.WithTags("Recurring").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

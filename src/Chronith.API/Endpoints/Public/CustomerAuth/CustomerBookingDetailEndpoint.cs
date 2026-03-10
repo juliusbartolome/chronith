@@ -18,7 +18,7 @@ public sealed class CustomerBookingDetailEndpoint(ISender sender)
     {
         Get("/public/{slug}/my-bookings/{id}");
         Roles("Customer");
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CustomerBookingDetailRequest req, CancellationToken ct)

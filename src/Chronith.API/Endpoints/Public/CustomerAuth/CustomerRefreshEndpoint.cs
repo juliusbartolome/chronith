@@ -18,7 +18,7 @@ public sealed class CustomerRefreshEndpoint(ISender sender)
     {
         Post("/public/{slug}/auth/refresh");
         AllowAnonymous();
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Auth"));
     }
 
     public override async Task HandleAsync(CustomerRefreshRequest req, CancellationToken ct)
