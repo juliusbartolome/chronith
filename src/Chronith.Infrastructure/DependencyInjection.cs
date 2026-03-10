@@ -67,6 +67,7 @@ public static class DependencyInjection
         services.AddScoped<IRecurrenceRuleRepository, RecurrenceRuleRepository>();
         services.AddScoped<IIdempotencyKeyRepository, IdempotencyKeyRepository>();
         services.AddScoped<IAuditEntryRepository, AuditEntryRepository>();
+        services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
         services.AddScoped<IAuditSnapshotResolver, BookingSnapshotResolver>();
         services.AddScoped<IAuditSnapshotResolver, BookingTypeSnapshotResolver>();
         services.AddScoped<IAuditSnapshotResolver, StaffMemberSnapshotResolver>();
