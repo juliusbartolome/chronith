@@ -5,89 +5,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Chronith.Tests.Unit.Infrastructure.Telemetry;
 
-public sealed class ChronithMetricsTests : IDisposable
+public sealed class ChronithMetricsTests
 {
-    private readonly ServiceProvider _serviceProvider;
-    private readonly IMeterFactory _meterFactory;
-
-    public ChronithMetricsTests()
+    private static (ChronithMetrics metrics, ServiceProvider provider) CreateMetrics()
     {
         var services = new ServiceCollection();
         services.AddMetrics();
-        _serviceProvider = services.BuildServiceProvider();
-        _meterFactory = _serviceProvider.GetRequiredService<IMeterFactory>();
-    }
-
-    public void Dispose() => _serviceProvider.Dispose();
-
-    [Fact]
-    public void RecordBookingCreated_DoesNotThrow()
-    {
-        var metrics = new ChronithMetrics(_meterFactory);
-
-        var act = () => metrics.RecordBookingCreated("tenant-1", "TimeSlot");
-
-        act.Should().NotThrow();
-    }
-
-    [Fact]
-    public void RecordBookingConfirmed_DoesNotThrow()
-    {
-        var metrics = new ChronithMetrics(_meterFactory);
-
-        var act = () => metrics.RecordBookingConfirmed("tenant-1");
-
-        act.Should().NotThrow();
-    }
-
-    [Fact]
-    public void RecordBookingCancelled_DoesNotThrow()
-    {
-        var metrics = new ChronithMetrics(_meterFactory);
-
-        var act = () => metrics.RecordBookingCancelled("tenant-1");
-
-        act.Should().NotThrow();
-    }
-
-    [Fact]
-    public void RecordPaymentProcessed_DoesNotThrow()
-    {
-        var metrics = new ChronithMetrics(_meterFactory);
-
-        var act = () => metrics.RecordPaymentProcessed("tenant-1", "PayMongo");
-
-        act.Should().NotThrow();
-    }
-
-    [Fact]
-    public void RecordWebhookDispatched_DoesNotThrow()
-    {
-        var metrics = new ChronithMetrics(_meterFactory);
-
-        var act = () => metrics.RecordWebhookDispatched("tenant-1");
-
-        act.Should().NotThrow();
-    }
-
-    [Fact]
-    public void RecordNotificationSent_DoesNotThrow()
-    {
-        var metrics = new ChronithMetrics(_meterFactory);
-
-        var act = () => metrics.RecordNotificationSent("tenant-1", "Email");
-
-        act.Should().NotThrow();
-    }
-
-    [Fact]
-    public void RecordAvailabilityDuration_DoesNotThrow()
-    {
-        var metrics = new ChronithMetrics(_meterFactory);
-
-        var act = () => metrics.RecordAvailabilityDuration("tenant-1", 42.5);
-
-        act.Should().NotThrow();
+        var provider = services.BuildServiceProvider();
+        var meterFactory = provider.GetRequiredService<IMeterFactory>();
+        return (new ChronithMetrics(meterFactory), provider);
     }
 
     [Fact]
@@ -97,39 +23,294 @@ public sealed class ChronithMetricsTests : IDisposable
     }
 
     [Fact]
-    public void RecordBookingCreated_WithMultipleTenants_DoesNotThrow()
+    public void RecordBookingCreated_IncrementsCounter_WithCorrectTags()
     {
-        var metrics = new ChronithMetrics(_meterFactory);
+        long recorded = 0;
+        string? tenantTag = null;
+        string? kindTag = null;
 
-        var act = () =>
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+                l.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
+        {
+            if (inst.Name == "chronith.bookings.created")
+            {
+                recorded = value;
+                foreach (var tag in tags)
+                {
+                    if (tag.Key == "tenant.id") tenantTag = tag.Value?.ToString();
+                    if (tag.Key == "booking.kind") kindTag = tag.Value?.ToString();
+                }
+            }
+        });
+        listener.Start();
+
+        var (metrics, provider) = CreateMetrics();
+        using (provider)
         {
             metrics.RecordBookingCreated("tenant-1", "TimeSlot");
-            metrics.RecordBookingCreated("tenant-2", "Calendar");
-            metrics.RecordBookingCreated("tenant-1", "Calendar");
-        };
+        }
 
-        act.Should().NotThrow();
+        recorded.Should().Be(1);
+        tenantTag.Should().Be("tenant-1");
+        kindTag.Should().Be("TimeSlot");
     }
 
     [Fact]
-    public void AllRecordMethods_WithMultipleCalls_DoNotThrow()
+    public void RecordBookingConfirmed_IncrementsCounter_WithCorrectTags()
     {
-        var metrics = new ChronithMetrics(_meterFactory);
+        long recorded = 0;
+        string? tenantTag = null;
 
-        var act = () =>
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
         {
-            for (var i = 0; i < 10; i++)
-            {
-                metrics.RecordBookingCreated("tenant-1", "TimeSlot");
-                metrics.RecordBookingConfirmed("tenant-1");
-                metrics.RecordBookingCancelled("tenant-1");
-                metrics.RecordPaymentProcessed("tenant-1", "Stub");
-                metrics.RecordWebhookDispatched("tenant-1");
-                metrics.RecordNotificationSent("tenant-1", "SMS");
-                metrics.RecordAvailabilityDuration("tenant-1", i * 1.5);
-            }
+            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+                l.EnableMeasurementEvents(instrument);
         };
+        listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
+        {
+            if (inst.Name == "chronith.bookings.confirmed")
+            {
+                recorded = value;
+                foreach (var tag in tags)
+                {
+                    if (tag.Key == "tenant.id") tenantTag = tag.Value?.ToString();
+                }
+            }
+        });
+        listener.Start();
 
-        act.Should().NotThrow();
+        var (metrics, provider) = CreateMetrics();
+        using (provider)
+        {
+            metrics.RecordBookingConfirmed("tenant-2");
+        }
+
+        recorded.Should().Be(1);
+        tenantTag.Should().Be("tenant-2");
+    }
+
+    [Fact]
+    public void RecordBookingCancelled_IncrementsCounter_WithCorrectTags()
+    {
+        long recorded = 0;
+        string? tenantTag = null;
+
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+                l.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
+        {
+            if (inst.Name == "chronith.bookings.cancelled")
+            {
+                recorded = value;
+                foreach (var tag in tags)
+                {
+                    if (tag.Key == "tenant.id") tenantTag = tag.Value?.ToString();
+                }
+            }
+        });
+        listener.Start();
+
+        var (metrics, provider) = CreateMetrics();
+        using (provider)
+        {
+            metrics.RecordBookingCancelled("tenant-3");
+        }
+
+        recorded.Should().Be(1);
+        tenantTag.Should().Be("tenant-3");
+    }
+
+    [Fact]
+    public void RecordPaymentProcessed_IncrementsCounter_WithCorrectTags()
+    {
+        long recorded = 0;
+        string? tenantTag = null;
+        string? providerTag = null;
+
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+                l.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
+        {
+            if (inst.Name == "chronith.payments.processed")
+            {
+                recorded = value;
+                foreach (var tag in tags)
+                {
+                    if (tag.Key == "tenant.id") tenantTag = tag.Value?.ToString();
+                    if (tag.Key == "payment.provider") providerTag = tag.Value?.ToString();
+                }
+            }
+        });
+        listener.Start();
+
+        var (metrics, provider) = CreateMetrics();
+        using (provider)
+        {
+            metrics.RecordPaymentProcessed("tenant-1", "PayMongo");
+        }
+
+        recorded.Should().Be(1);
+        tenantTag.Should().Be("tenant-1");
+        providerTag.Should().Be("PayMongo");
+    }
+
+    [Fact]
+    public void RecordWebhookDispatched_IncrementsCounter_WithCorrectTags()
+    {
+        long recorded = 0;
+        string? tenantTag = null;
+
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+                l.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
+        {
+            if (inst.Name == "chronith.webhooks.dispatched")
+            {
+                recorded = value;
+                foreach (var tag in tags)
+                {
+                    if (tag.Key == "tenant.id") tenantTag = tag.Value?.ToString();
+                }
+            }
+        });
+        listener.Start();
+
+        var (metrics, provider) = CreateMetrics();
+        using (provider)
+        {
+            metrics.RecordWebhookDispatched("tenant-1");
+        }
+
+        recorded.Should().Be(1);
+        tenantTag.Should().Be("tenant-1");
+    }
+
+    [Fact]
+    public void RecordNotificationSent_IncrementsCounter_WithCorrectTags()
+    {
+        long recorded = 0;
+        string? tenantTag = null;
+        string? channelTag = null;
+
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+                l.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
+        {
+            if (inst.Name == "chronith.notifications.sent")
+            {
+                recorded = value;
+                foreach (var tag in tags)
+                {
+                    if (tag.Key == "tenant.id") tenantTag = tag.Value?.ToString();
+                    if (tag.Key == "notification.channel") channelTag = tag.Value?.ToString();
+                }
+            }
+        });
+        listener.Start();
+
+        var (metrics, provider) = CreateMetrics();
+        using (provider)
+        {
+            metrics.RecordNotificationSent("tenant-1", "Email");
+        }
+
+        recorded.Should().Be(1);
+        tenantTag.Should().Be("tenant-1");
+        channelTag.Should().Be("Email");
+    }
+
+    [Fact]
+    public void RecordAvailabilityDuration_RecordsHistogram_WithCorrectValueAndTags()
+    {
+        double recorded = 0;
+        string? tenantTag = null;
+
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+                l.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<double>((inst, value, tags, _) =>
+        {
+            if (inst.Name == "chronith.availability.duration_ms")
+            {
+                recorded = value;
+                foreach (var tag in tags)
+                {
+                    if (tag.Key == "tenant.id") tenantTag = tag.Value?.ToString();
+                }
+            }
+        });
+        listener.Start();
+
+        var (metrics, provider) = CreateMetrics();
+        using (provider)
+        {
+            metrics.RecordAvailabilityDuration("tenant-1", 123.45);
+        }
+
+        recorded.Should().Be(123.45);
+        tenantTag.Should().Be("tenant-1");
+    }
+
+    [Fact]
+    public void RecordBookingCreated_MultipleCalls_EachEmitsCorrectValue()
+    {
+        var recordings = new List<(long value, string? tenant, string? kind)>();
+
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+                l.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
+        {
+            if (inst.Name == "chronith.bookings.created")
+            {
+                string? tenant = null, kind = null;
+                foreach (var tag in tags)
+                {
+                    if (tag.Key == "tenant.id") tenant = tag.Value?.ToString();
+                    if (tag.Key == "booking.kind") kind = tag.Value?.ToString();
+                }
+                recordings.Add((value, tenant, kind));
+            }
+        });
+        listener.Start();
+
+        var (metrics, provider) = CreateMetrics();
+        using (provider)
+        {
+            metrics.RecordBookingCreated("tenant-1", "TimeSlot");
+            metrics.RecordBookingCreated("tenant-2", "Calendar");
+        }
+
+        recordings.Should().HaveCount(2);
+        recordings[0].Should().Be((1L, "tenant-1", "TimeSlot"));
+        recordings[1].Should().Be((1L, "tenant-2", "Calendar"));
     }
 }
