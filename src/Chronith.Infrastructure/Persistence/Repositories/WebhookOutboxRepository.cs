@@ -21,6 +21,7 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
     {
         var now = DateTimeOffset.UtcNow;
         return await db.WebhookOutboxEntries
+            .TagWith("GetPendingAsync — WebhookOutboxRepository")
             .AsNoTracking()
             .Where(e => e.Status == OutboxStatus.Pending
                      && (e.NextRetryAt == null || e.NextRetryAt <= now))
@@ -44,6 +45,7 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
         var now = DateTimeOffset.UtcNow;
         var categoryInt = (int)category;
         return await db.WebhookOutboxEntries
+            .TagWith("GetPendingByCategoryAsync — WebhookOutboxRepository")
             .AsNoTracking()
             .Where(e => e.Status == OutboxStatus.Pending
                      && e.Category == categoryInt
@@ -100,6 +102,7 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
             return ([], 0);
 
         var query = db.WebhookOutboxEntries
+            .TagWith("ListByWebhookAsync — WebhookOutboxRepository")
             .AsNoTracking()
             .Where(e => e.WebhookId == webhookId)
             .OrderByDescending(e => e.CreatedAt);
@@ -121,6 +124,7 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
     {
         // Join through Webhooks so the global TenantId filter applies
         return await db.WebhookOutboxEntries
+            .TagWith("GetByIdAsync — WebhookOutboxRepository")
             .AsNoTracking()
             .Where(e => e.Id == deliveryId)
             .Where(e => db.Webhooks.Any(w => w.Id == e.WebhookId))
@@ -157,10 +161,12 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
     public async Task<DeliveryMetrics> GetDeliveryMetricsAsync(Guid tenantId, CancellationToken ct = default)
     {
         var delivered = await db.WebhookOutboxEntries
+            .TagWith("GetDeliveryMetricsAsync.delivered — WebhookOutboxRepository")
             .AsNoTracking()
             .CountAsync(e => e.TenantId == tenantId && e.Status == OutboxStatus.Delivered, ct);
 
         var failed = await db.WebhookOutboxEntries
+            .TagWith("GetDeliveryMetricsAsync.failed — WebhookOutboxRepository")
             .AsNoTracking()
             .CountAsync(e => e.TenantId == tenantId && e.Status == OutboxStatus.Failed, ct);
 

@@ -16,6 +16,7 @@ public sealed class TenantUserRepository(ChronithDbContext context) : ITenantUse
     public async Task<TenantUser?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var entity = await context.TenantUsers
+            .TagWith("GetByIdAsync — TenantUserRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == id, ct);
         return entity?.ToDomain();
@@ -25,6 +26,7 @@ public sealed class TenantUserRepository(ChronithDbContext context) : ITenantUse
     {
         var normalised = email.ToLowerInvariant();
         var entity = await context.TenantUsers
+            .TagWith("GetByEmailAsync — TenantUserRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.TenantId == tenantId && u.Email == normalised, ct);
         return entity?.ToDomain();
@@ -34,6 +36,7 @@ public sealed class TenantUserRepository(ChronithDbContext context) : ITenantUse
     {
         var normalised = email.ToLowerInvariant();
         return await context.TenantUsers
+            .TagWith("ExistsByEmailAsync — TenantUserRepository")
             .AnyAsync(u => u.TenantId == tenantId && u.Email == normalised, ct);
     }
 

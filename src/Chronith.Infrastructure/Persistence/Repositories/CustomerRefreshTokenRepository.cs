@@ -12,7 +12,9 @@ public sealed class CustomerRefreshTokenRepository(ChronithDbContext db) : ICust
 
     public async Task<CustomerRefreshToken?> GetByHashAsync(string tokenHash, CancellationToken ct = default)
     {
-        var entity = await db.CustomerRefreshTokens.AsNoTracking()
+        var entity = await db.CustomerRefreshTokens
+            .TagWith("GetByHashAsync — CustomerRefreshTokenRepository")
+            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
         return entity?.ToDomain();
     }

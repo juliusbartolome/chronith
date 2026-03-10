@@ -10,7 +10,9 @@ public sealed class IdempotencyKeyRepository(ChronithDbContext db) : IIdempotenc
     public async Task<IdempotencyKey?> GetByKeyAndRouteAsync(
         Guid tenantId, string key, string endpointRoute, CancellationToken ct = default)
     {
-        var entity = await db.IdempotencyKeys.AsNoTracking()
+        var entity = await db.IdempotencyKeys
+            .TagWith("GetByKeyAndRouteAsync — IdempotencyKeyRepository")
+            .AsNoTracking()
             .FirstOrDefaultAsync(k =>
                 k.TenantId == tenantId &&
                 k.Key == key &&
