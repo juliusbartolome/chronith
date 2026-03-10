@@ -9,7 +9,7 @@ namespace Chronith.Application.Commands.Bookings;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record RescheduleBookingCommand : IRequest<BookingDto>
+public sealed record RescheduleBookingCommand : IRequest<BookingDto>, IAuditable
 {
     public required Guid BookingId { get; init; }
     public required DateTimeOffset NewStart { get; init; }
@@ -18,6 +18,11 @@ public sealed record RescheduleBookingCommand : IRequest<BookingDto>
     /// When the caller is a Customer, enforce ownership.
     /// </summary>
     public string? RequiredCustomerId { get; init; }
+
+    // IAuditable
+    public Guid EntityId => BookingId;
+    public string EntityType => "Booking";
+    public string Action => "Reschedule";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

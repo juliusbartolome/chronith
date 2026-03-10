@@ -77,6 +77,7 @@ public static class DependencyInjection
         services.AddHostedService<ReminderSchedulerService>();
         services.AddHostedService<RecurringBookingGeneratorService>();
         services.AddHostedService<IdempotencyCleanupService>();
+        services.AddHostedService<AuditRetentionService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
         {
@@ -88,6 +89,7 @@ public static class DependencyInjection
         services.Configure<ReminderSchedulerOptions>(configuration.GetSection("ReminderScheduler"));
         services.Configure<RecurringBookingGeneratorOptions>(configuration.GetSection("RecurringBookings"));
         services.Configure<IdempotencyOptions>(configuration.GetSection("Idempotency"));
+        services.Configure<AuditRetentionOptions>(configuration.GetSection("AuditRetention"));
 
         // Notification channels
         services.Configure<SmtpOptions>(configuration.GetSection("Notifications:Smtp"));

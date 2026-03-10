@@ -18,4 +18,5 @@ public interface IAuditEntryRepository
         int pageSize,
         CancellationToken ct);
     Task<int> DeleteExpiredAsync(Guid tenantId, DateTimeOffset before, CancellationToken ct);
+    Task<IReadOnlyList<Guid>> GetDistinctTenantIdsAsync(CancellationToken ct);
 }

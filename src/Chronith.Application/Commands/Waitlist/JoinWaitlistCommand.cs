@@ -10,11 +10,16 @@ namespace Chronith.Application.Commands.Waitlist;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record JoinWaitlistCommand : IRequest<WaitlistEntryDto>
+public sealed record JoinWaitlistCommand : IRequest<WaitlistEntryDto>, IAuditable
 {
     public required string BookingTypeSlug { get; init; }
     public required DateTimeOffset DesiredStart { get; init; }
     public required DateTimeOffset DesiredEnd { get; init; }
+
+    // IAuditable — EntityId is Guid.Empty pre-creation
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "WaitlistEntry";
+    public string Action => "Create";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

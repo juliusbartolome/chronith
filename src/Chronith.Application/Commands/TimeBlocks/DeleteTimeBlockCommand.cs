@@ -6,9 +6,13 @@ namespace Chronith.Application.Commands.TimeBlocks;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record DeleteTimeBlockCommand : IRequest
+public sealed record DeleteTimeBlockCommand : IRequest, IAuditable
 {
     public required Guid TimeBlockId { get; init; }
+
+    public Guid EntityId => TimeBlockId;
+    public string EntityType => "TimeBlock";
+    public string Action => "Delete";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

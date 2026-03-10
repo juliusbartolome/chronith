@@ -9,12 +9,17 @@ namespace Chronith.Application.Commands.Staff;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record CreateStaffCommand : IRequest<StaffMemberDto>
+public sealed record CreateStaffCommand : IRequest<StaffMemberDto>, IAuditable
 {
     public required string Name { get; init; }
     public required string Email { get; init; }
     public Guid? TenantUserId { get; init; }
     public IReadOnlyList<StaffAvailabilityWindowInput> AvailabilityWindows { get; init; } = [];
+
+    // IAuditable — EntityId is Guid.Empty pre-creation
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "StaffMember";
+    public string Action => "Create";
 }
 
 public sealed record StaffAvailabilityWindowInput(

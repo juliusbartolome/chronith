@@ -10,7 +10,7 @@ namespace Chronith.Application.Commands.Bookings;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record CancelBookingCommand : IRequest<BookingDto>
+public sealed record CancelBookingCommand : IRequest<BookingDto>, IAuditable
 {
     public required Guid BookingId { get; init; }
     public required string BookingTypeSlug { get; init; }
@@ -18,6 +18,11 @@ public sealed record CancelBookingCommand : IRequest<BookingDto>
     /// When the caller is a Customer, enforce ownership (must match Booking.CustomerId).
     /// </summary>
     public string? RequiredCustomerId { get; init; }
+
+    // IAuditable
+    public Guid EntityId => BookingId;
+    public string EntityType => "Booking";
+    public string Action => "Cancel";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

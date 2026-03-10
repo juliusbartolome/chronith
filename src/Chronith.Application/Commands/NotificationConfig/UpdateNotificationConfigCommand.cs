@@ -9,10 +9,15 @@ namespace Chronith.Application.Commands.NotificationConfig;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record UpdateNotificationConfigCommand : IRequest<TenantNotificationConfigDto>
+public sealed record UpdateNotificationConfigCommand : IRequest<TenantNotificationConfigDto>, IAuditable
 {
     public required string ChannelType { get; init; }
     public required string Settings { get; init; }
+
+    // Upsert — no stable Guid available
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "TenantNotificationConfig";
+    public string Action => "Update";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

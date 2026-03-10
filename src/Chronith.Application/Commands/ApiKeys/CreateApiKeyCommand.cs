@@ -8,10 +8,15 @@ namespace Chronith.Application.Commands.ApiKeys;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record CreateApiKeyCommand : IRequest<CreateApiKeyResult>
+public sealed record CreateApiKeyCommand : IRequest<CreateApiKeyResult>, IAuditable
 {
     public required string Description { get; init; }
     public required string Role { get; init; }
+
+    // IAuditable — EntityId is Guid.Empty pre-creation
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "TenantApiKey";
+    public string Action => "Create";
 }
 
 // ── Validator ────────────────────────────────────────────────────────────────

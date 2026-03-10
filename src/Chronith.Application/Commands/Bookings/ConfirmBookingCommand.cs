@@ -10,10 +10,15 @@ namespace Chronith.Application.Commands.Bookings;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record ConfirmBookingCommand : IRequest<BookingDto>
+public sealed record ConfirmBookingCommand : IRequest<BookingDto>, IAuditable
 {
     public required Guid BookingId { get; init; }
     public required string BookingTypeSlug { get; init; }
+
+    // IAuditable
+    public Guid EntityId => BookingId;
+    public string EntityType => "Booking";
+    public string Action => "Confirm";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

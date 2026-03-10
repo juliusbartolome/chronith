@@ -7,9 +7,13 @@ namespace Chronith.Application.Commands.Recurring.CancelRecurrenceRule;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record CancelRecurrenceRuleCommand : IRequest
+public sealed record CancelRecurrenceRuleCommand : IRequest, IAuditable
 {
     public required Guid Id { get; init; }
+
+    public Guid EntityId => Id;
+    public string EntityType => "RecurrenceRule";
+    public string Action => "Cancel";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

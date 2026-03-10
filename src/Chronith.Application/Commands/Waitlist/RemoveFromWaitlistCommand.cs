@@ -7,13 +7,17 @@ namespace Chronith.Application.Commands.Waitlist;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record RemoveFromWaitlistCommand : IRequest
+public sealed record RemoveFromWaitlistCommand : IRequest, IAuditable
 {
     public required Guid WaitlistEntryId { get; init; }
     /// <summary>
     /// When the caller is a Customer, enforce ownership.
     /// </summary>
     public string? RequiredCustomerId { get; init; }
+
+    public Guid EntityId => WaitlistEntryId;
+    public string EntityType => "WaitlistEntry";
+    public string Action => "Delete";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

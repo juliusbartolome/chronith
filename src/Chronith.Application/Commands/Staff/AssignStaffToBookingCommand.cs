@@ -9,10 +9,14 @@ namespace Chronith.Application.Commands.Staff;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record AssignStaffToBookingCommand : IRequest<BookingDto>
+public sealed record AssignStaffToBookingCommand : IRequest<BookingDto>, IAuditable
 {
     public required Guid BookingId { get; init; }
     public required Guid StaffMemberId { get; init; }
+
+    public Guid EntityId => BookingId;
+    public string EntityType => "Booking";
+    public string Action => "AssignStaff";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

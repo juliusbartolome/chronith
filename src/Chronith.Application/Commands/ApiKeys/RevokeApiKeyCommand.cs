@@ -7,7 +7,12 @@ namespace Chronith.Application.Commands.ApiKeys;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record RevokeApiKeyCommand(Guid Id) : IRequest;
+public sealed record RevokeApiKeyCommand(Guid Id) : IRequest, IAuditable
+{
+    public Guid EntityId => Id;
+    public string EntityType => "TenantApiKey";
+    public string Action => "Revoke";
+}
 
 // ── Validator ────────────────────────────────────────────────────────────────
 
