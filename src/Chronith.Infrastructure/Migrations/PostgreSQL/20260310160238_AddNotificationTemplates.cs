@@ -11,11 +11,6 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "ix_idempotency_lookup",
-                schema: "chronith",
-                table: "idempotency_keys");
-
             migrationBuilder.CreateTable(
                 name: "notification_templates",
                 schema: "chronith",
@@ -38,13 +33,6 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                 });
 
             migrationBuilder.CreateIndex(
-                name: "ix_idempotency_lookup",
-                schema: "chronith",
-                table: "idempotency_keys",
-                columns: new[] { "TenantId", "Key", "EndpointRoute" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "ix_notification_templates_event_channel",
                 schema: "chronith",
                 table: "notification_templates",
@@ -64,17 +52,6 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
             migrationBuilder.DropTable(
                 name: "notification_templates",
                 schema: "chronith");
-
-            migrationBuilder.DropIndex(
-                name: "ix_idempotency_lookup",
-                schema: "chronith",
-                table: "idempotency_keys");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_idempotency_lookup",
-                schema: "chronith",
-                table: "idempotency_keys",
-                columns: new[] { "TenantId", "Key", "EndpointRoute" });
         }
     }
 }

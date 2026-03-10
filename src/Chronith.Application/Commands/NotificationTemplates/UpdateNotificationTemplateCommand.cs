@@ -42,7 +42,7 @@ public sealed class UpdateNotificationTemplateCommandHandler(
         var template = await templateRepo.GetByIdAsync(tenantContext.TenantId, cmd.Id, ct)
             ?? throw new NotFoundException("NotificationTemplate", cmd.Id);
 
-        template.UpdateBody(cmd.Subject, cmd.Body);
+        template.UpdateContent(cmd.Subject, cmd.Body);
 
         if (cmd.IsActive)
             template.Activate();

@@ -1,6 +1,6 @@
-using Chronith.Application.Interfaces;
-using Chronith.Domain.Exceptions;
+using Chronith.Application.Queries.NotificationTemplates;
 using FastEndpoints;
+using MediatR;
 
 namespace Chronith.API.Endpoints.NotificationTemplates;
 
@@ -17,9 +17,7 @@ public sealed record PreviewNotificationTemplateResponse(
     string? Subject,
     string Body);
 
-public sealed class PreviewNotificationTemplateEndpoint(
-    ITenantContext tenantContext,
-    INotificationTemplateRepository templateRepo)
+public sealed class PreviewNotificationTemplateEndpoint(ISender sender)
     : Endpoint<PreviewNotificationTemplateRequest, PreviewNotificationTemplateResponse>
 {
     public override void Configure()
@@ -31,21 +29,9 @@ public sealed class PreviewNotificationTemplateEndpoint(
 
     public override async Task HandleAsync(PreviewNotificationTemplateRequest req, CancellationToken ct)
     {
-        var template = await templateRepo.GetByIdAsync(tenantContext.TenantId, req.Id, ct)
-            ?? throw new NotFoundException("NotificationTemplate", req.Id);
+        var result = await sender.Send(
+            new PreviewNotificationTemplateQuery(req.Id, req.Variables), ct);
 
-        var body = Substitute(template.Body, req.Variables);
-        var subject = template.Subject is not null
-            ? Substitute(template.Subject, req.Variables)
-            : null;
-
-        await Send.OkAsync(new PreviewNotificationTemplateResponse(subject, body), ct);
-    }
-
-    private static string Substitute(string text, Dictionary<string, string> variables)
-    {
-        foreach (var (key, value) in variables)
-            text = text.Replace($"{{{{{key}}}}}", value, StringComparison.OrdinalIgnoreCase);
-        return text;
+        await Send.OkAsync(new PreviewNotificationTemplateResponse(result.Subject, result.Body), ct);
     }
 }

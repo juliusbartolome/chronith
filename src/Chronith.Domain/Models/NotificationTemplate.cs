@@ -35,7 +35,7 @@ public sealed class NotificationTemplate
         };
     }
 
-    public void UpdateBody(string? subject, string body)
+    public void UpdateContent(string? subject, string body)
     {
         Subject = subject;
         Body = body;

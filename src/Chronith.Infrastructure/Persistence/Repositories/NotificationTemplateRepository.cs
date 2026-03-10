@@ -59,7 +59,7 @@ public sealed class NotificationTemplateRepository(ChronithDbContext db)
         NotificationTemplate template, CancellationToken ct = default)
     {
         var entity = await db.NotificationTemplates
-            .FirstOrDefaultAsync(t => t.Id == template.Id, ct);
+            .FirstOrDefaultAsync(t => t.TenantId == template.TenantId && t.Id == template.Id, ct);
 
         if (entity is null) return;
 

@@ -57,7 +57,7 @@ public sealed class NotificationTemplateTests
     }
 
     [Fact]
-    public void UpdateBody_UpdatesSubjectBodyAndUpdatedAt()
+    public void UpdateContent_UpdatesSubjectBodyAndUpdatedAt()
     {
         var template = NotificationTemplate.Create(
             tenantId: Guid.NewGuid(),
@@ -69,7 +69,7 @@ public sealed class NotificationTemplateTests
         var originalCreatedAt = template.CreatedAt;
         var before = DateTimeOffset.UtcNow;
 
-        template.UpdateBody("New Subject", "New body.");
+        template.UpdateContent("New Subject", "New body.");
 
         var after = DateTimeOffset.UtcNow;
 
@@ -80,7 +80,7 @@ public sealed class NotificationTemplateTests
     }
 
     [Fact]
-    public void UpdateBody_WithNullSubject_ClearsSubject()
+    public void UpdateContent_WithNullSubject_ClearsSubject()
     {
         var template = NotificationTemplate.Create(
             tenantId: Guid.NewGuid(),
@@ -89,7 +89,7 @@ public sealed class NotificationTemplateTests
             subject: "Original Subject",
             body: "Original body.");
 
-        template.UpdateBody(null, "New body.");
+        template.UpdateContent(null, "New body.");
 
         template.Subject.Should().BeNull();
         template.Body.Should().Be("New body.");
