@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Chronith.Infrastructure.Persistence.Repositories;
 
-public sealed class NotificationConfigRepository(ChronithDbContext db)
+public sealed class NotificationConfigRepository(
+    ChronithDbContext db,
+    IEncryptionService encryptionService)
     : INotificationConfigRepository
 {
     public async Task<TenantNotificationConfig?> GetByChannelTypeAsync(
@@ -15,7 +17,11 @@ public sealed class NotificationConfigRepository(ChronithDbContext db)
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.TenantId == tenantId && c.ChannelType == channelType, ct);
 
-        return entity is null ? null : TenantNotificationConfigEntityMapper.ToDomain(entity);
+        if (entity is null) return null;
+
+        // Decrypt settings before mapping to domain
+        entity.Settings = DecryptSettings(entity.Settings) ?? "{}";
+        return TenantNotificationConfigEntityMapper.ToDomain(entity);
     }
 
     public async Task<IReadOnlyList<TenantNotificationConfig>> ListByTenantAsync(
@@ -26,6 +32,9 @@ public sealed class NotificationConfigRepository(ChronithDbContext db)
             .Where(c => c.TenantId == tenantId)
             .OrderBy(c => c.ChannelType)
             .ToListAsync(ct);
+
+        foreach (var e in entities)
+            e.Settings = DecryptSettings(e.Settings) ?? "{}";
 
         return entities.Select(TenantNotificationConfigEntityMapper.ToDomain).ToList();
     }
@@ -38,22 +47,49 @@ public sealed class NotificationConfigRepository(ChronithDbContext db)
             .Where(c => c.TenantId == tenantId && c.IsEnabled)
             .ToListAsync(ct);
 
+        foreach (var e in entities)
+            e.Settings = DecryptSettings(e.Settings) ?? "{}";
+
         return entities.Select(TenantNotificationConfigEntityMapper.ToDomain).ToList();
+    }
+
+    /// <summary>
+    /// Decrypts an encrypted settings value. If the value is not valid base64-encoded ciphertext
+    /// (e.g., a pre-migration plaintext JSON row), returns it as-is. The next write will encrypt it.
+    /// </summary>
+    private string? DecryptSettings(string? settings)
+    {
+        if (settings is null) return null;
+        try
+        {
+            return encryptionService.Decrypt(settings);
+        }
+        catch (FormatException)
+        {
+            // Legacy row: settings column contains plaintext JSON (pre-migration).
+            // Return as-is; next write will encrypt it.
+            return settings;
+        }
     }
 
     public async Task AddAsync(TenantNotificationConfig config, CancellationToken ct = default)
     {
         var entity = TenantNotificationConfigEntityMapper.ToEntity(config);
+        // Encrypt settings before persisting
+        entity.Settings = encryptionService.Encrypt(config.Settings) ?? "{}";
         await db.TenantNotificationConfigs.AddAsync(entity, ct);
     }
 
     public async Task UpdateAsync(TenantNotificationConfig config, CancellationToken ct = default)
     {
+        // Encrypt settings before persisting
+        var encryptedSettings = encryptionService.Encrypt(config.Settings) ?? "{}";
+
         await db.TenantNotificationConfigs
             .Where(c => c.Id == config.Id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(c => c.IsEnabled, config.IsEnabled)
-                .SetProperty(c => c.Settings, config.Settings)
+                .SetProperty(c => c.Settings, encryptedSettings)
                 .SetProperty(c => c.UpdatedAt, config.UpdatedAt),
                 ct);
     }

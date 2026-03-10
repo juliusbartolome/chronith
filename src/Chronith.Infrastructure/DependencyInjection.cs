@@ -10,6 +10,7 @@ using Chronith.Infrastructure.Persistence;
 using Chronith.Infrastructure.Persistence.Repositories;
 using Chronith.Infrastructure.Providers;
 using Chronith.Infrastructure.RateLimiting;
+using Chronith.Infrastructure.Security;
 using Chronith.Infrastructure.Services;
 using Chronith.Infrastructure.Services.Audit;
 using Chronith.Infrastructure.Telemetry;
@@ -115,6 +116,10 @@ public static class DependencyInjection
         services.Configure<MayaOptions>(configuration.GetSection("PaymentProviders:Maya"));
         services.AddSingleton<IPaymentProvider, MayaProvider>();
         services.AddSingleton<IPaymentProviderFactory, PaymentProviderFactory>();
+
+        // Encryption
+        services.Configure<EncryptionOptions>(configuration.GetSection(EncryptionOptions.SectionName));
+        services.AddSingleton<IEncryptionService, EncryptionService>();
 
         // Rate limiting
         services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));

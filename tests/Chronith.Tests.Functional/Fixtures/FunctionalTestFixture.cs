@@ -36,6 +36,7 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
                 builder.UseSetting("Database:Provider", "PostgreSQL");
                 builder.UseSetting("Database:ConnectionString", connectionString);
                 builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
+                builder.UseSetting("Security:EncryptionKey", TestConstants.EncryptionKey);
                 builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
             });
 

@@ -13,9 +13,22 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
 {
     private const int AccessTokenMinutes = 15;
 
+    /// <summary>
+    /// Returns the primary signing key. If <c>Jwt:SigningKeys</c> is configured, uses the first entry;
+    /// otherwise falls back to the single <c>Jwt:SigningKey</c> value for backward compatibility.
+    /// </summary>
+    private string GetPrimarySigningKey()
+    {
+        var keys = configuration.GetSection("Jwt:SigningKeys").Get<string[]>();
+        if (keys is { Length: > 0 })
+            return keys[0];
+
+        return configuration["Jwt:SigningKey"]!;
+    }
+
     public string CreateAccessToken(TenantUser user)
     {
-        var signingKey = configuration["Jwt:SigningKey"]!;
+        var signingKey = GetPrimarySigningKey();
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -38,7 +51,7 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
 
     public string CreateCustomerAccessToken(Customer customer)
     {
-        var signingKey = configuration["Jwt:SigningKey"]!;
+        var signingKey = GetPrimarySigningKey();
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

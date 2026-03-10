@@ -10,4 +10,5 @@ public sealed class TenantApiKeyEntity
     public bool IsRevoked { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? LastUsedAt { get; set; }
+    public DateTimeOffset? ExpiresAt { get; set; }
 }
