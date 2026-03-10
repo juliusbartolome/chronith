@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Chronith.Tests.Functional.Fixtures;
 using FluentAssertions;
 
@@ -23,7 +22,7 @@ public sealed class HealthCheckTests(FunctionalTestFixture fixture)
     {
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.GetAsync("/health/ready?format=json");
+        var response = await client.GetAsync("/health/ready");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -35,7 +34,7 @@ public sealed class HealthCheckTests(FunctionalTestFixture fixture)
     {
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.GetAsync("/health/ready?format=json");
+        var response = await client.GetAsync("/health/ready");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);

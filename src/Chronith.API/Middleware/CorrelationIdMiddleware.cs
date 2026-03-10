@@ -1,9 +1,11 @@
+using Chronith.Application.Constants;
+
 namespace Chronith.API.Middleware;
 
 public sealed class CorrelationIdMiddleware(RequestDelegate next)
 {
     public const string HeaderName = "X-Correlation-Id";
-    public const string ItemKey = "CorrelationId";
+    public const string ItemKey = HttpContextConstants.CorrelationIdKey;
 
     public async Task InvokeAsync(HttpContext context)
     {
