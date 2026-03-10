@@ -15,7 +15,7 @@ public sealed class GetAuditEntryByIdEndpoint(ISender sender)
 {
     public override void Configure()
     {
-        Get("/audit/entries/{id}");
+        Get("/audit/{id}");
         Roles("TenantAdmin");
         Options(x => x.WithTags("Audit"));
     }

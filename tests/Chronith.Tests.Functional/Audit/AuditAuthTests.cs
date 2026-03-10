@@ -1,4 +1,5 @@
 using System.Net;
+using Chronith.Infrastructure.Persistence.Entities;
 using Chronith.Tests.Functional.Fixtures;
 using Chronith.Tests.Functional.Helpers;
 
@@ -13,7 +14,18 @@ public sealed class AuditAuthTests(FunctionalTestFixture fixture)
         await SeedData.SeedTenantAsync(db);
     }
 
-    // GET /audit/entries — Admin only
+    // GET /audit — Admin only
+
+    [Fact]
+    public async Task GetAuditEntries_AsAdmin_Returns200()
+    {
+        await EnsureSeedAsync();
+        var client = fixture.CreateClient("TenantAdmin");
+
+        var response = await client.GetAsync("/v1/audit");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
 
     [Theory]
     [InlineData("Customer", HttpStatusCode.Forbidden)]
@@ -24,7 +36,7 @@ public sealed class AuditAuthTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
 
-        var response = await client.GetAsync("/v1/audit/entries");
+        var response = await client.GetAsync("/v1/audit");
 
         response.StatusCode.Should().Be(expected);
     }
@@ -34,12 +46,12 @@ public sealed class AuditAuthTests(FunctionalTestFixture fixture)
     {
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.GetAsync("/v1/audit/entries");
+        var response = await client.GetAsync("/v1/audit");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    // GET /audit/entries/{id} — Admin only
+    // GET /audit/{id} — Admin only
 
     [Theory]
     [InlineData("Customer", HttpStatusCode.Forbidden)]
@@ -50,7 +62,7 @@ public sealed class AuditAuthTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
 
-        var response = await client.GetAsync($"/v1/audit/entries/{Guid.NewGuid()}");
+        var response = await client.GetAsync($"/v1/audit/{Guid.NewGuid()}");
 
         response.StatusCode.Should().Be(expected);
     }
@@ -60,7 +72,7 @@ public sealed class AuditAuthTests(FunctionalTestFixture fixture)
     {
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.GetAsync($"/v1/audit/entries/{Guid.NewGuid()}");
+        var response = await client.GetAsync($"/v1/audit/{Guid.NewGuid()}");
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

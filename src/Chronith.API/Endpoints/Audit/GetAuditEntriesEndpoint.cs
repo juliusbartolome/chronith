@@ -37,7 +37,7 @@ public sealed class GetAuditEntriesEndpoint(ISender sender)
 {
     public override void Configure()
     {
-        Get("/audit/entries");
+        Get("/audit");
         Roles("TenantAdmin");
         Options(x => x.WithTags("Audit"));
     }

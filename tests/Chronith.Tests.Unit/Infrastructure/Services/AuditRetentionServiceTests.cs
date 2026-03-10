@@ -37,7 +37,7 @@ public sealed class AuditRetentionServiceTests
         var options = Options.Create(new AuditRetentionOptions
         {
             RetentionDays = retentionDays,
-            CleanupIntervalHours = cleanupIntervalHours
+            IntervalHours = cleanupIntervalHours
         });
 
         var logger = Substitute.For<ILogger<AuditRetentionService>>();

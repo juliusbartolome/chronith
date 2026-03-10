@@ -60,7 +60,7 @@ public sealed class AuditEndpointsTests(FunctionalTestFixture fixture)
         var (entryId1, _) = await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.GetAsync("/v1/audit/entries");
+        var response = await client.GetAsync("/v1/audit");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.ReadFromApiJsonAsync<PagedResultDto<AuditEntryDto>>();
@@ -77,7 +77,7 @@ public sealed class AuditEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.GetAsync("/v1/audit/entries?entityType=Booking");
+        var response = await client.GetAsync("/v1/audit?entityType=Booking");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.ReadFromApiJsonAsync<PagedResultDto<AuditEntryDto>>();
@@ -91,7 +91,7 @@ public sealed class AuditEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.GetAsync("/v1/audit/entries?action=Update");
+        var response = await client.GetAsync("/v1/audit?action=Update");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.ReadFromApiJsonAsync<PagedResultDto<AuditEntryDto>>();
@@ -105,7 +105,7 @@ public sealed class AuditEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.GetAsync("/v1/audit/entries?page=1&pageSize=1");
+        var response = await client.GetAsync("/v1/audit?page=1&pageSize=1");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.ReadFromApiJsonAsync<PagedResultDto<AuditEntryDto>>();
@@ -120,7 +120,7 @@ public sealed class AuditEndpointsTests(FunctionalTestFixture fixture)
         var (entryId1, _) = await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.GetAsync($"/v1/audit/entries/{entryId1}");
+        var response = await client.GetAsync($"/v1/audit/{entryId1}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var entry = await response.ReadFromApiJsonAsync<AuditEntryDto>();
@@ -136,7 +136,7 @@ public sealed class AuditEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.GetAsync($"/v1/audit/entries/{Guid.NewGuid()}");
+        var response = await client.GetAsync($"/v1/audit/{Guid.NewGuid()}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

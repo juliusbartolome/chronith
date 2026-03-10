@@ -25,7 +25,7 @@ public sealed class AuditRetentionService(
                 logger.LogError(ex, "Error during audit log retention cleanup");
             }
 
-            await Task.Delay(TimeSpan.FromHours(options.Value.CleanupIntervalHours), stoppingToken);
+            await Task.Delay(TimeSpan.FromHours(options.Value.IntervalHours), stoppingToken);
         }
     }
 
