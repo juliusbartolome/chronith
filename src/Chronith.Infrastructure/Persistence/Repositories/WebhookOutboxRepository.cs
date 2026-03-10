@@ -95,6 +95,7 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
     {
         // Verify webhook belongs to current tenant (global filter on db.Webhooks enforces this)
         var webhookExists = await db.Webhooks
+            .TagWith("WebhookExists — WebhookOutboxRepository")
             .AsNoTracking()
             .AnyAsync(w => w.Id == webhookId, ct);
 

@@ -196,7 +196,7 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
                     b.HasIndex("TenantId", "IsDeleted");
 
-                    b.HasIndex("TenantId", "CustomerAccountId", "Start")
+                    b.HasIndex("TenantId", "CustomerId", "Start")
                         .IsDescending(false, false, true)
                         .HasDatabaseName("ix_bookings_customer");
 
@@ -543,7 +543,6 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                     b.HasIndex("ExpiresAt");
 
                     b.HasIndex("TenantId", "Key", "EndpointRoute")
-                        .IsUnique()
                         .HasDatabaseName("ix_idempotency_lookup");
 
                     b.ToTable("idempotency_keys", "chronith");

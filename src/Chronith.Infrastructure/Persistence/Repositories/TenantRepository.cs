@@ -32,7 +32,9 @@ public sealed class TenantRepository : ITenantRepository
     }
 
     public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default)
-        => await _db.Tenants.AnyAsync(t => t.Slug == slug, ct);
+        => await _db.Tenants
+            .TagWith("ExistsBySlugAsync — TenantRepository")
+            .AnyAsync(t => t.Slug == slug, ct);
 
     public async Task AddAsync(Tenant tenant, CancellationToken ct = default)
     {

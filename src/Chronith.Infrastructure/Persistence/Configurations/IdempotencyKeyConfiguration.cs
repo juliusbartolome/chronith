@@ -31,7 +31,6 @@ public sealed class IdempotencyKeyConfiguration : IEntityTypeConfiguration<Idemp
             .HasMaxLength(256);
 
         builder.HasIndex(k => new { k.TenantId, k.Key, k.EndpointRoute })
-            .IsUnique()
             .HasDatabaseName("ix_idempotency_lookup");
 
         builder.HasIndex(k => k.ExpiresAt);

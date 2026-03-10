@@ -54,7 +54,7 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
         builder.HasIndex(b => new { b.TenantId, b.BookingTypeId, b.Start, b.Status })
             .HasDatabaseName("ix_bookings_availability");
 
-        builder.HasIndex(b => new { b.TenantId, b.CustomerAccountId, b.Start })
+        builder.HasIndex(b => new { b.TenantId, b.CustomerId, b.Start })
             .IsDescending(false, false, true)
             .HasDatabaseName("ix_bookings_customer");
 

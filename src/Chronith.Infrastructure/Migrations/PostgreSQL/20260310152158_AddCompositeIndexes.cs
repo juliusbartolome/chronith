@@ -15,11 +15,16 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                 schema: "chronith",
                 table: "bookings");
 
-            migrationBuilder.RenameIndex(
+            migrationBuilder.DropIndex(
                 name: "IX_idempotency_keys_TenantId_Key_EndpointRoute",
                 schema: "chronith",
+                table: "idempotency_keys");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_idempotency_lookup",
+                schema: "chronith",
                 table: "idempotency_keys",
-                newName: "ix_idempotency_lookup");
+                columns: new[] { "TenantId", "Key", "EndpointRoute" });
 
             migrationBuilder.RenameIndex(
                 name: "IX_customers_TenantId_Email",
@@ -43,7 +48,7 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                 name: "ix_bookings_customer",
                 schema: "chronith",
                 table: "bookings",
-                columns: new[] { "TenantId", "CustomerAccountId", "Start" },
+                columns: new[] { "TenantId", "CustomerId", "Start" },
                 descending: new[] { false, false, true });
 
             migrationBuilder.CreateIndex(
@@ -87,11 +92,17 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                 schema: "chronith",
                 table: "bookings");
 
-            migrationBuilder.RenameIndex(
+            migrationBuilder.DropIndex(
                 name: "ix_idempotency_lookup",
                 schema: "chronith",
+                table: "idempotency_keys");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_idempotency_keys_TenantId_Key_EndpointRoute",
+                schema: "chronith",
                 table: "idempotency_keys",
-                newName: "IX_idempotency_keys_TenantId_Key_EndpointRoute");
+                columns: new[] { "TenantId", "Key", "EndpointRoute" },
+                unique: true);
 
             migrationBuilder.RenameIndex(
                 name: "ix_customers_email",

@@ -83,6 +83,7 @@ public sealed class AuditEntryRepository : IAuditEntryRepository
     public async Task<IReadOnlyList<Guid>> GetDistinctTenantIdsAsync(CancellationToken ct)
     {
         return await _db.AuditEntries
+            .TagWith("GetDistinctTenantIdsAsync — AuditEntryRepository")
             .AsNoTracking()
             .Select(a => a.TenantId)
             .Distinct()
