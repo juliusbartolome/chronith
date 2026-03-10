@@ -17,6 +17,7 @@ public sealed class TimeBlockRepository : ITimeBlockRepository
         CancellationToken ct = default)
     {
         var query = _db.TimeBlocks
+            .TagWith("ListInRangeAsync — TimeBlockRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(t => t.TenantId == tenantId && !t.IsDeleted && t.Start < to && t.End > from);

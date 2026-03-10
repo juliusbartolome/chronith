@@ -16,6 +16,7 @@ public sealed class WaitlistRepository : IWaitlistRepository
         Guid tenantId, Guid id, CancellationToken ct = default)
     {
         var entity = await _db.WaitlistEntries
+            .TagWith("GetByIdAsync — WaitlistRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(w => w.TenantId == tenantId && w.Id == id, ct);
 
@@ -28,6 +29,7 @@ public sealed class WaitlistRepository : IWaitlistRepository
         CancellationToken ct = default)
     {
         var entities = await _db.WaitlistEntries
+            .TagWith("ListBySlotAsync — WaitlistRepository")
             .AsNoTracking()
             .Where(w => w.TenantId == tenantId
                         && w.BookingTypeId == bookingTypeId
@@ -45,6 +47,7 @@ public sealed class WaitlistRepository : IWaitlistRepository
         CancellationToken ct = default)
     {
         var entity = await _db.WaitlistEntries
+            .TagWith("GetNextWaitingAsync — WaitlistRepository")
             .AsNoTracking()
             .Where(w => w.TenantId == tenantId
                         && w.BookingTypeId == bookingTypeId
@@ -61,6 +64,7 @@ public sealed class WaitlistRepository : IWaitlistRepository
         DateTimeOffset now, CancellationToken ct = default)
     {
         var entities = await _db.WaitlistEntries
+            .TagWith("GetExpiredOffersAsync — WaitlistRepository")
             .AsNoTracking()
             .Where(w => w.Status == WaitlistStatus.Offered && w.ExpiresAt <= now)
             .ToListAsync(ct);

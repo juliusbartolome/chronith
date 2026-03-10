@@ -20,6 +20,7 @@ public sealed class AuditEntryRepository : IAuditEntryRepository
     public async Task<AuditEntry?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct)
     {
         var entity = await _db.AuditEntries
+            .TagWith("GetByIdAsync — AuditEntryRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.TenantId == tenantId && a.Id == id, ct);
 
@@ -39,6 +40,7 @@ public sealed class AuditEntryRepository : IAuditEntryRepository
         CancellationToken ct)
     {
         var query = _db.AuditEntries
+            .TagWith("QueryAsync — AuditEntryRepository")
             .AsNoTracking()
             .Where(a => a.TenantId == tenantId);
 
@@ -81,6 +83,7 @@ public sealed class AuditEntryRepository : IAuditEntryRepository
     public async Task<IReadOnlyList<Guid>> GetDistinctTenantIdsAsync(CancellationToken ct)
     {
         return await _db.AuditEntries
+            .TagWith("GetDistinctTenantIdsAsync — AuditEntryRepository")
             .AsNoTracking()
             .Select(a => a.TenantId)
             .Distinct()

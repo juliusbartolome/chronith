@@ -14,6 +14,7 @@ public sealed class NotificationConfigRepository(
         Guid tenantId, string channelType, CancellationToken ct = default)
     {
         var entity = await db.TenantNotificationConfigs
+            .TagWith("GetByChannelTypeAsync — NotificationConfigRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.TenantId == tenantId && c.ChannelType == channelType, ct);
 
@@ -28,6 +29,7 @@ public sealed class NotificationConfigRepository(
         Guid tenantId, CancellationToken ct = default)
     {
         var entities = await db.TenantNotificationConfigs
+            .TagWith("ListByTenantAsync — NotificationConfigRepository")
             .AsNoTracking()
             .Where(c => c.TenantId == tenantId)
             .OrderBy(c => c.ChannelType)
@@ -43,6 +45,7 @@ public sealed class NotificationConfigRepository(
         Guid tenantId, CancellationToken ct = default)
     {
         var entities = await db.TenantNotificationConfigs
+            .TagWith("ListEnabledByTenantAsync — NotificationConfigRepository")
             .AsNoTracking()
             .Where(c => c.TenantId == tenantId && c.IsEnabled)
             .ToListAsync(ct);

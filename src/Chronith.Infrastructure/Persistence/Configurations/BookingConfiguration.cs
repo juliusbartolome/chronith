@@ -50,6 +50,20 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
         builder.HasIndex(b => new { b.TenantId, b.IsDeleted });
         builder.HasIndex(b => b.CustomerId);
 
+        // Composite indexes for query optimization
+        builder.HasIndex(b => new { b.TenantId, b.BookingTypeId, b.Start, b.Status })
+            .HasDatabaseName("ix_bookings_availability");
+
+        builder.HasIndex(b => new { b.TenantId, b.CustomerId, b.Start })
+            .IsDescending(false, false, true)
+            .HasDatabaseName("ix_bookings_customer");
+
+        builder.HasIndex(b => new { b.TenantId, b.StaffMemberId, b.Start })
+            .HasDatabaseName("ix_bookings_staff");
+
+        builder.HasIndex(b => new { b.RecurrenceRuleId, b.Start })
+            .HasDatabaseName("ix_bookings_recurrence");
+
         builder.HasMany(b => b.StatusChanges)
             .WithOne(sc => sc.Booking)
             .HasForeignKey(sc => sc.BookingId)

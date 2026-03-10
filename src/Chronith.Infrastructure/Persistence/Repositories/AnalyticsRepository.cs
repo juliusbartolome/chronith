@@ -17,6 +17,7 @@ public sealed class AnalyticsRepository(ChronithDbContext db) : IAnalyticsReposi
         Guid tenantId, DateTimeOffset from, DateTimeOffset to, string groupBy, CancellationToken ct)
     {
         var bookings = db.Bookings
+            .TagWith("GetBookingAnalyticsAsync — AnalyticsRepository")
             .AsNoTracking()
             .Where(b => b.TenantId == tenantId && b.Start >= from && b.Start < to);
 
@@ -60,6 +61,7 @@ public sealed class AnalyticsRepository(ChronithDbContext db) : IAnalyticsReposi
     {
         // Only confirmed bookings count as revenue
         var bookings = db.Bookings
+            .TagWith("GetRevenueAnalyticsAsync — AnalyticsRepository")
             .AsNoTracking()
             .Where(b => b.TenantId == tenantId
                 && b.Start >= from && b.Start < to
@@ -89,12 +91,15 @@ public sealed class AnalyticsRepository(ChronithDbContext db) : IAnalyticsReposi
 
         // Load booking types with availability windows for slot calculation
         var bookingTypes = await db.BookingTypes
+            .TagWith("GetUtilizationAnalyticsAsync.bookingTypes — AnalyticsRepository")
             .AsNoTracking()
             .Include(bt => bt.AvailabilityWindows)
+            .AsSplitQuery()
             .Where(bt => bt.TenantId == tenantId && !bt.IsDeleted)
             .ToListAsync(ct);
 
         var bookings = await db.Bookings
+            .TagWith("GetUtilizationAnalyticsAsync.bookings — AnalyticsRepository")
             .AsNoTracking()
             .Where(b => b.TenantId == tenantId
                 && b.Start >= from && b.Start < to
@@ -113,8 +118,10 @@ public sealed class AnalyticsRepository(ChronithDbContext db) : IAnalyticsReposi
 
         // By staff
         var staffMembers = await db.StaffMembers
+            .TagWith("GetUtilizationAnalyticsAsync.staffMembers — AnalyticsRepository")
             .AsNoTracking()
             .Include(s => s.AvailabilityWindows)
+            .AsSplitQuery()
             .Where(s => s.TenantId == tenantId && !s.IsDeleted && s.IsActive)
             .ToListAsync(ct);
 

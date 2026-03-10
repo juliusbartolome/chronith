@@ -9,14 +9,18 @@ public sealed class RecurrenceRuleRepository(ChronithDbContext db) : IRecurrence
 {
     public async Task<RecurrenceRule?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        var entity = await db.RecurrenceRules.AsNoTracking()
+        var entity = await db.RecurrenceRules
+            .TagWith("GetByIdAsync — RecurrenceRuleRepository")
+            .AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == id, ct);
         return entity?.ToDomain();
     }
 
     public async Task<IReadOnlyList<RecurrenceRule>> GetByBookingTypeIdAsync(Guid bookingTypeId, CancellationToken ct = default)
     {
-        var entities = await db.RecurrenceRules.AsNoTracking()
+        var entities = await db.RecurrenceRules
+            .TagWith("GetByBookingTypeIdAsync — RecurrenceRuleRepository")
+            .AsNoTracking()
             .Where(r => r.BookingTypeId == bookingTypeId)
             .ToListAsync(ct);
         return entities.Select(e => e.ToDomain()).ToList().AsReadOnly();
@@ -24,7 +28,9 @@ public sealed class RecurrenceRuleRepository(ChronithDbContext db) : IRecurrence
 
     public async Task<IReadOnlyList<RecurrenceRule>> GetAllAsync(CancellationToken ct = default)
     {
-        var entities = await db.RecurrenceRules.AsNoTracking()
+        var entities = await db.RecurrenceRules
+            .TagWith("GetAllAsync — RecurrenceRuleRepository")
+            .AsNoTracking()
             .ToListAsync(ct);
         return entities.Select(e => e.ToDomain()).ToList().AsReadOnly();
     }
@@ -38,6 +44,7 @@ public sealed class RecurrenceRuleRepository(ChronithDbContext db) : IRecurrence
     public async Task<IReadOnlyList<RecurrenceRule>> GetAllActiveAcrossTenantsAsync(CancellationToken ct = default)
     {
         var entities = await db.RecurrenceRules
+            .TagWith("GetAllActiveAcrossTenantsAsync — RecurrenceRuleRepository")
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(r => !r.IsDeleted)
