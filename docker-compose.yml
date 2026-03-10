@@ -50,6 +50,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     environment:
       Database__Provider: PostgreSQL
       Database__ConnectionString: "Host=postgres;Port=5432;Database=chronith;Username=chronith;Password=chronith"

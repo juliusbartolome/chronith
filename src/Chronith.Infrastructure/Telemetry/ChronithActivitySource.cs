@@ -4,7 +4,7 @@ namespace Chronith.Infrastructure.Telemetry;
 
 public static class ChronithActivitySource
 {
-    public const string Name = "Chronith.API";
+    public const string Name = "Chronith.Tracing";
     public static readonly ActivitySource Instance = new(Name, "0.8.0");
 
     public static Activity? StartBookingStateTransition(string operation, Guid tenantId, Guid bookingId)
