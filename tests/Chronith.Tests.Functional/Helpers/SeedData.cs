@@ -331,4 +331,40 @@ public static class SeedData
         await db.SaveChangesAsync();
         return id;
     }
+
+    public static async Task<Guid> SeedNotificationTemplateAsync(
+        ChronithDbContext db,
+        string eventType = "booking.confirmed",
+        string channelType = "email",
+        string body = "Hello {{CustomerName}}, your booking is confirmed.",
+        string? subject = "Booking Confirmed",
+        bool isActive = true,
+        Guid? tenantId = null)
+    {
+        var tid = tenantId ?? TestConstants.TenantId;
+
+        // Idempotent — skip if (tenantId, eventType, channelType) already seeded
+        var existing = db.NotificationTemplates.IgnoreQueryFilters()
+            .FirstOrDefault(t => t.TenantId == tid
+                              && t.EventType == eventType
+                              && t.ChannelType == channelType);
+        if (existing is not null) return existing.Id;
+
+        var id = Guid.NewGuid();
+        db.NotificationTemplates.Add(new Chronith.Infrastructure.Persistence.Entities.NotificationTemplateEntity
+        {
+            Id = id,
+            TenantId = tid,
+            EventType = eventType,
+            ChannelType = channelType,
+            Subject = subject,
+            Body = body,
+            IsActive = isActive,
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
 }
