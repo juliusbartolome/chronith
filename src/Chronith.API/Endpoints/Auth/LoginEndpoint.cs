@@ -18,7 +18,7 @@ public sealed class LoginEndpoint(ISender sender) : Endpoint<LoginRequest, AuthT
     {
         Post("/auth/login");
         AllowAnonymous();
-        Options(x => x.WithTags("Auth"));
+        Options(x => x.WithTags("Auth").RequireRateLimiting("Auth"));
     }
 
     public override async Task HandleAsync(LoginRequest req, CancellationToken ct)

@@ -2,7 +2,6 @@ using Chronith.API.HealthChecks;
 using Chronith.API.Middleware;
 using Chronith.API.Processors;
 using Chronith.Application;
-using Chronith.Application.Interfaces;
 using Chronith.Application.Options;
 using Chronith.Infrastructure;
 using Chronith.Infrastructure.Auth;
@@ -14,13 +13,11 @@ using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using NSwag;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
-using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 
@@ -132,36 +129,70 @@ builder.Services.AddAuthentication()
 
 builder.Services.AddRateLimiter(options =>
 {
-    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
-    {
-        var tenantId = ctx.User?.FindFirst("tenant_id")?.Value ?? "anonymous";
-        var store = ctx.RequestServices.GetRequiredService<IRateLimitStore>();
-        var rateLimitOpts = ctx.RequestServices.GetRequiredService<IOptions<RateLimitingOptions>>().Value;
-        var permitLimit = store.GetPermitLimit(tenantId);
+    var rl = builder.Configuration.GetSection(RateLimitingOptions.SectionName).Get<RateLimitingOptions>() ?? new();
 
+    options.AddPolicy("Authenticated", context =>
+    {
+        var tenantId = context.User.FindFirst("tenant_id")?.Value ?? "anonymous";
+        var limit = rl.TenantOverrides.TryGetValue(tenantId, out var o) && o.PermitLimit.HasValue
+            ? o.PermitLimit.Value
+            : rl.Authenticated.PermitLimit;
+        var window = rl.TenantOverrides.TryGetValue(tenantId, out var ow) && ow.WindowSeconds.HasValue
+            ? ow.WindowSeconds.Value
+            : rl.Authenticated.WindowSeconds;
         return RateLimitPartition.GetSlidingWindowLimiter(tenantId, _ => new SlidingWindowRateLimiterOptions
         {
-            Window = TimeSpan.FromSeconds(rateLimitOpts.DefaultWindowSeconds),
-            PermitLimit = permitLimit,
-            QueueLimit = rateLimitOpts.QueueLimit,
+            PermitLimit = limit,
+            Window = TimeSpan.FromSeconds(window),
+            QueueLimit = rl.QueueLimit,
             SegmentsPerWindow = 6,
         });
     });
 
+    options.AddPolicy("Public", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = rl.Public.PermitLimit,
+                Window = TimeSpan.FromSeconds(rl.Public.WindowSeconds),
+                QueueLimit = rl.QueueLimit,
+                SegmentsPerWindow = 6,
+            }));
+
+    options.AddPolicy("Auth", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = rl.Auth.PermitLimit,
+                Window = TimeSpan.FromSeconds(rl.Auth.WindowSeconds),
+                QueueLimit = rl.QueueLimit,
+                SegmentsPerWindow = 6,
+            }));
+
+    options.AddPolicy("Export", context =>
+    {
+        var tenantId = context.User.FindFirst("tenant_id")?.Value ?? "anonymous";
+        var limit = rl.TenantOverrides.TryGetValue(tenantId, out var o) && o.PermitLimit.HasValue
+            ? o.PermitLimit.Value
+            : rl.Export.PermitLimit;
+        var window = rl.TenantOverrides.TryGetValue(tenantId, out var ow) && ow.WindowSeconds.HasValue
+            ? ow.WindowSeconds.Value
+            : rl.Export.WindowSeconds;
+        return RateLimitPartition.GetSlidingWindowLimiter(tenantId, _ => new SlidingWindowRateLimiterOptions
+        {
+            PermitLimit = limit,
+            Window = TimeSpan.FromSeconds(window),
+            QueueLimit = rl.QueueLimit,
+            SegmentsPerWindow = 6,
+        });
+    });
+
+    options.RejectionStatusCode = 429;
     options.OnRejected = async (context, ct) =>
     {
         context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-
-        // SlidingWindowRateLimiter does not populate RetryAfter on the rejected lease;
-        // fall back to the configured window duration so the header is always present.
-        var windowSeconds = context.HttpContext.RequestServices
-            .GetRequiredService<IOptions<RateLimitingOptions>>().Value.DefaultWindowSeconds;
-        var retryAfterSeconds = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
-            ? (int)retryAfter.TotalSeconds
-            : windowSeconds;
-        context.HttpContext.Response.Headers.RetryAfter =
-            retryAfterSeconds.ToString(CultureInfo.InvariantCulture);
-
         context.HttpContext.Response.ContentType = "application/problem+json";
         await context.HttpContext.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
         {
@@ -198,28 +229,6 @@ app.UseAuthentication()
 app.UseRateLimiter();
 
 app.UseSwaggerGen(c => c.Path = "/openapi.json");
-
-// Append X-RateLimit-* informational headers on successful responses
-app.Use(async (ctx, next) =>
-{
-    ctx.Response.OnStarting(() =>
-    {
-        if (ctx.Response.StatusCode != StatusCodes.Status429TooManyRequests)
-        {
-            var store = ctx.RequestServices.GetRequiredService<IRateLimitStore>();
-            var opts = ctx.RequestServices.GetRequiredService<IOptions<RateLimitingOptions>>().Value;
-            var tenantId = ctx.User?.FindFirst("tenant_id")?.Value ?? "anonymous";
-            var limit = store.GetPermitLimit(tenantId);
-            var windowEnd = DateTimeOffset.UtcNow.AddSeconds(opts.DefaultWindowSeconds);
-
-            ctx.Response.Headers["X-RateLimit-Limit"] = limit.ToString(CultureInfo.InvariantCulture);
-            ctx.Response.Headers["X-RateLimit-Reset"] =
-                windowEnd.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture);
-        }
-        return Task.CompletedTask;
-    });
-    await next();
-});
 
 app.UseMiddleware<VersionRedirectMiddleware>();
 

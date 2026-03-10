@@ -25,7 +25,7 @@ public sealed class GetStaffAvailabilityEndpoint(ISender sender)
     {
         Get("/staff/{id}/availability");
         Roles("TenantAdmin", "TenantStaff", "Customer");
-        Options(x => x.WithTags("Staff"));
+        Options(x => x.WithTags("Staff").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(GetStaffAvailabilityRequest req, CancellationToken ct)

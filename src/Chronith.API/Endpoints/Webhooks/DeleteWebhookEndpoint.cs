@@ -17,7 +17,7 @@ public sealed class DeleteWebhookEndpoint(ISender sender)
     {
         Delete("/booking-types/{slug}/webhooks/{webhookId}");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Webhooks"));
+        Options(x => x.WithTags("Webhooks").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(DeleteWebhookRequest req, CancellationToken ct)

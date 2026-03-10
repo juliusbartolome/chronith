@@ -33,7 +33,7 @@ public sealed class CreateRecurrenceRuleValidator : AbstractValidator<CreateRecu
 {
     public CreateRecurrenceRuleValidator()
     {
-        RuleFor(x => x.BookingTypeSlug).NotEmpty();
+        RuleFor(x => x.BookingTypeSlug).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Frequency).IsInEnum();
         RuleFor(x => x.Interval).GreaterThanOrEqualTo(1);
         RuleFor(x => x.MaxOccurrences)

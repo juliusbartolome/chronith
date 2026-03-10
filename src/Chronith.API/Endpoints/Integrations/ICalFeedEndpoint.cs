@@ -11,7 +11,7 @@ public sealed class ICalFeedEndpoint(ISender sender)
     {
         Get("/booking-types/{slug}/calendar.ics");
         AllowAnonymous();
-        Options(x => x.WithTags("Integrations"));
+        Options(x => x.WithTags("Integrations").RequireRateLimiting("Public"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

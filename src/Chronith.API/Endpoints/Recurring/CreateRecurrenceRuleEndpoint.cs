@@ -27,7 +27,7 @@ public sealed class CreateRecurrenceRuleEndpoint(ISender sender)
     {
         Post("/booking-types/{slug}/recurring");
         Roles("TenantAdmin", "TenantStaff", "Customer");
-        Options(x => x.WithTags("Recurring"));
+        Options(x => x.WithTags("Recurring").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CreateRecurrenceRuleRequest req, CancellationToken ct)

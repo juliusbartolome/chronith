@@ -39,7 +39,7 @@ public sealed class GetAuditEntriesEndpoint(ISender sender)
     {
         Get("/audit");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Audit"));
+        Options(x => x.WithTags("Audit").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(GetAuditEntriesRequest req, CancellationToken ct)

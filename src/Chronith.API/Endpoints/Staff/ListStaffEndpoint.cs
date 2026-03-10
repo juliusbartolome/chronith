@@ -12,7 +12,7 @@ public sealed class ListStaffEndpoint(ISender sender)
     {
         Get("/staff");
         Roles("TenantAdmin", "TenantStaff");
-        Options(x => x.WithTags("Staff"));
+        Options(x => x.WithTags("Staff").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

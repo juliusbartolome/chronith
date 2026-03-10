@@ -24,7 +24,7 @@ public sealed class GetRevenueAnalyticsEndpoint(ISender sender)
     {
         Get("/analytics/revenue");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Analytics"));
+        Options(x => x.WithTags("Analytics").RequireRateLimiting("Export"));
     }
 
     public override async Task HandleAsync(GetRevenueAnalyticsRequest req, CancellationToken ct)

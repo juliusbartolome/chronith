@@ -12,7 +12,7 @@ public sealed class CustomerBookingsEndpoint(ISender sender)
     {
         Get("/public/{slug}/my-bookings");
         Roles("Customer");
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

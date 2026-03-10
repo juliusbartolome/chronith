@@ -23,7 +23,7 @@ public sealed class GetAvailabilityEndpoint(ISender sender)
     {
         Get("/booking-types/{slug}/availability");
         Roles("TenantAdmin", "TenantStaff", "Customer");
-        Options(x => x.WithTags("Availability"));
+        Options(x => x.WithTags("Availability").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(GetAvailabilityRequest req, CancellationToken ct)

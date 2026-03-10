@@ -23,7 +23,7 @@ public sealed class UpdateStaffEndpoint(ISender sender)
     {
         Put("/staff/{id}");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Staff"));
+        Options(x => x.WithTags("Staff").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(UpdateStaffRequest req, CancellationToken ct)

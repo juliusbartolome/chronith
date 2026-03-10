@@ -27,7 +27,7 @@ public sealed class ListTimeBlocksEndpoint(ISender sender)
     {
         Get("/time-blocks");
         Roles("TenantAdmin", "TenantStaff");
-        Options(x => x.WithTags("TimeBlocks"));
+        Options(x => x.WithTags("TimeBlocks").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(ListTimeBlocksRequest req, CancellationToken ct)

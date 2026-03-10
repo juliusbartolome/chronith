@@ -26,7 +26,7 @@ public sealed class PublicGetAvailabilityEndpoint(ISender sender, ITenantReposit
     {
         Get("/public/{tenantSlug}/booking-types/{slug}/availability");
         AllowAnonymous();
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Public"));
     }
 
     public override async Task HandleAsync(PublicGetAvailabilityRequest req, CancellationToken ct)

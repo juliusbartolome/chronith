@@ -11,7 +11,7 @@ public sealed class PaymentWebhookEndpoint(ISender sender)
     {
         Post("/webhooks/payments/{provider}");
         AllowAnonymous(); // Webhooks come from external providers, no JWT
-        Options(x => x.WithTags("Payments"));
+        Options(x => x.WithTags("Payments").RequireRateLimiting("Public"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

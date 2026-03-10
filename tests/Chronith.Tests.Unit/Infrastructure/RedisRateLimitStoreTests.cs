@@ -8,9 +8,12 @@ namespace Chronith.Tests.Unit.Infrastructure;
 public class RedisRateLimitStoreTests
 {
     [Fact]
-    public void GetPermitLimit_WithNoOverride_ReturnsDefault()
+    public void GetPermitLimit_WithNoOverride_ReturnsAuthenticatedDefault()
     {
-        var opts = new RateLimitingOptions { DefaultPermitLimit = 300 };
+        var opts = new RateLimitingOptions
+        {
+            Authenticated = new PolicyConfig { PermitLimit = 300, WindowSeconds = 60 }
+        };
         var store = new RedisRateLimitStore(Options.Create(opts));
 
         store.GetPermitLimit("any-tenant").Should().Be(300);
@@ -22,10 +25,10 @@ public class RedisRateLimitStoreTests
         const string tenantId = "tenant-abc";
         var opts = new RateLimitingOptions
         {
-            DefaultPermitLimit = 300,
-            TenantOverrides = new Dictionary<string, TenantRateLimitOverride>
+            Authenticated = new PolicyConfig { PermitLimit = 300, WindowSeconds = 60 },
+            TenantOverrides = new Dictionary<string, TenantOverride>
             {
-                [tenantId] = new TenantRateLimitOverride { PermitLimit = 5000 }
+                [tenantId] = new TenantOverride { PermitLimit = 5000 }
             }
         };
         var store = new RedisRateLimitStore(Options.Create(opts));
@@ -34,14 +37,14 @@ public class RedisRateLimitStoreTests
     }
 
     [Fact]
-    public void GetPermitLimit_WithUnknownTenant_ReturnsDefault()
+    public void GetPermitLimit_WithUnknownTenant_ReturnsAuthenticatedDefault()
     {
         var opts = new RateLimitingOptions
         {
-            DefaultPermitLimit = 100,
-            TenantOverrides = new Dictionary<string, TenantRateLimitOverride>
+            Authenticated = new PolicyConfig { PermitLimit = 100, WindowSeconds = 60 },
+            TenantOverrides = new Dictionary<string, TenantOverride>
             {
-                ["other"] = new TenantRateLimitOverride { PermitLimit = 999 }
+                ["other"] = new TenantOverride { PermitLimit = 999 }
             }
         };
         var store = new RedisRateLimitStore(Options.Create(opts));

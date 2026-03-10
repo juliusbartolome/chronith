@@ -18,7 +18,7 @@ public sealed class CreateApiKeyEndpoint(ISender sender)
     {
         Post("/tenant/api-keys");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("ApiKeys"));
+        Options(x => x.WithTags("ApiKeys").RequireRateLimiting("Authenticated"));
         // Intentionally Bearer-only: API keys cannot create other API keys.
     }
 

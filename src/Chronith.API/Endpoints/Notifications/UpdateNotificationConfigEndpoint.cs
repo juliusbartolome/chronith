@@ -18,7 +18,7 @@ public sealed class UpdateNotificationConfigEndpoint(ISender sender)
     {
         Put("/tenant/notifications/{channelType}");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Notifications"));
+        Options(x => x.WithTags("Notifications").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(UpdateNotificationConfigRequest req, CancellationToken ct)

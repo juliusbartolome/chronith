@@ -12,7 +12,7 @@ public sealed class ListNotificationConfigsEndpoint(ISender sender)
     {
         Get("/tenant/notifications");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Notifications"));
+        Options(x => x.WithTags("Notifications").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

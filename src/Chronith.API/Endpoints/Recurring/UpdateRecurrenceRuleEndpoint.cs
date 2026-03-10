@@ -27,7 +27,7 @@ public sealed class UpdateRecurrenceRuleEndpoint(ISender sender)
     {
         Put("/recurring/{id}");
         Roles("TenantAdmin", "TenantStaff");
-        Options(x => x.WithTags("Recurring"));
+        Options(x => x.WithTags("Recurring").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(UpdateRecurrenceRuleRequest req, CancellationToken ct)

@@ -11,7 +11,7 @@ public sealed class CustomerMeEndpoint(ISender sender) : EndpointWithoutRequest<
     {
         Get("/public/{slug}/auth/me");
         Roles("Customer");
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

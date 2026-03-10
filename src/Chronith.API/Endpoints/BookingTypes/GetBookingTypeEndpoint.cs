@@ -17,7 +17,7 @@ public sealed class GetBookingTypeEndpoint(ISender sender)
     {
         Get("/booking-types/{slug}");
         Roles("TenantAdmin", "TenantStaff", "Customer");
-        Options(x => x.WithTags("BookingTypes"));
+        Options(x => x.WithTags("BookingTypes").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(GetBookingTypeRequest req, CancellationToken ct)

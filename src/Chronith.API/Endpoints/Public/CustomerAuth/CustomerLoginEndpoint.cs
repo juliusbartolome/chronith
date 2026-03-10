@@ -19,7 +19,7 @@ public sealed class CustomerLoginEndpoint(ISender sender)
     {
         Post("/public/{slug}/auth/login");
         AllowAnonymous();
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Auth"));
     }
 
     public override async Task HandleAsync(CustomerLoginRequest req, CancellationToken ct)

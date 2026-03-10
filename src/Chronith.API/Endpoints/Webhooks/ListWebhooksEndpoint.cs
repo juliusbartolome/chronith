@@ -17,7 +17,7 @@ public sealed class ListWebhooksEndpoint(ISender sender)
     {
         Get("/booking-types/{slug}/webhooks");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Webhooks"));
+        Options(x => x.WithTags("Webhooks").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(ListWebhooksRequest req, CancellationToken ct)

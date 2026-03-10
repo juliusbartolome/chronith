@@ -27,9 +27,9 @@ public sealed class PublicJoinWaitlistValidator : AbstractValidator<PublicJoinWa
     public PublicJoinWaitlistValidator()
     {
         RuleFor(x => x.TenantId).NotEmpty();
-        RuleFor(x => x.BookingTypeSlug).NotEmpty();
-        RuleFor(x => x.CustomerId).NotEmpty();
-        RuleFor(x => x.CustomerEmail).NotEmpty().EmailAddress();
+        RuleFor(x => x.BookingTypeSlug).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.CustomerId).NotEmpty().MaximumLength(320);
+        RuleFor(x => x.CustomerEmail).NotEmpty().EmailAddress().MaximumLength(320);
         RuleFor(x => x.DesiredEnd).GreaterThan(x => x.DesiredStart);
     }
 }

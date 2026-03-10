@@ -28,7 +28,7 @@ public sealed class JoinWaitlistValidator : AbstractValidator<JoinWaitlistComman
 {
     public JoinWaitlistValidator()
     {
-        RuleFor(x => x.BookingTypeSlug).NotEmpty();
+        RuleFor(x => x.BookingTypeSlug).NotEmpty().MaximumLength(100);
         RuleFor(x => x.DesiredEnd).GreaterThan(x => x.DesiredStart);
     }
 }

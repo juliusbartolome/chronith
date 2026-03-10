@@ -22,7 +22,7 @@ public sealed class CreateWebhookEndpoint(ISender sender)
     {
         Post("/booking-types/{slug}/webhooks");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Webhooks"));
+        Options(x => x.WithTags("Webhooks").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CreateWebhookRequest req, CancellationToken ct)

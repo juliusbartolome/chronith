@@ -14,7 +14,7 @@ public sealed class PublicListStaffEndpoint(ISender sender, ITenantRepository te
     {
         Get("/public/{tenantSlug}/staff");
         AllowAnonymous();
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Public"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)
