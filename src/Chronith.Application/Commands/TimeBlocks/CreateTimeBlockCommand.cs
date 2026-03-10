@@ -30,6 +30,8 @@ public sealed class CreateTimeBlockValidator : AbstractValidator<CreateTimeBlock
     public CreateTimeBlockValidator()
     {
         RuleFor(x => x.End).GreaterThan(x => x.Start);
+        When(x => x.Reason is not null, () =>
+            RuleFor(x => x.Reason!).MaximumLength(1000));
     }
 }
 

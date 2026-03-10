@@ -32,7 +32,7 @@ public sealed class UpdateNotificationConfigValidator : AbstractValidator<Update
             .NotEmpty()
             .Must(ct => ValidChannelTypes.Contains(ct))
             .WithMessage("ChannelType must be one of: email, sms, push");
-        RuleFor(x => x.Settings).NotEmpty();
+        RuleFor(x => x.Settings).NotEmpty().MaximumLength(5000);
     }
 }
 

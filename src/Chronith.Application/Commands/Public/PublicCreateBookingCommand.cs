@@ -27,10 +27,10 @@ public sealed class PublicCreateBookingValidator : AbstractValidator<PublicCreat
     public PublicCreateBookingValidator()
     {
         RuleFor(x => x.TenantId).NotEmpty();
-        RuleFor(x => x.BookingTypeSlug).NotEmpty();
+        RuleFor(x => x.BookingTypeSlug).NotEmpty().MaximumLength(100);
         RuleFor(x => x.StartTime).NotEmpty();
-        RuleFor(x => x.CustomerEmail).NotEmpty().EmailAddress();
-        RuleFor(x => x.CustomerId).NotEmpty();
+        RuleFor(x => x.CustomerEmail).NotEmpty().EmailAddress().MaximumLength(320);
+        RuleFor(x => x.CustomerId).NotEmpty().MaximumLength(320);
     }
 }
 
