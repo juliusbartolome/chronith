@@ -10,7 +10,7 @@ namespace Chronith.Application.Commands.Recurring.UpdateRecurrenceRule;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record UpdateRecurrenceRuleCommand : IRequest<RecurrenceRuleDto>
+public sealed record UpdateRecurrenceRuleCommand : IRequest<RecurrenceRuleDto>, IAuditable
 {
     public required Guid Id { get; init; }
     public required RecurrenceFrequency Frequency { get; init; }
@@ -19,6 +19,10 @@ public sealed record UpdateRecurrenceRuleCommand : IRequest<RecurrenceRuleDto>
     public required DateOnly SeriesStart { get; init; }
     public DateOnly? SeriesEnd { get; init; }
     public int? MaxOccurrences { get; init; }
+
+    public Guid EntityId => Id;
+    public string EntityType => "RecurrenceRule";
+    public string Action => "Update";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

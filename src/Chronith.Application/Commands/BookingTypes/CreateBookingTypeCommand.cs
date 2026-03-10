@@ -10,7 +10,7 @@ namespace Chronith.Application.Commands.BookingTypes;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record CreateBookingTypeCommand : IRequest<BookingTypeDto>
+public sealed record CreateBookingTypeCommand : IRequest<BookingTypeDto>, IAuditable
 {
     public required string Slug { get; init; }
     public required string Name { get; init; }
@@ -30,6 +30,11 @@ public sealed record CreateBookingTypeCommand : IRequest<BookingTypeDto>
 
     // Calendar fields
     public IReadOnlyList<DayOfWeek>? AvailableDays { get; init; }
+
+    // IAuditable
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "BookingType";
+    public string Action => "Create";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

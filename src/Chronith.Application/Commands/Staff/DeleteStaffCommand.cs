@@ -7,9 +7,13 @@ namespace Chronith.Application.Commands.Staff;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record DeleteStaffCommand : IRequest
+public sealed record DeleteStaffCommand : IRequest, IAuditable
 {
     public required Guid StaffId { get; init; }
+
+    public Guid EntityId => StaffId;
+    public string EntityType => "StaffMember";
+    public string Action => "Delete";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

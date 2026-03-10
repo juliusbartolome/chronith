@@ -11,12 +11,17 @@ namespace Chronith.Application.Commands.Bookings;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record CreateBookingCommand : IRequest<BookingDto>
+public sealed record CreateBookingCommand : IRequest<BookingDto>, IAuditable
 {
     public required string BookingTypeSlug { get; init; }
     public required DateTimeOffset StartTime { get; init; }
     public required string CustomerEmail { get; init; }
     public string? CustomerId { get; init; }
+
+    // IAuditable — EntityId is Guid.Empty pre-creation; AuditBehavior captures newValues post-handler
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "Booking";
+    public string Action => "Create";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

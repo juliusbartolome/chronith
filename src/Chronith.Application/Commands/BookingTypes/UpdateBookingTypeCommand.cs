@@ -10,7 +10,7 @@ namespace Chronith.Application.Commands.BookingTypes;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record UpdateBookingTypeCommand : IRequest<BookingTypeDto>
+public sealed record UpdateBookingTypeCommand : IRequest<BookingTypeDto>, IAuditable
 {
     public required string Slug { get; init; }
     public required string Name { get; init; }
@@ -32,6 +32,11 @@ public sealed record UpdateBookingTypeCommand : IRequest<BookingTypeDto>
 
     /// <summary>Nullable HTTPS URL. Null removes the existing callback.</summary>
     public string? CustomerCallbackUrl { get; init; }
+
+    // IAuditable — EntityId resolved by slug; Guid.Empty since only slug is known pre-execution
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "BookingType";
+    public string Action => "Update";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

@@ -10,12 +10,16 @@ namespace Chronith.Application.Commands.Staff;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record UpdateStaffCommand : IRequest<StaffMemberDto>
+public sealed record UpdateStaffCommand : IRequest<StaffMemberDto>, IAuditable
 {
     public required Guid StaffId { get; init; }
     public required string Name { get; init; }
     public required string Email { get; init; }
     public IReadOnlyList<StaffAvailabilityWindowInput> AvailabilityWindows { get; init; } = [];
+
+    public Guid EntityId => StaffId;
+    public string EntityType => "StaffMember";
+    public string Action => "Update";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
