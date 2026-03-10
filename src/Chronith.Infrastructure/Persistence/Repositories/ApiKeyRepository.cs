@@ -70,6 +70,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
         IsRevoked = d.IsRevoked,
         CreatedAt = d.CreatedAt,
         LastUsedAt = d.LastUsedAt,
+        ExpiresAt = d.ExpiresAt,
     };
 
     private static TenantApiKey MapToDomain(TenantApiKeyEntity e)
@@ -82,6 +83,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
             Description = e.Description,
             Role = e.Role,
             CreatedAt = e.CreatedAt,
+            ExpiresAt = e.ExpiresAt,
         };
 
         if (e.IsRevoked)

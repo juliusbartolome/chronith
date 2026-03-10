@@ -32,6 +32,10 @@ public sealed class ApiKeyAuthenticationHandler(
         if (key is null)
             return AuthenticateResult.Fail("Invalid or revoked API key");
 
+        // Reject if the key has expired
+        if (key.IsExpired(DateTimeOffset.UtcNow))
+            return AuthenticateResult.Fail("API key has expired");
+
         // Fire-and-forget last-used update — uses a fresh DI scope so that the
         // scoped IApiKeyRepository is not captured after the request scope disposes.
         _ = UpdateLastUsedAtSafeAsync(scopeFactory, key.Id, Logger);

@@ -10,6 +10,11 @@ public sealed class TenantApiKey
     public bool IsRevoked { get; private set; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? LastUsedAt { get; private set; }
+    public DateTimeOffset? ExpiresAt { get; init; }
+
+    /// <summary>Returns true when this key has a set expiry date in the past.</summary>
+    public bool IsExpired(DateTimeOffset now) =>
+        ExpiresAt.HasValue && ExpiresAt.Value < now;
 
     public void Revoke() => IsRevoked = true;
 
