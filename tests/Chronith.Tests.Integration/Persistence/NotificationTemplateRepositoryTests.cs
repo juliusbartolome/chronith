@@ -101,7 +101,7 @@ public class NotificationTemplateRepositoryTests(PostgresFixture postgres)
         await repo.AddRangeAsync([template]);
         await db.SaveChangesAsync();
 
-        template.UpdateBody("Updated body.", "Updated Subject");
+        template.UpdateContent("Updated Subject", "Updated body.");
         template.Deactivate();
         await repo.UpdateAsync(template);
         await db.SaveChangesAsync();
