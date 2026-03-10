@@ -30,13 +30,12 @@ var observabilityOptions = builder.Configuration
     .GetSection(ObservabilityOptions.SectionName)
     .Get<ObservabilityOptions>() ?? new ObservabilityOptions();
 
-builder.Services.Configure<CorsOptions>(builder.Configuration.GetSection("Security:Cors"));
-builder.Services.Configure<CspOptions>(builder.Configuration.GetSection("Security:Csp"));
+builder.Services.Configure<CspOptions>(builder.Configuration.GetSection(CspOptions.SectionName));
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var corsConfig = builder.Configuration.GetSection("Security:Cors").Get<CorsOptions>() ?? new();
+        var corsConfig = builder.Configuration.GetSection(CorsOptions.SectionName).Get<CorsOptions>() ?? new();
         if (corsConfig.AllowedOrigins.Length > 0)
         {
             policy.WithOrigins(corsConfig.AllowedOrigins);

@@ -2,6 +2,8 @@ namespace Chronith.Application.Options;
 
 public sealed class CspOptions
 {
+    public const string SectionName = "Security:Csp";
+
     public string DefaultSrc { get; set; } = "'self'";
     public string ScriptSrc { get; set; } = "'self'";
     public string StyleSrc { get; set; } = "'self' 'unsafe-inline'";

@@ -51,5 +51,6 @@ public sealed class CorsTests(FunctionalTestFixture fixture)
 
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NoContent, HttpStatusCode.OK);
         response.Headers.Contains("Access-Control-Allow-Origin").Should().BeTrue();
+        response.Headers.Contains("Access-Control-Allow-Headers").Should().BeTrue();
     }
 }

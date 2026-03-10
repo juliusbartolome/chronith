@@ -12,6 +12,7 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next, IOptions<Csp
 
         context.Response.Headers["Content-Security-Policy"] = policy;
         context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        // X-Frame-Options is kept alongside frame-ancestors in CSP for older browser compatibility.
         context.Response.Headers["X-Frame-Options"] = "DENY";
         context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
         context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
