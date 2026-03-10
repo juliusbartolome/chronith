@@ -77,4 +77,13 @@ public sealed class AuditEntryRepository : IAuditEntryRepository
             .Where(a => a.TenantId == tenantId && a.Timestamp < before)
             .ExecuteDeleteAsync(ct);
     }
+
+    public async Task<IReadOnlyList<Guid>> GetDistinctTenantIdsAsync(CancellationToken ct)
+    {
+        return await _db.AuditEntries
+            .AsNoTracking()
+            .Select(a => a.TenantId)
+            .Distinct()
+            .ToListAsync(ct);
+    }
 }
