@@ -85,6 +85,7 @@ public static class DependencyInjection
         services.AddHostedService<RecurringBookingGeneratorService>();
         services.AddHostedService<IdempotencyCleanupService>();
         services.AddHostedService<AuditRetentionService>();
+        services.AddHostedService<ApiKeyAgingService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
         {
@@ -97,6 +98,7 @@ public static class DependencyInjection
         services.Configure<RecurringBookingGeneratorOptions>(configuration.GetSection("RecurringBookings"));
         services.Configure<IdempotencyOptions>(configuration.GetSection("Idempotency"));
         services.Configure<AuditRetentionOptions>(configuration.GetSection("AuditRetention"));
+        services.Configure<ApiKeyAgingOptions>(configuration.GetSection("ApiKeyAging"));
 
         // Notification channels
         services.Configure<SmtpOptions>(configuration.GetSection("Notifications:Smtp"));
@@ -132,6 +134,7 @@ public static class DependencyInjection
         // Telemetry
         services.AddMetrics();
         services.AddSingleton<ChronithMetrics>();
+        services.AddSingleton<IBookingMetrics>(sp => sp.GetRequiredService<ChronithMetrics>());
         services.AddSingleton<IBackgroundServiceHealthTracker, BackgroundServiceHealthTracker>();
         services.AddSingleton<TenantIdEnricher>();
         services.AddSingleton<UserIdEnricher>();

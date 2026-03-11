@@ -1,6 +1,7 @@
 using Chronith.Application.Behaviors;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
@@ -27,7 +28,8 @@ public sealed class GetAvailabilityHandler(
     ITimeBlockRepository timeBlockRepo,
     ISlotGeneratorService slotGenerator,
     IStaffMemberRepository? staffRepo = null,
-    IRedisCacheService? cacheService = null)
+    IRedisCacheService? cacheService = null,
+    IBookingMetrics? metricsService = null)
     : IRequestHandler<GetAvailabilityQuery, AvailabilityDto>
 {
     private static readonly BookingStatus[] ConflictStatuses =
@@ -57,6 +59,9 @@ public sealed class GetAvailabilityHandler(
     private async Task<AvailabilityDto> FetchAvailabilityInternalAsync(
         GetAvailabilityQuery query, CancellationToken ct)
     {
+        using var activity = ChronithActivitySource.StartAvailabilityCompute(tenantContext.TenantId, query.BookingTypeSlug);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
         // 1. Load BookingType (AsNoTracking)
         var bookingType = await bookingTypeRepo.GetBySlugAsync(tenantContext.TenantId, query.BookingTypeSlug, ct)
             ?? throw new NotFoundException("BookingType", query.BookingTypeSlug);
@@ -94,10 +99,12 @@ public sealed class GetAvailabilityHandler(
             filtered = FilterByStaffAvailability(filtered, assignedStaff, tz);
         }
 
+        sw.Stop();
+        metricsService?.RecordAvailabilityDuration(tenantContext.TenantId.ToString(), sw.Elapsed.TotalMilliseconds);
+
         return new AvailabilityDto(
             filtered.Select(s => new AvailableSlotDto(s.Start, s.End)).ToList());
     }
-
     /// <summary>
     /// Filters slots to only those where at least one active staff member has an
     /// availability window covering the entire slot duration.

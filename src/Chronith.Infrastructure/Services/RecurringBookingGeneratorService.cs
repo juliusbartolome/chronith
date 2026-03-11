@@ -1,7 +1,9 @@
 using Chronith.Application.Interfaces;
 using Chronith.Application.Notifications;
+using AppTelemetry = Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
+using Chronith.Infrastructure.Telemetry;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,6 +16,7 @@ public sealed class RecurringBookingGeneratorService(
     IServiceScopeFactory scopeFactory,
     IOptions<RecurringBookingGeneratorOptions> options,
     IBackgroundServiceHealthTracker healthTracker,
+    ChronithMetrics metrics,
     ILogger<RecurringBookingGeneratorService> logger)
     : BackgroundService
 {
@@ -122,6 +125,8 @@ public sealed class RecurringBookingGeneratorService(
             return;
         }
 
+        using var activity = AppTelemetry.ChronithActivitySource.StartRecurringGenerate(rule.TenantId, rule.Id);
+
         // Resolve tenant (for timezone)
         var tenant = await tenantRepo.GetByIdAsync(rule.TenantId, ct);
         if (tenant is null)
@@ -207,6 +212,10 @@ public sealed class RecurringBookingGeneratorService(
 
         await bookingRepo.AddAsync(booking, ct);
         await unitOfWork.SaveChangesAsync(ct);
+
+        metrics.RecordBookingCreated(
+            rule.TenantId.ToString(),
+            bookingType is TimeSlotBookingType ? "TimeSlot" : "Calendar");
 
         logger.LogInformation(
             "Recurrence rule {RuleId}: created booking {BookingId} for occurrence {Occurrence}",

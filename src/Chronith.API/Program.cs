@@ -7,6 +7,7 @@ using Chronith.Application.Options;
 using Chronith.Infrastructure;
 using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Persistence;
+using Chronith.Application.Telemetry;
 using Chronith.Infrastructure.Telemetry;
 using Microsoft.IdentityModel.Tokens;
 using FastEndpoints;
@@ -122,7 +123,7 @@ builder.Services.SwaggerDocument(o =>
     o.DocumentSettings = s =>
     {
         s.Title = "Chronith API";
-        s.Version = "v0.7";
+        s.Version = "v0.8";
         s.Description = "Multi-tenant booking engine REST API";
         s.PostProcess = doc =>
         {

@@ -1,8 +1,10 @@
+using System.Diagnostics.Metrics;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Notifications;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Services;
+using Chronith.Infrastructure.Telemetry;
 using Chronith.Tests.Unit.Helpers;
 using FluentAssertions;
 using MediatR;
@@ -18,6 +20,14 @@ public sealed class RecurringBookingGeneratorServiceTests
     private static readonly Guid TenantId = Guid.NewGuid();
     private static readonly Guid BookingTypeId = Guid.NewGuid();
     private static readonly Guid CustomerId = Guid.NewGuid();
+
+    private static ChronithMetrics CreateMetrics()
+    {
+        var services = new ServiceCollection();
+        services.AddMetrics();
+        var sp = services.BuildServiceProvider();
+        return new ChronithMetrics(sp.GetRequiredService<IMeterFactory>());
+    }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -113,7 +123,7 @@ public sealed class RecurringBookingGeneratorServiceTests
         var logger = Substitute.For<ILogger<RecurringBookingGeneratorService>>();
         var healthTracker = Substitute.For<IBackgroundServiceHealthTracker>();
 
-        var sut = new RecurringBookingGeneratorService(scopeFactory, options, healthTracker, logger);
+        var sut = new RecurringBookingGeneratorService(scopeFactory, options, healthTracker, CreateMetrics(), logger);
 
         return (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, unitOfWork, publisher);
     }

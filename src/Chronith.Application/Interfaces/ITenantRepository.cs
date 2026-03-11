@@ -8,4 +8,5 @@ public interface ITenantRepository
     Task<Tenant?> GetBySlugAsync(string slug, CancellationToken ct = default);
     Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default);
     Task AddAsync(Tenant tenant, CancellationToken ct = default);
+    Task<IReadOnlyList<Tenant>> ListAllAsync(CancellationToken ct = default);
 }
