@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Chronith.Application.Interfaces;
+using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -100,5 +101,51 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public Guid ValidateMagicLinkToken(string token, string tenantSlug)
+    {
+        try
+        {
+            var signingKey = GetPrimarySigningKey();
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            var handler = new JwtSecurityTokenHandler();
+            var principal = handler.ValidateToken(token, validationParameters, out _);
+
+            var purpose = principal.FindFirstValue("purpose");
+            if (purpose != "magic-link-verify")
+                throw new UnauthorizedException("Invalid token purpose.");
+
+            var tokenTenantSlug = principal.FindFirstValue("tenantSlug");
+            if (tokenTenantSlug != tenantSlug)
+                throw new UnauthorizedException("Tenant slug mismatch.");
+
+            var sub = principal.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (sub is null || !Guid.TryParse(sub, out var customerId))
+                throw new UnauthorizedException("Invalid token subject.");
+
+            return customerId;
+        }
+        catch (UnauthorizedException)
+        {
+            throw;
+        }
+        catch
+        {
+            throw new UnauthorizedException("Invalid or expired magic link token.");
+        }
     }
 }

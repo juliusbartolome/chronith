@@ -1,10 +1,14 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Enums;
+using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Auth;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Chronith.Tests.Unit.Infrastructure;
 
@@ -84,5 +88,100 @@ public class JwtTokenServiceTests
         var expectedExpiry = before.AddHours(24);
         decoded.ValidTo.Should().BeCloseTo(expectedExpiry, TimeSpan.FromSeconds(5),
             "token must expire ~24 hours from creation");
+    }
+
+    // --- ValidateMagicLinkToken tests ---
+
+    private static Customer BuildCustomer(Guid? tenantId = null) =>
+        Customer.Create(
+            tenantId: tenantId ?? Guid.NewGuid(),
+            email: "alice@example.com",
+            passwordHash: null,
+            name: "Alice",
+            phone: null,
+            authProvider: "magic-link");
+
+    [Fact]
+    public void ValidateMagicLinkToken_ReturnsCustomerId_ForValidToken()
+    {
+        var sut = CreateSut();
+        var customer = BuildCustomer();
+        var token = sut.CreateMagicLinkToken(customer, "test-tenant");
+
+        var customerId = sut.ValidateMagicLinkToken(token, "test-tenant");
+
+        customerId.Should().Be(customer.Id);
+    }
+
+    [Fact]
+    public void ValidateMagicLinkToken_ThrowsUnauthorized_ForExpiredToken()
+    {
+        // Arrange: build a token that is already expired using raw JWT construction
+        const string signingKey = "super-secret-test-signing-key-at-least-32-chars";
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var customerId = Guid.NewGuid();
+
+        var expiredToken = new JwtSecurityToken(
+            claims:
+            [
+                new Claim(JwtRegisteredClaimNames.Sub, customerId.ToString()),
+                new Claim("tenantSlug", "test-tenant"),
+                new Claim("purpose", "magic-link-verify"),
+            ],
+            expires: DateTime.UtcNow.AddHours(-1), // already expired
+            signingCredentials: creds);
+        var tokenStr = new JwtSecurityTokenHandler().WriteToken(expiredToken);
+
+        var sut = CreateSut();
+
+        // Act
+        var act = () => sut.ValidateMagicLinkToken(tokenStr, "test-tenant");
+
+        // Assert
+        act.Should().Throw<UnauthorizedException>();
+    }
+
+    [Fact]
+    public void ValidateMagicLinkToken_ThrowsUnauthorized_ForWrongPurpose()
+    {
+        // Arrange: build a token with wrong purpose claim
+        const string signingKey = "super-secret-test-signing-key-at-least-32-chars";
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var customerId = Guid.NewGuid();
+
+        var wrongPurposeToken = new JwtSecurityToken(
+            claims:
+            [
+                new Claim(JwtRegisteredClaimNames.Sub, customerId.ToString()),
+                new Claim("tenantSlug", "test-tenant"),
+                new Claim("purpose", "something-else"),
+            ],
+            expires: DateTime.UtcNow.AddHours(24),
+            signingCredentials: creds);
+        var tokenStr = new JwtSecurityTokenHandler().WriteToken(wrongPurposeToken);
+
+        var sut = CreateSut();
+
+        // Act
+        var act = () => sut.ValidateMagicLinkToken(tokenStr, "test-tenant");
+
+        // Assert
+        act.Should().Throw<UnauthorizedException>();
+    }
+
+    [Fact]
+    public void ValidateMagicLinkToken_ThrowsUnauthorized_ForWrongTenantSlug()
+    {
+        var sut = CreateSut();
+        var customer = BuildCustomer();
+        // token issued for "tenant-a"
+        var token = sut.CreateMagicLinkToken(customer, "tenant-a");
+
+        // but we validate against "tenant-b"
+        var act = () => sut.ValidateMagicLinkToken(token, "tenant-b");
+
+        act.Should().Throw<UnauthorizedException>();
     }
 }
