@@ -53,11 +53,8 @@ public sealed class ApiKeyAgingService(
             try
             {
                 var keys = await apiKeyRepo.ListByTenantAsync(tenant.Id, ct);
-                foreach (var key in keys)
+                foreach (var key in keys.Where(k => !k.IsRevoked && !k.IsExpired(now)))
                 {
-                    if (key.IsRevoked || key.IsExpired(now))
-                        continue;
-
                     var age = now - key.CreatedAt;
                     if (age >= threshold)
                     {
