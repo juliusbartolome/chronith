@@ -7,6 +7,7 @@ using Chronith.Application.Options;
 using Chronith.Infrastructure;
 using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Persistence;
+using Chronith.Application.Telemetry;
 using Chronith.Infrastructure.Telemetry;
 using Microsoft.IdentityModel.Tokens;
 using FastEndpoints;

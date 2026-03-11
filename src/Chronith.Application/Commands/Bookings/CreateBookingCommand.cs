@@ -1,6 +1,7 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
+using Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
@@ -57,6 +58,8 @@ public sealed class CreateBookingHandler(
 
     public async Task<BookingDto> Handle(CreateBookingCommand cmd, CancellationToken ct)
     {
+        using var activity = ChronithActivitySource.StartBookingStateTransition("Create", tenantContext.TenantId, Guid.Empty);
+
         var bookingType = await bookingTypeRepo.GetBySlugAsync(tenantContext.TenantId, cmd.BookingTypeSlug, ct)
             ?? throw new NotFoundException("BookingType", cmd.BookingTypeSlug);
 
@@ -98,10 +101,13 @@ public sealed class CreateBookingHandler(
         await bookingRepo.AddAsync(booking, ct);
         await tx.CommitAsync(ct);
 
+        activity?.SetTag("booking.id", booking.Id.ToString());
+
         // For Automatic payment mode with a non-free booking, create a checkout session
         if (bookingType.PaymentMode == PaymentMode.Automatic && bookingType.PriceInCentavos > 0)
         {
             var providerName = bookingType.PaymentProvider ?? "Stub";
+            using var payActivity = ChronithActivitySource.StartPaymentProcess(tenantContext.TenantId, providerName);
             var provider = paymentProviderFactory.GetProvider(providerName);
             var checkoutResult = await provider.CreateCheckoutSessionAsync(
                 new CreateCheckoutRequest(

@@ -1,6 +1,7 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
+using Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using FluentValidation;
@@ -47,6 +48,8 @@ public sealed class CancelBookingHandler(
 {
     public async Task<BookingDto> Handle(CancelBookingCommand cmd, CancellationToken ct)
     {
+        using var activity = ChronithActivitySource.StartBookingStateTransition("Cancel", tenantContext.TenantId, cmd.BookingId);
+
         var booking = await bookingRepo.GetByIdAsync(tenantContext.TenantId, cmd.BookingId, ct)
             ?? throw new NotFoundException("Booking", cmd.BookingId);
 

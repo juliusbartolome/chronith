@@ -1,6 +1,7 @@
 using Chronith.Application.Behaviors;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
@@ -57,6 +58,8 @@ public sealed class GetAvailabilityHandler(
     private async Task<AvailabilityDto> FetchAvailabilityInternalAsync(
         GetAvailabilityQuery query, CancellationToken ct)
     {
+        using var activity = ChronithActivitySource.StartAvailabilityCompute(tenantContext.TenantId, query.BookingTypeSlug);
+
         // 1. Load BookingType (AsNoTracking)
         var bookingType = await bookingTypeRepo.GetBySlugAsync(tenantContext.TenantId, query.BookingTypeSlug, ct)
             ?? throw new NotFoundException("BookingType", query.BookingTypeSlug);

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Chronith.Infrastructure.Telemetry;
+namespace Chronith.Application.Telemetry;
 
 public static class ChronithActivitySource
 {
