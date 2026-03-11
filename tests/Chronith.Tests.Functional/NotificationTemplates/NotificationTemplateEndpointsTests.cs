@@ -165,8 +165,9 @@ public sealed class NotificationTemplateEndpointsTests(FunctionalTestFixture fix
             channelType: "email");
 
         var client = fixture.CreateClient("TenantAdmin");
+        using var emptyBody = new StringContent("{}", System.Text.Encoding.UTF8, "application/json");
         var response = await client.PostAsync(
-            "/v1/tenant/notification-templates/reset/booking.confirmed.reset", null);
+            "/v1/tenant/notification-templates/reset/booking.confirmed.reset", emptyBody);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }

@@ -218,6 +218,11 @@ builder.Services.AddRateLimiter(options =>
     options.OnRejected = async (context, ct) =>
     {
         context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            context.HttpContext.Response.Headers.RetryAfter =
+                ((int)retryAfter.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        else
+            context.HttpContext.Response.Headers.RetryAfter = "60";
         context.HttpContext.Response.ContentType = "application/problem+json";
         await context.HttpContext.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
         {
@@ -226,6 +231,8 @@ builder.Services.AddRateLimiter(options =>
             Detail = "Rate limit exceeded. See the Retry-After header for when you can retry.",
             Type = "https://tools.ietf.org/html/rfc6585#section-4",
         }, ct);
+        // Restore content-type after WriteAsJsonAsync (which sets application/json)
+        context.HttpContext.Response.ContentType = "application/problem+json";
     };
 });
 

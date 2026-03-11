@@ -1,18 +1,69 @@
 using System.Net;
 using System.Net.Http.Json;
+using Chronith.Infrastructure.Persistence;
 using Chronith.Tests.Functional.Fixtures;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Chronith.Tests.Functional.Security;
 
-[Collection("Functional")]
-public sealed class RateLimitTests(FunctionalTestFixture fixture)
+/// <summary>
+/// Rate-limit response shape tests.  Uses a self-contained
+/// WebApplicationFactory with a tight Auth policy (1 req/window)
+/// so it never pollutes the shared FunctionalTestFixture IP bucket.
+/// </summary>
+public sealed class RateLimitTests : IAsyncLifetime
 {
-    // Auth policy: 10 requests per 300 seconds, partitioned by IP.
-    // In WebApplicationFactory all requests share the same virtual IP, so
-    // sending 11 requests exhausts the 10-permit window and the 11th gets 429.
+    private static readonly string? CiConnectionString =
+        Environment.GetEnvironmentVariable("CI_FUNCTIONAL_CONNECTION_STRING");
+
+    private readonly Testcontainers.PostgreSql.PostgreSqlContainer? _postgres =
+        CiConnectionString is null
+            ? new Testcontainers.PostgreSql.PostgreSqlBuilder("postgres:17-alpine")
+                .WithDatabase("chronith_ratelimitshape")
+                .WithUsername("test")
+                .WithPassword("test")
+                .Build()
+            : null;
+
+    private WebApplicationFactory<Program> _tightAuthFactory = null!;
+
+    public async Task InitializeAsync()
+    {
+        if (_postgres is not null)
+            await _postgres.StartAsync();
+
+        var connStr = CiConnectionString ?? _postgres!.GetConnectionString();
+
+        _tightAuthFactory = new WebApplicationFactory<Program>() // lgtm[cs/local-not-disposed] // codeql[cs/local-not-disposed]
+            .WithWebHostBuilder(b =>
+            {
+                b.UseEnvironment("Development");
+                b.UseSetting("Database:Provider", "PostgreSQL");
+                b.UseSetting("Database:ConnectionString", connStr);
+                b.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
+                b.UseSetting("Security:EncryptionKey", TestConstants.EncryptionKey);
+                // Auth policy: 1 request per 300-second window
+                b.UseSetting("RateLimiting:Auth:PermitLimit", "1");
+                b.UseSetting("RateLimiting:Auth:WindowSeconds", "300");
+            });
+
+        using var scope = _tightAuthFactory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ChronithDbContext>();
+        await db.Database.MigrateAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _tightAuthFactory.DisposeAsync();
+        if (_postgres is not null)
+            await _postgres.DisposeAsync();
+    }
+
     private const string AuthLoginPath = "/v1/auth/login";
-    private const int AuthPolicyPermitLimit = 10; // matches RateLimitingOptions.Auth default
 
     private static readonly object InvalidLoginPayload = new
     {
@@ -24,50 +75,38 @@ public sealed class RateLimitTests(FunctionalTestFixture fixture)
     [Fact]
     public async Task AuthEndpoint_WhenRateLimitExceeded_Returns429()
     {
-        var client = fixture.CreateAnonymousClient();
+        var client = _tightAuthFactory.CreateClient();
 
-        HttpResponseMessage? lastResponse = null;
+        // First request — within limit (returns 400/404)
+        await client.PostAsJsonAsync(AuthLoginPath, InvalidLoginPayload);
 
-        // Send permit-limit + 1 requests.
-        // Requests 1..10 will return 400 or 404 (bad credentials / unknown tenant).
-        // Request 11 must return 429 — the rate limiter rejects before the handler runs.
-        for (int i = 0; i <= AuthPolicyPermitLimit; i++)
-        {
-            lastResponse = await client.PostAsJsonAsync(AuthLoginPath, InvalidLoginPayload);
-        }
+        // Second request — exceeds 1-request Auth window
+        var limited = await client.PostAsJsonAsync(AuthLoginPath, InvalidLoginPayload);
 
-        lastResponse!.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+        limited.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
     }
 
     [Fact]
     public async Task AuthEndpoint_WhenRateLimitExceeded_ResponseHasRetryAfterHeader()
     {
-        var client = fixture.CreateAnonymousClient();
+        var client = _tightAuthFactory.CreateClient();
 
-        HttpResponseMessage? limitedResponse = null;
+        await client.PostAsJsonAsync(AuthLoginPath, InvalidLoginPayload);
+        var limitedResponse = await client.PostAsJsonAsync(AuthLoginPath, InvalidLoginPayload);
 
-        for (int i = 0; i <= AuthPolicyPermitLimit; i++)
-        {
-            limitedResponse = await client.PostAsJsonAsync(AuthLoginPath, InvalidLoginPayload);
-        }
-
-        limitedResponse!.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+        limitedResponse.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
         limitedResponse.Headers.Should().ContainKey("Retry-After");
     }
 
     [Fact]
     public async Task AuthEndpoint_WhenRateLimitExceeded_ResponseBodyIsProblemDetails()
     {
-        var client = fixture.CreateAnonymousClient();
+        var client = _tightAuthFactory.CreateClient();
 
-        HttpResponseMessage? limitedResponse = null;
+        await client.PostAsJsonAsync(AuthLoginPath, InvalidLoginPayload);
+        var limitedResponse = await client.PostAsJsonAsync(AuthLoginPath, InvalidLoginPayload);
 
-        for (int i = 0; i <= AuthPolicyPermitLimit; i++)
-        {
-            limitedResponse = await client.PostAsJsonAsync(AuthLoginPath, InvalidLoginPayload);
-        }
-
-        limitedResponse!.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+        limitedResponse.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
         limitedResponse.Content.Headers.ContentType?.MediaType
             .Should().Be("application/problem+json");
     }
