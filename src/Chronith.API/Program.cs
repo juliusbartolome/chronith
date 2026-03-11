@@ -123,7 +123,7 @@ builder.Services.SwaggerDocument(o =>
     o.DocumentSettings = s =>
     {
         s.Title = "Chronith API";
-        s.Version = "v0.7";
+        s.Version = "v0.8";
         s.Description = "Multi-tenant booking engine REST API";
         s.PostProcess = doc =>
         {
