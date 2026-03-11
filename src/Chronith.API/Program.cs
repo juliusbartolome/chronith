@@ -217,22 +217,23 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = 429;
     options.OnRejected = async (context, ct) =>
     {
-        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        var resp = context.HttpContext.Response;
+        resp.StatusCode = StatusCodes.Status429TooManyRequests;
         if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-            context.HttpContext.Response.Headers.RetryAfter =
+            resp.Headers.RetryAfter =
                 ((int)retryAfter.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
         else
-            context.HttpContext.Response.Headers.RetryAfter = "60";
-        context.HttpContext.Response.ContentType = "application/problem+json";
-        await context.HttpContext.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
+            resp.Headers.RetryAfter = "60";
+        // Use WriteAsync so we control Content-Type exactly (WriteAsJsonAsync sets application/json).
+        resp.ContentType = "application/problem+json";
+        var body = System.Text.Json.JsonSerializer.Serialize(new
         {
-            Status = 429,
-            Title = "Too Many Requests",
-            Detail = "Rate limit exceeded. See the Retry-After header for when you can retry.",
-            Type = "https://tools.ietf.org/html/rfc6585#section-4",
-        }, ct);
-        // Restore content-type after WriteAsJsonAsync (which sets application/json)
-        context.HttpContext.Response.ContentType = "application/problem+json";
+            status = 429,
+            title = "Too Many Requests",
+            detail = "Rate limit exceeded. See the Retry-After header for when you can retry.",
+            type = "https://tools.ietf.org/html/rfc6585#section-4",
+        });
+        await resp.WriteAsync(body, ct);
     };
 });
 
