@@ -89,7 +89,7 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, customer.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, customer.Email),
+            new Claim("email", customer.Email),
             new Claim("tenantSlug", tenantSlug),
             new Claim("purpose", "magic-link-verify"),
         };
