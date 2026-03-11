@@ -21,16 +21,59 @@ services:
       timeout: 5s
       retries: 5
 
-  chronith-api:
-    build: .
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
     depends_on:
       postgres:
         condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://chronith:chronith@postgres:5432/chronith
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "200"
+      DEFAULT_POOL_SIZE: "20"
+      AUTH_TYPE: scram-sha-256
+    ports:
+      - "6432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U chronith"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chronith-api:
+    build: .
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
       redis:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     environment:
       Database__Provider: PostgreSQL
-      Database__ConnectionString: "Host=postgres;Port=5432;Database=chronith;Username=chronith;Password=chronith"
+      Database__ConnectionString: "Host=pgbouncer;Port=5432;Database=chronith;Username=chronith;Password=chronith;Pooling=false"
       Jwt__SigningKey: "change-me-in-production-at-least-32-chars"
       ASPNETCORE_URLS: "http://+:8080"
       Payments__Provider: "Stub"
@@ -39,6 +82,10 @@ services:
       Webhooks__HttpTimeoutSeconds: "10"
       Redis__Enabled: "true"
       Redis__ConnectionString: "redis:6379"
+      Observability__OtlpEndpoint: "http://jaeger:4317"
+      Observability__ServiceName: "chronith-api"
+      Observability__EnableTracing: "true"
+      Observability__EnableMetrics: "true"
 
 volumes:
   postgres_data:

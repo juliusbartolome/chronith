@@ -19,7 +19,7 @@ public sealed class ListWebhookDeliveriesEndpoint(ISender sender)
     {
         Get("/webhooks/{webhookId}/deliveries");
         Roles("TenantAdmin", "TenantStaff");
-        Options(x => x.WithTags("Webhooks"));
+        Options(x => x.WithTags("Webhooks").RequireRateLimiting("Authenticated"));
         Summary(s =>
         {
             s.Summary = "List webhook delivery attempts";

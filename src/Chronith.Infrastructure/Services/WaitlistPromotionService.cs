@@ -9,6 +9,7 @@ namespace Chronith.Infrastructure.Services;
 public sealed class WaitlistPromotionService(
     IServiceScopeFactory scopeFactory,
     IOptions<WaitlistPromotionOptions> options,
+    IBackgroundServiceHealthTracker healthTracker,
     ILogger<WaitlistPromotionService> logger)
     : BackgroundService
 {
@@ -19,6 +20,7 @@ public sealed class WaitlistPromotionService(
             try
             {
                 await ProcessExpiredOffersAndPromoteAsync(stoppingToken);
+                healthTracker.RecordSuccess(nameof(WaitlistPromotionService));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

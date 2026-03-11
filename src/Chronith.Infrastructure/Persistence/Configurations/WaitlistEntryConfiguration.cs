@@ -26,5 +26,9 @@ public sealed class WaitlistEntryConfiguration : IEntityTypeConfiguration<Waitli
 
         builder.HasIndex(w => new { w.TenantId, w.BookingTypeId, w.Status });
         builder.HasIndex(w => new { w.TenantId, w.IsDeleted });
+
+        // FIFO queue index for waitlist promotion
+        builder.HasIndex(w => new { w.TenantId, w.BookingTypeId, w.Status, w.CreatedAt })
+            .HasDatabaseName("ix_waitlist_fifo");
     }
 }

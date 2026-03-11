@@ -19,7 +19,7 @@ public sealed class RescheduleBookingEndpoint(ISender sender)
     {
         Post("/bookings/{bookingId}/reschedule");
         Roles("TenantAdmin", "TenantStaff", "Customer");
-        Options(x => x.WithTags("Bookings"));
+        Options(x => x.WithTags("Bookings").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(RescheduleBookingRequest req, CancellationToken ct)

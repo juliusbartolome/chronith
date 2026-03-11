@@ -41,9 +41,13 @@ public sealed class ChronithDbContext : DbContext
     public DbSet<CustomerRefreshTokenEntity> CustomerRefreshTokens => Set<CustomerRefreshTokenEntity>();
     public DbSet<TenantAuthConfigEntity> TenantAuthConfigs => Set<TenantAuthConfigEntity>();
     public DbSet<RecurrenceRuleEntity> RecurrenceRules => Set<RecurrenceRuleEntity>();
+    public DbSet<NotificationTemplateEntity> NotificationTemplates => Set<NotificationTemplateEntity>();
 
     // No global query filter: idempotency keys have no IsDeleted; cleaned up via TTL
     public DbSet<IdempotencyKeyEntity> IdempotencyKeys => Set<IdempotencyKeyEntity>();
+
+    // No global query filter: audit entries have no IsDeleted; filtered explicitly by TenantId.
+    public DbSet<AuditEntryEntity> AuditEntries => Set<AuditEntryEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,5 +78,8 @@ public sealed class ChronithDbContext : DbContext
 
         modelBuilder.Entity<RecurrenceRuleEntity>()
             .HasQueryFilter(r => !r.IsDeleted && r.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<NotificationTemplateEntity>()
+            .HasQueryFilter(n => !n.IsDeleted && n.TenantId == _tenantContext.TenantId);
     }
 }

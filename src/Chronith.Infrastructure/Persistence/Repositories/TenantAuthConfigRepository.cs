@@ -9,7 +9,9 @@ public sealed class TenantAuthConfigRepository(ChronithDbContext db) : ITenantAu
 {
     public async Task<TenantAuthConfig?> GetByTenantIdAsync(Guid tenantId, CancellationToken ct = default)
     {
-        var entity = await db.TenantAuthConfigs.AsNoTracking()
+        var entity = await db.TenantAuthConfigs
+            .TagWith("GetByTenantIdAsync — TenantAuthConfigRepository")
+            .AsNoTracking()
             .FirstOrDefaultAsync(c => c.TenantId == tenantId, ct);
         return entity?.ToDomain();
     }

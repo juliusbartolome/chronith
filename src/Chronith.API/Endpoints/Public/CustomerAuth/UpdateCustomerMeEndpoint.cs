@@ -18,7 +18,7 @@ public sealed class UpdateCustomerMeEndpoint(ISender sender)
     {
         Put("/public/{slug}/auth/me");
         Roles("Customer");
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(UpdateCustomerMeRequest req, CancellationToken ct)

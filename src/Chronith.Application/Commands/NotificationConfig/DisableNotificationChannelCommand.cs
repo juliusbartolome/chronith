@@ -7,9 +7,13 @@ namespace Chronith.Application.Commands.NotificationConfig;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record DisableNotificationChannelCommand : IRequest
+public sealed record DisableNotificationChannelCommand : IRequest, IAuditable
 {
     public required string ChannelType { get; init; }
+
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "TenantNotificationConfig";
+    public string Action => "DisableChannel";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

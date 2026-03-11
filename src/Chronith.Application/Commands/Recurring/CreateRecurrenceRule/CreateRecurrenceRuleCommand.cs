@@ -11,7 +11,7 @@ namespace Chronith.Application.Commands.Recurring.CreateRecurrenceRule;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record CreateRecurrenceRuleCommand : IRequest<RecurrenceRuleDto>
+public sealed record CreateRecurrenceRuleCommand : IRequest<RecurrenceRuleDto>, IAuditable
 {
     public required string BookingTypeSlug { get; init; }
     public required RecurrenceFrequency Frequency { get; init; }
@@ -20,6 +20,11 @@ public sealed record CreateRecurrenceRuleCommand : IRequest<RecurrenceRuleDto>
     public required DateOnly SeriesStart { get; init; }
     public DateOnly? SeriesEnd { get; init; }
     public int? MaxOccurrences { get; init; }
+
+    // IAuditable — EntityId is Guid.Empty pre-creation
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "RecurrenceRule";
+    public string Action => "Create";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -28,7 +33,7 @@ public sealed class CreateRecurrenceRuleValidator : AbstractValidator<CreateRecu
 {
     public CreateRecurrenceRuleValidator()
     {
-        RuleFor(x => x.BookingTypeSlug).NotEmpty();
+        RuleFor(x => x.BookingTypeSlug).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Frequency).IsInEnum();
         RuleFor(x => x.Interval).GreaterThanOrEqualTo(1);
         RuleFor(x => x.MaxOccurrences)

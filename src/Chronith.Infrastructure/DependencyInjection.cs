@@ -10,13 +10,18 @@ using Chronith.Infrastructure.Persistence;
 using Chronith.Infrastructure.Persistence.Repositories;
 using Chronith.Infrastructure.Providers;
 using Chronith.Infrastructure.RateLimiting;
+using Chronith.Infrastructure.Security;
 using Chronith.Infrastructure.Services;
+using Chronith.Infrastructure.Services.Audit;
+using Chronith.Infrastructure.Services.Notifications;
+using Chronith.Infrastructure.Telemetry;
 using Chronith.Infrastructure.TenantContext;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using StackExchange.Redis;
 
 namespace Chronith.Infrastructure;
 
@@ -63,6 +68,14 @@ public static class DependencyInjection
         services.AddScoped<ITenantAuthConfigRepository, TenantAuthConfigRepository>();
         services.AddScoped<IRecurrenceRuleRepository, RecurrenceRuleRepository>();
         services.AddScoped<IIdempotencyKeyRepository, IdempotencyKeyRepository>();
+        services.AddScoped<IAuditEntryRepository, AuditEntryRepository>();
+        services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
+        services.AddScoped<IDefaultTemplateSeeder, DefaultTemplateSeeder>();
+        services.AddSingleton<ITemplateRenderer, TemplateRenderer>();
+        services.AddScoped<IAuditSnapshotResolver, BookingSnapshotResolver>();
+        services.AddScoped<IAuditSnapshotResolver, BookingTypeSnapshotResolver>();
+        services.AddScoped<IAuditSnapshotResolver, StaffMemberSnapshotResolver>();
+        services.AddScoped<IAuditSnapshotResolver, TenantSnapshotResolver>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IOidcTokenValidator, OidcTokenValidator>();
         services.AddHostedService<WebhookDispatcherService>();
@@ -71,6 +84,7 @@ public static class DependencyInjection
         services.AddHostedService<ReminderSchedulerService>();
         services.AddHostedService<RecurringBookingGeneratorService>();
         services.AddHostedService<IdempotencyCleanupService>();
+        services.AddHostedService<AuditRetentionService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
         {
@@ -82,6 +96,7 @@ public static class DependencyInjection
         services.Configure<ReminderSchedulerOptions>(configuration.GetSection("ReminderScheduler"));
         services.Configure<RecurringBookingGeneratorOptions>(configuration.GetSection("RecurringBookings"));
         services.Configure<IdempotencyOptions>(configuration.GetSection("Idempotency"));
+        services.Configure<AuditRetentionOptions>(configuration.GetSection("AuditRetention"));
 
         // Notification channels
         services.Configure<SmtpOptions>(configuration.GetSection("Notifications:Smtp"));
@@ -107,8 +122,20 @@ public static class DependencyInjection
         services.AddSingleton<IPaymentProvider, MayaProvider>();
         services.AddSingleton<IPaymentProviderFactory, PaymentProviderFactory>();
 
+        // Encryption
+        services.Configure<EncryptionOptions>(configuration.GetSection(EncryptionOptions.SectionName));
+        services.AddSingleton<IEncryptionService, EncryptionService>();
+
         // Rate limiting
         services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
+
+        // Telemetry
+        services.AddMetrics();
+        services.AddSingleton<ChronithMetrics>();
+        services.AddSingleton<IBackgroundServiceHealthTracker, BackgroundServiceHealthTracker>();
+        services.AddSingleton<TenantIdEnricher>();
+        services.AddSingleton<UserIdEnricher>();
+        services.AddSingleton<CorrelationIdEnricher>();
 
         // Redis (optional)
         var redisEnabled = configuration.GetValue<bool>("Redis:Enabled");
@@ -116,6 +143,8 @@ public static class DependencyInjection
         {
             var redisConnectionString = configuration["Redis:ConnectionString"]!;
             services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
+            services.AddSingleton<IConnectionMultiplexer>(
+                _ => ConnectionMultiplexer.Connect(redisConnectionString));
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = redisConnectionString;

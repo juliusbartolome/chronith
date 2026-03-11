@@ -6,8 +6,8 @@ public sealed class CustomerLoginCommandValidator : AbstractValidator<CustomerLo
 {
     public CustomerLoginCommandValidator()
     {
-        RuleFor(x => x.TenantSlug).NotEmpty();
-        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.TenantSlug).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(320);
         RuleFor(x => x.Password).NotEmpty();
     }
 }

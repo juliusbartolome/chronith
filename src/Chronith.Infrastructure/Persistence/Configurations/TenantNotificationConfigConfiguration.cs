@@ -18,7 +18,7 @@ public sealed class TenantNotificationConfigConfiguration
             .HasMaxLength(20);
 
         builder.Property(c => c.Settings)
-            .HasColumnType("jsonb")
+            .HasColumnType("text")
             .IsRequired();
 
         // One config per tenant per channel type

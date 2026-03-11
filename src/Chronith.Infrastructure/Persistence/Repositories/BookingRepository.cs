@@ -16,6 +16,7 @@ public sealed class BookingRepository : IBookingRepository
     public async Task<Booking?> GetByIdAsync(Guid tenantId, Guid bookingId, CancellationToken ct = default)
     {
         var entity = await _db.Bookings
+            .TagWith("GetByIdAsync — BookingRepository")
             .AsNoTracking()
             .Include(b => b.StatusChanges)
             .FirstOrDefaultAsync(b => b.TenantId == tenantId && b.Id == bookingId, ct);
@@ -31,6 +32,7 @@ public sealed class BookingRepository : IBookingRepository
         CancellationToken ct = default)
     {
         var query = _db.Bookings
+            .TagWith("ListAsync — BookingRepository")
             .AsNoTracking()
             .Where(b => b.TenantId == tenantId && b.BookingTypeId == bookingTypeId)
             .OrderByDescending(b => b.Start);
@@ -57,6 +59,7 @@ public sealed class BookingRepository : IBookingRepository
     {
         var statuses = conflictStatuses.ToList();
         return await _db.Bookings
+            .TagWith("CountConflictsAsync — BookingRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()   // need to query across tenants to detect cross-tenant conflicts? No — but we need to bypass soft-delete filter
             .Where(b => b.BookingTypeId == bookingTypeId
@@ -79,6 +82,7 @@ public sealed class BookingRepository : IBookingRepository
     {
         var statusList = statuses.ToList();
         var results = await _db.Bookings
+            .TagWith("GetBookedSlotsAsync — BookingRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(b => b.BookingTypeId == bookingTypeId
@@ -96,6 +100,7 @@ public sealed class BookingRepository : IBookingRepository
         Guid tenantId, string customerId, CancellationToken ct = default)
     {
         var entities = await _db.Bookings
+            .TagWith("GetByCustomerIdAsync — BookingRepository")
             .AsNoTracking()
             .Include(b => b.StatusChanges)
             .Where(b => b.TenantId == tenantId && b.CustomerId == customerId)
@@ -109,6 +114,7 @@ public sealed class BookingRepository : IBookingRepository
         Guid tenantId, DateTimeOffset monthStartUtc, CancellationToken ct = default)
     {
         var grouped = await _db.Bookings
+            .TagWith("GetMetricsAsync.grouped — BookingRepository")
             .AsNoTracking()
             .Where(b => b.TenantId == tenantId && !b.IsDeleted)
             .GroupBy(b => b.Status)
@@ -119,6 +125,7 @@ public sealed class BookingRepository : IBookingRepository
         var byStatus = grouped.ToDictionary(g => g.Status, g => g.Count);
 
         var thisMonth = await _db.Bookings
+            .TagWith("GetMetricsAsync.thisMonth — BookingRepository")
             .AsNoTracking()
             .CountAsync(b => b.TenantId == tenantId && !b.IsDeleted && b.Start >= monthStartUtc, ct);
 
@@ -132,11 +139,13 @@ public sealed class BookingRepository : IBookingRepository
             tenantId == Guid.Empty
                 // Webhook context — search across all tenants, bypass query filters
                 ? _db.Bookings
+                    .TagWith("GetByPaymentReferenceAsync.crossTenant — BookingRepository")
                     .AsNoTracking()
                     .IgnoreQueryFilters()
                     .Include(b => b.StatusChanges)
                     .Where(b => !b.IsDeleted && b.PaymentReference == paymentReference)
                 : _db.Bookings
+                    .TagWith("GetByPaymentReferenceAsync — BookingRepository")
                     .AsNoTracking()
                     .Include(b => b.StatusChanges)
                     .Where(b => b.TenantId == tenantId && b.PaymentReference == paymentReference)
@@ -149,6 +158,7 @@ public sealed class BookingRepository : IBookingRepository
         Guid bookingTypeId, CancellationToken ct = default)
     {
         var results = await _db.Bookings
+            .TagWith("GetICalEntriesAsync — BookingRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(b => b.BookingTypeId == bookingTypeId

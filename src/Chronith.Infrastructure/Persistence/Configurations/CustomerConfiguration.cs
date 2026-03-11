@@ -43,7 +43,8 @@ public sealed class CustomerConfiguration : IEntityTypeConfiguration<CustomerEnt
         // Unique email per tenant (soft-delete aware)
         builder.HasIndex(c => new { c.TenantId, c.Email })
             .IsUnique()
-            .HasFilter("\"IsDeleted\" = false");
+            .HasFilter("\"IsDeleted\" = false")
+            .HasDatabaseName("ix_customers_email");
 
         // External ID lookup
         builder.HasIndex(c => new { c.TenantId, c.ExternalId })

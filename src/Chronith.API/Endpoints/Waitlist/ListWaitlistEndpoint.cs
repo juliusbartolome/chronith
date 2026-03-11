@@ -23,7 +23,7 @@ public sealed class ListWaitlistEndpoint(ISender sender)
     {
         Get("/booking-types/{bookingTypeSlug}/waitlist");
         Roles("TenantAdmin", "TenantStaff");
-        Options(x => x.WithTags("Waitlist"));
+        Options(x => x.WithTags("Waitlist").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(ListWaitlistRequest req, CancellationToken ct)

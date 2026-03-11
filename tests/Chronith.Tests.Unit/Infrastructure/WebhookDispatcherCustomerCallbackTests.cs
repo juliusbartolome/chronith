@@ -29,8 +29,9 @@ public class WebhookDispatcherCustomerCallbackTests
         _scopeFactory.CreateScope().Returns(scope);
 
         var opts = Options.Create(new WebhookDispatcherOptions { DispatchIntervalSeconds = 10 });
+        var healthTracker = Substitute.For<IBackgroundServiceHealthTracker>();
         return new WebhookDispatcherService(
-            _scopeFactory, _httpClientFactory, opts, NullLogger<WebhookDispatcherService>.Instance);
+            _scopeFactory, _httpClientFactory, opts, healthTracker, NullLogger<WebhookDispatcherService>.Instance);
     }
 
     [Fact]

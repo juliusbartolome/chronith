@@ -12,7 +12,7 @@ public sealed class GetTenantMetricsEndpoint(ISender sender)
     {
         Get("/tenant/metrics");
         Roles("TenantAdmin", "TenantStaff");
-        Options(x => x.WithTags("Tenant"));
+        Options(x => x.WithTags("Tenant").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

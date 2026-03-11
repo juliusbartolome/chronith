@@ -16,7 +16,7 @@ public sealed class DisableNotificationChannelEndpoint(ISender sender)
     {
         Delete("/tenant/notifications/{channelType}");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Notifications"));
+        Options(x => x.WithTags("Notifications").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(DisableNotificationChannelRequest req, CancellationToken ct)

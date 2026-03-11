@@ -16,6 +16,7 @@ public sealed class StaffMemberRepository : IStaffMemberRepository
         Guid tenantId, Guid staffId, CancellationToken ct = default)
     {
         var entity = await _db.StaffMembers
+            .TagWith("GetByIdAsync — StaffMemberRepository")
             .AsNoTracking()
             .Include(s => s.AvailabilityWindows)
             .FirstOrDefaultAsync(s => s.TenantId == tenantId && s.Id == staffId, ct);
@@ -27,6 +28,7 @@ public sealed class StaffMemberRepository : IStaffMemberRepository
         Guid tenantId, CancellationToken ct = default)
     {
         var entities = await _db.StaffMembers
+            .TagWith("ListAsync — StaffMemberRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Include(s => s.AvailabilityWindows)
@@ -41,6 +43,7 @@ public sealed class StaffMemberRepository : IStaffMemberRepository
         Guid tenantId, Guid bookingTypeId, CancellationToken ct = default)
     {
         var entities = await _db.BookingTypeStaffAssignments
+            .TagWith("ListByBookingTypeAsync — StaffMemberRepository")
             .AsNoTracking()
             .Where(a => a.BookingTypeId == bookingTypeId)
             .Join(

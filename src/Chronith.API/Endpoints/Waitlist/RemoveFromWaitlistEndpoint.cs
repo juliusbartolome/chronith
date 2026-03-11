@@ -16,7 +16,7 @@ public sealed class RemoveFromWaitlistEndpoint(ISender sender)
     {
         Delete("/waitlist/{id}");
         Roles("Customer", "TenantAdmin");
-        Options(x => x.WithTags("Waitlist"));
+        Options(x => x.WithTags("Waitlist").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(RemoveFromWaitlistRequest req, CancellationToken ct)

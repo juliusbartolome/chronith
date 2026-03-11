@@ -23,9 +23,9 @@ public sealed class CreateWebhookValidator : AbstractValidator<CreateWebhookComm
 {
     public CreateWebhookValidator()
     {
-        RuleFor(x => x.BookingTypeSlug).NotEmpty();
+        RuleFor(x => x.BookingTypeSlug).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Url).NotEmpty().Must(u => Uri.TryCreate(u, UriKind.Absolute, out _))
-            .WithMessage("Url must be a valid absolute URI.");
+            .WithMessage("Url must be a valid absolute URI.").MaximumLength(2048);
         RuleFor(x => x.Secret).NotEmpty().MinimumLength(16);
     }
 }

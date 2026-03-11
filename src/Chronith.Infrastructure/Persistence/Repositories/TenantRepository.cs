@@ -14,6 +14,7 @@ public sealed class TenantRepository : ITenantRepository
     public async Task<Tenant?> GetByIdAsync(Guid tenantId, CancellationToken ct = default)
     {
         var entity = await _db.Tenants
+            .TagWith("GetByIdAsync — TenantRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == tenantId, ct);
 
@@ -23,6 +24,7 @@ public sealed class TenantRepository : ITenantRepository
     public async Task<Tenant?> GetBySlugAsync(string slug, CancellationToken ct = default)
     {
         var entity = await _db.Tenants
+            .TagWith("GetBySlugAsync — TenantRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Slug == slug, ct);
 
@@ -30,7 +32,9 @@ public sealed class TenantRepository : ITenantRepository
     }
 
     public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default)
-        => await _db.Tenants.AnyAsync(t => t.Slug == slug, ct);
+        => await _db.Tenants
+            .TagWith("ExistsBySlugAsync — TenantRepository")
+            .AnyAsync(t => t.Slug == slug, ct);
 
     public async Task AddAsync(Tenant tenant, CancellationToken ct = default)
     {

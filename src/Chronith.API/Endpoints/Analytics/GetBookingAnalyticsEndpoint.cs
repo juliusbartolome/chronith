@@ -24,7 +24,7 @@ public sealed class GetBookingAnalyticsEndpoint(ISender sender)
     {
         Get("/analytics/bookings");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Analytics"));
+        Options(x => x.WithTags("Analytics").RequireRateLimiting("Export"));
     }
 
     public override async Task HandleAsync(GetBookingAnalyticsRequest req, CancellationToken ct)

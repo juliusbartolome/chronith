@@ -12,7 +12,7 @@ public sealed class GetMeEndpoint(ISender sender) : EndpointWithoutRequest<UserP
     public override void Configure()
     {
         Get("/auth/me");
-        Options(x => x.WithTags("Auth"));
+        Options(x => x.WithTags("Auth").RequireRateLimiting("Auth"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)
@@ -36,7 +36,7 @@ public sealed class PatchMeEndpoint(ISender sender) : Endpoint<PatchMeRequest, U
     public override void Configure()
     {
         Patch("/auth/me");
-        Options(x => x.WithTags("Auth"));
+        Options(x => x.WithTags("Auth").RequireRateLimiting("Auth"));
     }
 
     public override async Task HandleAsync(PatchMeRequest req, CancellationToken ct)

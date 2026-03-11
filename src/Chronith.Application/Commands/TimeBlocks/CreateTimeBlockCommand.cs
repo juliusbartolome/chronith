@@ -9,13 +9,18 @@ namespace Chronith.Application.Commands.TimeBlocks;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record CreateTimeBlockCommand : IRequest<TimeBlockDto>
+public sealed record CreateTimeBlockCommand : IRequest<TimeBlockDto>, IAuditable
 {
     public required DateTimeOffset Start { get; init; }
     public required DateTimeOffset End { get; init; }
     public Guid? BookingTypeId { get; init; }
     public Guid? StaffMemberId { get; init; }
     public string? Reason { get; init; }
+
+    // IAuditable — EntityId is Guid.Empty pre-creation
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "TimeBlock";
+    public string Action => "Create";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -25,6 +30,8 @@ public sealed class CreateTimeBlockValidator : AbstractValidator<CreateTimeBlock
     public CreateTimeBlockValidator()
     {
         RuleFor(x => x.End).GreaterThan(x => x.Start);
+        When(x => x.Reason is not null, () =>
+            RuleFor(x => x.Reason!).MaximumLength(1000));
     }
 }
 

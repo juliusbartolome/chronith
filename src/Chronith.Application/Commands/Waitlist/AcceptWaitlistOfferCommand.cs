@@ -9,9 +9,13 @@ namespace Chronith.Application.Commands.Waitlist;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record AcceptWaitlistOfferCommand : IRequest<WaitlistEntryDto>
+public sealed record AcceptWaitlistOfferCommand : IRequest<WaitlistEntryDto>, IAuditable
 {
     public required Guid WaitlistEntryId { get; init; }
+
+    public Guid EntityId => WaitlistEntryId;
+    public string EntityType => "WaitlistEntry";
+    public string Action => "AcceptOffer";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────

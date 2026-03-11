@@ -15,7 +15,9 @@ public static class DependencyInjection
         {
             cfg.RegisterServicesFromAssemblyContaining<IApplicationMarker>();
             cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
+            cfg.AddOpenBehavior(typeof(SanitizationBehavior<,>));
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            cfg.AddOpenBehavior(typeof(AuditBehavior<,>));
             cfg.AddOpenBehavior(typeof(PerformanceBehavior<,>));
         });
 

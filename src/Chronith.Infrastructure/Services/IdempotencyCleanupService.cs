@@ -9,6 +9,7 @@ namespace Chronith.Infrastructure.Services;
 public sealed class IdempotencyCleanupService(
     IServiceScopeFactory scopeFactory,
     IOptions<IdempotencyOptions> options,
+    IBackgroundServiceHealthTracker healthTracker,
     ILogger<IdempotencyCleanupService> logger)
     : BackgroundService
 {
@@ -22,6 +23,7 @@ public sealed class IdempotencyCleanupService(
                 var repo = scope.ServiceProvider.GetRequiredService<IIdempotencyKeyRepository>();
                 await repo.DeleteExpiredAsync(stoppingToken);
                 logger.LogInformation("Expired idempotency keys cleaned up");
+                healthTracker.RecordSuccess(nameof(IdempotencyCleanupService));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

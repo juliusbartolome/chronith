@@ -26,7 +26,7 @@ public sealed class PublicGetStaffAvailabilityEndpoint(ISender sender, ITenantRe
     {
         Get("/public/{tenantSlug}/staff/{id}/availability");
         AllowAnonymous();
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Public"));
     }
 
     public override async Task HandleAsync(PublicGetStaffAvailabilityRequest req, CancellationToken ct)

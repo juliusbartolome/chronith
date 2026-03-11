@@ -12,7 +12,7 @@ public sealed class GetTenantAuthConfigEndpoint(ISender sender)
     {
         Get("/tenant/auth-config");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Tenant"));
+        Options(x => x.WithTags("Tenant").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

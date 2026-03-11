@@ -7,6 +7,6 @@ public sealed class UpdateCustomerProfileCommandValidator : AbstractValidator<Up
     public UpdateCustomerProfileCommandValidator()
     {
         RuleFor(x => x.CustomerId).NotEmpty();
-        RuleFor(x => x.Name).NotEmpty();
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
     }
 }

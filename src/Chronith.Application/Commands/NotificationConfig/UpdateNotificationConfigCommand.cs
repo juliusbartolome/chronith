@@ -9,10 +9,15 @@ namespace Chronith.Application.Commands.NotificationConfig;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record UpdateNotificationConfigCommand : IRequest<TenantNotificationConfigDto>
+public sealed record UpdateNotificationConfigCommand : IRequest<TenantNotificationConfigDto>, IAuditable
 {
     public required string ChannelType { get; init; }
     public required string Settings { get; init; }
+
+    // Upsert — no stable Guid available
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "TenantNotificationConfig";
+    public string Action => "Update";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -27,7 +32,7 @@ public sealed class UpdateNotificationConfigValidator : AbstractValidator<Update
             .NotEmpty()
             .Must(ct => ValidChannelTypes.Contains(ct))
             .WithMessage("ChannelType must be one of: email, sms, push");
-        RuleFor(x => x.Settings).NotEmpty();
+        RuleFor(x => x.Settings).NotEmpty().MaximumLength(5000);
     }
 }
 

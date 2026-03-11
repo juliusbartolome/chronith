@@ -12,6 +12,7 @@ public sealed class BookingReminderRepository(ChronithDbContext db)
         Guid bookingId, int intervalMinutes, CancellationToken ct = default)
     {
         return await db.BookingReminders
+            .TagWith("ExistsAsync — BookingReminderRepository")
             .AsNoTracking()
             .AnyAsync(r => r.BookingId == bookingId && r.IntervalMinutes == intervalMinutes, ct);
     }
@@ -26,6 +27,7 @@ public sealed class BookingReminderRepository(ChronithDbContext db)
         Guid bookingId, CancellationToken ct = default)
     {
         var entities = await db.BookingReminders
+            .TagWith("ListByBookingAsync — BookingReminderRepository")
             .AsNoTracking()
             .Where(r => r.BookingId == bookingId)
             .OrderBy(r => r.IntervalMinutes)

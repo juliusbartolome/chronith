@@ -23,6 +23,63 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.AuditEntryEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("UserRole")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Timestamp");
+
+                    b.HasIndex("TenantId", "UserId", "Timestamp")
+                        .IsDescending(false, false, true);
+
+                    b.HasIndex("TenantId", "EntityType", "EntityId", "Timestamp")
+                        .IsDescending(false, false, false, true);
+
+                    b.ToTable("audit_entries", "chronith");
+                });
+
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.AvailabilityWindowEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -129,15 +186,26 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("RecurrenceRuleId");
-
                     b.HasIndex("StaffMemberId");
 
+                    b.HasIndex("RecurrenceRuleId", "Start")
+                        .HasDatabaseName("ix_bookings_recurrence");
+
                     b.HasIndex("TenantId", "IsDeleted");
+
+                    b.HasIndex("TenantId", "CustomerId", "Start")
+                        .IsDescending(false, false, true)
+                        .HasDatabaseName("ix_bookings_customer");
+
+                    b.HasIndex("TenantId", "StaffMemberId", "Start")
+                        .HasDatabaseName("ix_bookings_staff");
 
                     b.HasIndex("BookingTypeId", "Status", "Start", "End");
 
                     b.HasIndex("TenantId", "BookingTypeId", "Start", "End");
+
+                    b.HasIndex("TenantId", "BookingTypeId", "Start", "Status")
+                        .HasDatabaseName("ix_bookings_availability");
 
                     b.ToTable("bookings", "chronith");
                 });
@@ -383,6 +451,7 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
                     b.HasIndex("TenantId", "Email")
                         .IsUnique()
+                        .HasDatabaseName("ix_customers_email")
                         .HasFilter("\"IsDeleted\" = false");
 
                     b.HasIndex("TenantId", "ExternalId")
@@ -471,9 +540,61 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                     b.HasIndex("ExpiresAt");
 
                     b.HasIndex("TenantId", "Key", "EndpointRoute")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("ix_idempotency_lookup");
 
                     b.ToTable("idempotency_keys", "chronith");
+                });
+
+            modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.NotificationTemplateEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<string>("ChannelType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "IsDeleted");
+
+                    b.HasIndex("TenantId", "EventType", "ChannelType")
+                        .IsUnique()
+                        .HasDatabaseName("ix_notification_templates_event_channel");
+
+                    b.ToTable("notification_templates", "chronith");
                 });
 
             modelBuilder.Entity("Chronith.Infrastructure.Persistence.Entities.RecurrenceRuleEntity", b =>
@@ -606,6 +727,10 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
                     b.Property<bool>("IsRevoked")
                         .HasColumnType("boolean");
 
@@ -732,7 +857,7 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
                     b.Property<string>("Settings")
                         .IsRequired()
-                        .HasColumnType("jsonb");
+                        .HasColumnType("text");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -913,6 +1038,9 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                     b.HasIndex("TenantId", "IsDeleted");
 
                     b.HasIndex("TenantId", "BookingTypeId", "Status");
+
+                    b.HasIndex("TenantId", "BookingTypeId", "Status", "CreatedAt")
+                        .HasDatabaseName("ix_waitlist_fifo");
 
                     b.ToTable("waitlist_entries", "chronith");
                 });

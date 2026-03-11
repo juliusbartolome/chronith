@@ -21,7 +21,7 @@ public sealed class TenantAuthConfigEndpoint(ISender sender)
     {
         Put("/tenant/auth-config");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("Tenant"));
+        Options(x => x.WithTags("Tenant").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(UpsertTenantAuthConfigRequest req, CancellationToken ct)

@@ -17,7 +17,7 @@ public sealed class PayBookingEndpoint(ISender sender)
     {
         Post("/bookings/{bookingId}/pay");
         Roles("TenantAdmin", "TenantStaff", "TenantPaymentService");
-        Options(x => x.WithTags("Bookings"));
+        Options(x => x.WithTags("Bookings").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(PayBookingRequest req, CancellationToken ct)

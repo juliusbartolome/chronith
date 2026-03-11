@@ -9,14 +9,18 @@ public sealed class CustomerRepository(ChronithDbContext db) : ICustomerReposito
 {
     public async Task<Customer?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        var entity = await db.Customers.AsNoTracking()
+        var entity = await db.Customers
+            .TagWith("GetByIdAsync — CustomerRepository")
+            .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id, ct);
         return entity?.ToDomain();
     }
 
     public async Task<Customer?> GetByIdCrossTenantAsync(Guid id, CancellationToken ct = default)
     {
-        var entity = await db.Customers.AsNoTracking()
+        var entity = await db.Customers
+            .TagWith("GetByIdCrossTenantAsync — CustomerRepository")
+            .AsNoTracking()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted, ct);
         return entity?.ToDomain();
@@ -24,7 +28,9 @@ public sealed class CustomerRepository(ChronithDbContext db) : ICustomerReposito
 
     public async Task<Customer?> GetByEmailAsync(Guid tenantId, string email, CancellationToken ct = default)
     {
-        var entity = await db.Customers.AsNoTracking()
+        var entity = await db.Customers
+            .TagWith("GetByEmailAsync — CustomerRepository")
+            .AsNoTracking()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.TenantId == tenantId && c.Email == email && !c.IsDeleted, ct);
         return entity?.ToDomain();
@@ -32,7 +38,9 @@ public sealed class CustomerRepository(ChronithDbContext db) : ICustomerReposito
 
     public async Task<Customer?> GetByExternalIdAsync(Guid tenantId, string externalId, CancellationToken ct = default)
     {
-        var entity = await db.Customers.AsNoTracking()
+        var entity = await db.Customers
+            .TagWith("GetByExternalIdAsync — CustomerRepository")
+            .AsNoTracking()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.TenantId == tenantId && c.ExternalId == externalId && !c.IsDeleted, ct);
         return entity?.ToDomain();

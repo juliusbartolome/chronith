@@ -21,7 +21,7 @@ public sealed class CustomerRegisterEndpoint(ISender sender)
     {
         Post("/public/{slug}/auth/register");
         AllowAnonymous();
-        Options(x => x.WithTags("Public"));
+        Options(x => x.WithTags("Public").RequireRateLimiting("Auth"));
     }
 
     public override async Task HandleAsync(CustomerRegisterRequest req, CancellationToken ct)
