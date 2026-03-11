@@ -132,6 +132,7 @@ public static class DependencyInjection
         // Telemetry
         services.AddMetrics();
         services.AddSingleton<ChronithMetrics>();
+        services.AddSingleton<IBookingMetrics>(sp => sp.GetRequiredService<ChronithMetrics>());
         services.AddSingleton<IBackgroundServiceHealthTracker, BackgroundServiceHealthTracker>();
         services.AddSingleton<TenantIdEnricher>();
         services.AddSingleton<UserIdEnricher>();

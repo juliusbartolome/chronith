@@ -1,3 +1,4 @@
+using System.Diagnostics.Metrics;
 using System.Text.Json;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
@@ -5,6 +6,7 @@ using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Notifications;
 using Chronith.Infrastructure.Services;
+using Chronith.Infrastructure.Telemetry;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,6 +18,14 @@ namespace Chronith.Tests.Unit.Infrastructure;
 public sealed class NotificationDispatcherTemplateTests
 {
     private static readonly Guid TenantId = Guid.NewGuid();
+
+    private static ChronithMetrics CreateMetrics()
+    {
+        var services = new ServiceCollection();
+        services.AddMetrics();
+        var sp = services.BuildServiceProvider();
+        return new ChronithMetrics(sp.GetRequiredService<IMeterFactory>());
+    }
 
     private (
         NotificationDispatcherService Service,
@@ -65,7 +75,7 @@ public sealed class NotificationDispatcherTemplateTests
         var healthTracker = Substitute.For<IBackgroundServiceHealthTracker>();
 
         var sut = new NotificationDispatcherService(
-            scopeFactory, channelFactory, templateRenderer, options, healthTracker, logger);
+            scopeFactory, channelFactory, templateRenderer, options, healthTracker, CreateMetrics(), logger);
 
         return (sut, outboxRepo, configRepo, templateRepo, templateRenderer, channel);
     }

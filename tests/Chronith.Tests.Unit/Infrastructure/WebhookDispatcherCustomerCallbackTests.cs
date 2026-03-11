@@ -1,8 +1,10 @@
+using System.Diagnostics.Metrics;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Services;
+using Chronith.Infrastructure.Telemetry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -18,6 +20,14 @@ public class WebhookDispatcherCustomerCallbackTests
     private readonly IHttpClientFactory _httpClientFactory = Substitute.For<IHttpClientFactory>();
     private readonly IServiceScopeFactory _scopeFactory = Substitute.For<IServiceScopeFactory>();
 
+    private static ChronithMetrics CreateMetrics()
+    {
+        var services = new ServiceCollection();
+        services.AddMetrics();
+        var sp = services.BuildServiceProvider();
+        return new ChronithMetrics(sp.GetRequiredService<IMeterFactory>());
+    }
+
     private WebhookDispatcherService CreateSut()
     {
         var scope = Substitute.For<IServiceScope>();
@@ -31,7 +41,7 @@ public class WebhookDispatcherCustomerCallbackTests
         var opts = Options.Create(new WebhookDispatcherOptions { DispatchIntervalSeconds = 10 });
         var healthTracker = Substitute.For<IBackgroundServiceHealthTracker>();
         return new WebhookDispatcherService(
-            _scopeFactory, _httpClientFactory, opts, healthTracker, NullLogger<WebhookDispatcherService>.Instance);
+            _scopeFactory, _httpClientFactory, opts, healthTracker, CreateMetrics(), NullLogger<WebhookDispatcherService>.Instance);
     }
 
     [Fact]

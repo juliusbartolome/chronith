@@ -7,6 +7,7 @@ using Chronith.Tests.Unit.Helpers;
 using FluentAssertions;
 using MediatR;
 using NSubstitute;
+using NSubstitute.ReceivedExtensions;
 
 namespace Chronith.Tests.Unit.Application;
 
@@ -49,13 +50,14 @@ public sealed class CreateBookingHandlerTests
     /// <summary>
     /// Builds a fully-wired handler with all collaborators substituted.
     /// Returns the handler, the IUnitOfWork mock, the IBookingRepository mock,
-    /// and the IPaymentProvider mock.
+    /// the IPaymentProvider mock, and the IBookingMetrics mock.
     /// </summary>
     private static (
         CreateBookingHandler Handler,
         IUnitOfWork UnitOfWork,
         IBookingRepository BookingRepo,
-        IPaymentProvider Provider)
+        IPaymentProvider Provider,
+        IBookingMetrics Metrics)
         Build(BookingType bookingType)
     {
         var tenantCtx = Substitute.For<ITenantContext>();
@@ -97,6 +99,8 @@ public sealed class CreateBookingHandlerTests
         var providerFactory = Substitute.For<IPaymentProviderFactory>();
         providerFactory.GetProvider(Arg.Any<string>()).Returns(provider);
 
+        var metrics = Substitute.For<IBookingMetrics>();
+
         var handler = new CreateBookingHandler(
             tenantCtx,
             bookingTypeRepo,
@@ -104,9 +108,10 @@ public sealed class CreateBookingHandlerTests
             tenantRepo,
             unitOfWork,
             publisher,
-            providerFactory);
+            providerFactory,
+            metrics);
 
-        return (handler, unitOfWork, bookingRepo, provider);
+        return (handler, unitOfWork, bookingRepo, provider, metrics);
     }
 
     private static CreateBookingCommand MakeCommand() => new()
@@ -123,7 +128,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
-        var (handler, _, _, provider) = Build(bookingType);
+        var (handler, _, _, provider, _) = Build(bookingType);
 
         // Act
         await handler.Handle(MakeCommand(), CancellationToken.None);
@@ -138,7 +143,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
-        var (handler, _, bookingRepo, _) = Build(bookingType);
+        var (handler, _, bookingRepo, _, _) = Build(bookingType);
 
         // Act
         await handler.Handle(MakeCommand(), CancellationToken.None);
@@ -153,7 +158,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
-        var (handler, _, _, _) = Build(bookingType);
+        var (handler, _, _, _, _) = Build(bookingType);
 
         // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
@@ -167,7 +172,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
-        var (handler, _, _, _) = Build(bookingType);
+        var (handler, _, _, _, _) = Build(bookingType);
 
         // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
@@ -181,7 +186,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange — Manual mode
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Manual);
-        var (handler, _, _, provider) = Build(bookingType);
+        var (handler, _, _, provider, _) = Build(bookingType);
 
         // Act
         await handler.Handle(MakeCommand(), CancellationToken.None);
@@ -196,7 +201,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange — Manual mode never calls payment provider
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Manual);
-        var (handler, _, _, _) = Build(bookingType);
+        var (handler, _, _, _, _) = Build(bookingType);
 
         // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
@@ -210,7 +215,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange — Automatic mode but price is 0 (free)
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub", priceInCentavos: 0);
-        var (handler, _, _, provider) = Build(bookingType);
+        var (handler, _, _, provider, _) = Build(bookingType);
 
         // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
@@ -227,7 +232,7 @@ public sealed class CreateBookingHandlerTests
     {
         // Arrange
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
-        var (handler, _, _, provider) = Build(bookingType);
+        var (handler, _, _, provider, _) = Build(bookingType);
 
         // Act
         await handler.Handle(MakeCommand(), CancellationToken.None);
@@ -240,5 +245,27 @@ public sealed class CreateBookingHandlerTests
                 r.TenantId == TenantId &&
                 r.Description.Contains(bookingType.Name)),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ManualPaymentMode_RecordsBookingCreatedMetric()
+    {
+        var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Manual);
+        var (handler, _, _, _, metrics) = Build(bookingType);
+
+        await handler.Handle(MakeCommand(), CancellationToken.None);
+
+        metrics.Received(1).RecordBookingCreated(Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task Handle_AutomaticPaymentMode_RecordsPaymentProcessedMetric()
+    {
+        var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
+        var (handler, _, _, _, metrics) = Build(bookingType);
+
+        await handler.Handle(MakeCommand(), CancellationToken.None);
+
+        metrics.Received(1).RecordPaymentProcessed(Arg.Any<string>(), Arg.Any<string>());
     }
 }
