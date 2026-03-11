@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
@@ -45,5 +46,43 @@ public class JwtTokenServiceTests
         hash.Should().NotBeNullOrWhiteSpace();
         hash.Should().NotBe(raw);
         hash.Length.Should().Be(64, "SHA-256 hex string is always 64 chars");
+    }
+
+    [Fact]
+    public void CreateMagicLinkToken_ReturnsJwt_WithCorrectClaims()
+    {
+        // Arrange
+        var sut = CreateSut();
+        var tenantId = Guid.NewGuid();
+        var customer = Customer.Create(
+            tenantId: tenantId,
+            email: "alice@example.com",
+            passwordHash: "hashed-password",
+            name: "Alice",
+            phone: null,
+            authProvider: "builtin");
+
+        var before = DateTime.UtcNow;
+
+        // Act
+        var token = sut.CreateMagicLinkToken(customer, "test-tenant");
+
+        // Assert
+        var decoded = new JwtSecurityTokenHandler().ReadJwtToken(token);
+
+        decoded.Subject.Should().Be(customer.Id.ToString(), "sub claim must be customer ID");
+
+        decoded.Claims.FirstOrDefault(c => c.Type == "email")
+            ?.Value.Should().Be("alice@example.com", "email claim must match customer email");
+
+        decoded.Claims.FirstOrDefault(c => c.Type == "tenantSlug")
+            ?.Value.Should().Be("test-tenant", "tenantSlug claim must match provided slug");
+
+        decoded.Claims.FirstOrDefault(c => c.Type == "purpose")
+            ?.Value.Should().Be("magic-link-verify", "purpose claim must be 'magic-link-verify'");
+
+        var expectedExpiry = before.AddHours(24);
+        decoded.ValidTo.Should().BeCloseTo(expectedExpiry, TimeSpan.FromSeconds(5),
+            "token must expire ~24 hours from creation");
     }
 }

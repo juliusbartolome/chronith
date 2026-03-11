@@ -79,4 +79,26 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
         var hash = Convert.ToHexStringLower(hashBytes);
         return (raw, hash);
     }
+
+    public string CreateMagicLinkToken(Customer customer, string tenantSlug)
+    {
+        var signingKey = GetPrimarySigningKey();
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, customer.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, customer.Email),
+            new Claim("tenantSlug", tenantSlug),
+            new Claim("purpose", "magic-link-verify"),
+        };
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(24),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
 }

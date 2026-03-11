@@ -15,4 +15,10 @@ public interface ITokenService
     /// Returns (rawToken, tokenHash) — store the hash, return the raw token to the client.
     /// </summary>
     (string RawToken, string TokenHash) CreateRefreshToken();
+
+    /// <summary>
+    /// Creates a 24-hour signed JWT for magic link email verification.
+    /// Claims: sub (customer ID), email, tenantSlug, purpose="magic-link-verify"
+    /// </summary>
+    string CreateMagicLinkToken(Customer customer, string tenantSlug);
 }
