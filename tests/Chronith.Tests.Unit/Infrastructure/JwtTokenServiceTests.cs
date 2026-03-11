@@ -14,12 +14,14 @@ namespace Chronith.Tests.Unit.Infrastructure;
 
 public class JwtTokenServiceTests
 {
+    private const string TestSigningKey = "super-secret-test-signing-key-at-least-32-chars";
+
     private static ITokenService CreateSut()
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Jwt:SigningKey"] = "super-secret-test-signing-key-at-least-32-chars"
+                ["Jwt:SigningKey"] = TestSigningKey
             })
             .Build();
         return new JwtTokenService(config);
@@ -117,8 +119,7 @@ public class JwtTokenServiceTests
     public void ValidateMagicLinkToken_ThrowsUnauthorized_ForExpiredToken()
     {
         // Arrange: build a token that is already expired using raw JWT construction
-        const string signingKey = "super-secret-test-signing-key-at-least-32-chars";
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestSigningKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var customerId = Guid.NewGuid();
 
@@ -146,8 +147,7 @@ public class JwtTokenServiceTests
     public void ValidateMagicLinkToken_ThrowsUnauthorized_ForWrongPurpose()
     {
         // Arrange: build a token with wrong purpose claim
-        const string signingKey = "super-secret-test-signing-key-at-least-32-chars";
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestSigningKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var customerId = Guid.NewGuid();
 
