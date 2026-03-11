@@ -41,4 +41,16 @@ public sealed class TenantRepository : ITenantRepository
         var entity = TenantEntityMapper.ToEntity(tenant);
         await _db.Tenants.AddAsync(entity, ct);
     }
+
+    public async Task<IReadOnlyList<Tenant>> ListAllAsync(CancellationToken ct = default)
+    {
+        var entities = await _db.Tenants
+            .TagWith("ListAllAsync — TenantRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(t => !t.IsDeleted)
+            .ToListAsync(ct);
+
+        return entities.Select(TenantEntityMapper.ToDomain).ToList().AsReadOnly();
+    }
 }
