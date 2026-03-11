@@ -59,16 +59,14 @@ public sealed class CustomerMagicLinkRegisterCommandHandler(
 
         var token = tokenService.CreateMagicLinkToken(customer, request.TenantSlug);
 
-        var emailChannel = notificationChannels.FirstOrDefault(c => c.ChannelType == "email");
-        if (emailChannel is not null)
-        {
-            await emailChannel.SendAsync(
-                new NotificationMessage(
-                    Recipient: request.Email,
-                    Subject: "Complete your registration",
-                    Body: token),
-                cancellationToken);
-        }
+        var emailChannel = notificationChannels.FirstOrDefault(c => c.ChannelType == "email")
+            ?? throw new InvalidOperationException("No email notification channel is configured.");
+        await emailChannel.SendAsync(
+            new NotificationMessage(
+                Recipient: request.Email,
+                Subject: "Complete your registration",
+                Body: token),
+            cancellationToken);
 
         return new MagicLinkInitiatedDto("Check your email to complete registration.");
     }

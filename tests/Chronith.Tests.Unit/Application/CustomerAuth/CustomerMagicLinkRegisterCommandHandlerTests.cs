@@ -10,7 +10,6 @@ namespace Chronith.Tests.Unit.Application.CustomerAuth;
 
 public sealed class CustomerMagicLinkRegisterCommandHandlerTests
 {
-    private static readonly Guid TenantId = Guid.NewGuid();
     private const string TenantSlug = "test-tenant";
 
     private static (
@@ -114,9 +113,11 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         // Act
         await handler.Handle(command, CancellationToken.None);
 
-        // Assert: the email channel's SendAsync was called
+        // Assert: the email channel's SendAsync was called with the token in the body
         await emailChannel.Received(1).SendAsync(
-            Arg.Is<NotificationMessage>(m => m.Recipient == "test@example.com"),
+            Arg.Is<NotificationMessage>(m =>
+                m.Recipient == "test@example.com" &&
+                m.Body == "magic-link-token"),
             Arg.Any<CancellationToken>());
     }
 
@@ -202,5 +203,45 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         // Assert
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("*already exists*");
+    }
+
+    [Fact]
+    public async Task Handle_Throws_WhenEmailChannelNotConfigured()
+    {
+        // Arrange: handler wired with no notification channels
+        var tenantRepo = Substitute.For<ITenantRepository>();
+        var authConfigRepo = Substitute.For<ITenantAuthConfigRepository>();
+        var customerRepo = Substitute.For<ICustomerRepository>();
+        var tokenService = Substitute.For<ITokenService>();
+        var unitOfWork = Substitute.For<IUnitOfWork>();
+
+        tokenService.CreateMagicLinkToken(Arg.Any<Customer>(), Arg.Any<string>())
+            .Returns("magic-link-token");
+
+        var handler = new CustomerMagicLinkRegisterCommandHandler(
+            tenantRepo, authConfigRepo, customerRepo,
+            tokenService, notificationChannels: [], unitOfWork);
+
+        var tenant = BuildTenant();
+        var authConfig = BuildAuthConfig(tenant.Id, magicLinkEnabled: true);
+
+        tenantRepo.GetBySlugAsync(TenantSlug, Arg.Any<CancellationToken>()).Returns(tenant);
+        authConfigRepo.GetByTenantIdAsync(tenant.Id, Arg.Any<CancellationToken>()).Returns(authConfig);
+        customerRepo.GetByEmailAsync(tenant.Id, "test@example.com", Arg.Any<CancellationToken>())
+            .Returns((Customer?)null);
+
+        var command = new CustomerMagicLinkRegisterCommand
+        {
+            TenantSlug = TenantSlug,
+            Email = "test@example.com",
+            Name = "Test User"
+        };
+
+        // Act
+        var act = () => handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*email*");
     }
 }
