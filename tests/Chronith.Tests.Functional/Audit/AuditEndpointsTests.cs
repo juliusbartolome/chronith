@@ -55,7 +55,7 @@ public sealed class AuditEndpointsTests(FunctionalTestFixture fixture)
     [Fact]
     public async Task GetAuditEntries_AsAdmin_ReturnsPagedResult()
     {
-        var (entryId1, _) = await EnsureSeedAsync();
+        await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
         var response = await client.GetAsync("/v1/audit");

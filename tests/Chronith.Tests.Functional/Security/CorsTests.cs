@@ -42,7 +42,7 @@ public sealed class CorsTests(FunctionalTestFixture fixture)
         // OPTIONS preflight should return 204 (No Content) with CORS headers
         // when AllowedOrigins is empty (AllowAnyOrigin).
         var client = fixture.CreateAnonymousClient();
-        var request = new HttpRequestMessage(HttpMethod.Options, "/health/ready");
+        using var request = new HttpRequestMessage(HttpMethod.Options, "/health/ready");
         request.Headers.Add("Origin", "https://example.com");
         request.Headers.Add("Access-Control-Request-Method", "GET");
         request.Headers.Add("Access-Control-Request-Headers", "Authorization");

@@ -48,7 +48,7 @@ public sealed class AuditQueryHandlerTests
     {
         var id = Guid.NewGuid();
         _auditRepo.GetByIdAsync(_tenantId, id, Arg.Any<CancellationToken>())
-            .Returns((AuditEntry?)null);
+            .Returns(default(AuditEntry));
 
         var handler = new GetAuditEntryByIdHandler(_tenantContext, _auditRepo);
 

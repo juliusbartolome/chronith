@@ -56,7 +56,7 @@ public sealed class TenantIdEnricherTests
     {
         // Arrange
         var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
-        httpContextAccessor.HttpContext.Returns((HttpContext?)null);
+        httpContextAccessor.HttpContext.Returns(default(HttpContext));
 
         var enricher = new TenantIdEnricher(httpContextAccessor);
         var logEvent = CreateLogEvent();
@@ -121,7 +121,7 @@ public sealed class UserIdEnricherTests
     {
         // Arrange
         var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
-        httpContextAccessor.HttpContext.Returns((HttpContext?)null);
+        httpContextAccessor.HttpContext.Returns(default(HttpContext));
 
         var enricher = new UserIdEnricher(httpContextAccessor);
         var logEvent = CreateLogEvent();
@@ -178,7 +178,7 @@ public sealed class CorrelationIdEnricherTests
     {
         // Arrange
         var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
-        httpContextAccessor.HttpContext.Returns((HttpContext?)null);
+        httpContextAccessor.HttpContext.Returns(default(HttpContext));
 
         var enricher = new CorrelationIdEnricher(httpContextAccessor);
         var logEvent = CreateLogEvent();

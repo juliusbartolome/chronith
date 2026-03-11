@@ -29,20 +29,12 @@ public sealed partial class SanitizationBehavior<TRequest, TResponse>
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var properties = typeof(TRequest).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var properties = typeof(TRequest)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.PropertyType == typeof(string) && p.CanWrite && !IsInitOnly(p));
 
         foreach (var property in properties)
         {
-            if (property.PropertyType != typeof(string))
-                continue;
-
-            if (!property.CanWrite)
-                continue;
-
-            // Skip init-only properties — their setter is decorated with IsExternalInit
-            if (IsInitOnly(property))
-                continue;
-
             var value = property.GetValue(request) as string;
             if (value is null)
                 continue;

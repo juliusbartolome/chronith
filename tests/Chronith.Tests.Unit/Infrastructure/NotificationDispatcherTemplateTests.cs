@@ -178,7 +178,7 @@ public sealed class NotificationDispatcherTemplateTests
 
         var (sut, _, _, templateRepo, templateRenderer, channel) = BuildSut([entry]);
         templateRepo.GetByEventAndChannelAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns((NotificationTemplate?)null);
+            .Returns(default(NotificationTemplate));
 
         await sut.DispatchBatchAsync(CancellationToken.None);
 

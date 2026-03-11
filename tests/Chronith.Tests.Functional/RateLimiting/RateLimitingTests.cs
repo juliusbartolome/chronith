@@ -52,27 +52,9 @@ public class RateLimitingTests : IAsyncLifetime
                 b.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
             });
 
-        _tightLimitFactory = new WebApplicationFactory<Program>() // lgtm[cs/local-not-disposed] // codeql[cs/local-not-disposed]
-            .WithWebHostBuilder(b =>
-            {
-                b.UseSetting("Database:Provider", "PostgreSQL");
-                b.UseSetting("Database:ConnectionString", connStr);
-                b.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
-                // Set Authenticated policy to 1 request per window
-                b.UseSetting("RateLimiting:Authenticated:PermitLimit", "1");
-                b.UseSetting("RateLimiting:Authenticated:WindowSeconds", "60");
-            });
+        _tightLimitFactory = new TightLimitWebApplicationFactory(connStr);
 
-        _tightAuthPolicyFactory = new WebApplicationFactory<Program>() // lgtm[cs/local-not-disposed] // codeql[cs/local-not-disposed]
-            .WithWebHostBuilder(b =>
-            {
-                b.UseSetting("Database:Provider", "PostgreSQL");
-                b.UseSetting("Database:ConnectionString", connStr);
-                b.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
-                // Set Auth policy to 1 request per window
-                b.UseSetting("RateLimiting:Auth:PermitLimit", "1");
-                b.UseSetting("RateLimiting:Auth:WindowSeconds", "60");
-            });
+        _tightAuthPolicyFactory = new TightAuthPolicyWebApplicationFactory(connStr);
 
         // Run migrations once (all factories share the same DB)
         using var scope = _defaultFactory.Services.CreateScope();
@@ -200,7 +182,7 @@ public class RateLimitingTests : IAsyncLifetime
         // POST to /v1/auth/login with an invalid body just to exercise the rate limiter —
         // we expect either 400 (validation) or 401 (bad credentials) for valid requests,
         // but the key assertion is that after the first request the second returns 429.
-        var payload = new StringContent(
+        using var payload = new StringContent(
             """{"tenantSlug":"x","email":"x@x.com","password":"wrong"}""",
             System.Text.Encoding.UTF8,
             "application/json");
@@ -210,11 +192,39 @@ public class RateLimitingTests : IAsyncLifetime
         first.StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
 
         // Second request — exceeds 1-request Auth window
-        var secondPayload = new StringContent(
+        using var secondPayload = new StringContent(
             """{"tenantSlug":"x","email":"x@x.com","password":"wrong"}""",
             System.Text.Encoding.UTF8,
             "application/json");
         var second = await client.PostAsync("/v1/auth/login", secondPayload);
         second.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+    }
+
+    // ── Nested factory subclasses — avoid intermediate disposable objects ─────
+
+    private sealed class TightLimitWebApplicationFactory(string connStr) : WebApplicationFactory<Program>
+    {
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.UseSetting("Database:Provider", "PostgreSQL");
+            builder.UseSetting("Database:ConnectionString", connStr);
+            builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
+            // Authenticated policy capped at 1 req/window
+            builder.UseSetting("RateLimiting:Authenticated:PermitLimit", "1");
+            builder.UseSetting("RateLimiting:Authenticated:WindowSeconds", "60");
+        }
+    }
+
+    private sealed class TightAuthPolicyWebApplicationFactory(string connStr) : WebApplicationFactory<Program>
+    {
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.UseSetting("Database:Provider", "PostgreSQL");
+            builder.UseSetting("Database:ConnectionString", connStr);
+            builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
+            // Auth policy (login/register) capped at 1 req/window
+            builder.UseSetting("RateLimiting:Auth:PermitLimit", "1");
+            builder.UseSetting("RateLimiting:Auth:WindowSeconds", "60");
+        }
     }
 }

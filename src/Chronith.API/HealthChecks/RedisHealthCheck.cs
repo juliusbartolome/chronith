@@ -14,7 +14,7 @@ public sealed class RedisHealthCheck(IConnectionMultiplexer redis) : IHealthChec
             await db.PingAsync();
             return HealthCheckResult.Healthy();
         }
-        catch (Exception ex)
+        catch (RedisException ex)
         {
             return HealthCheckResult.Unhealthy(exception: ex);
         }

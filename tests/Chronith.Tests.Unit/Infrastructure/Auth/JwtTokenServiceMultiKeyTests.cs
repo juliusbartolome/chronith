@@ -64,7 +64,7 @@ public class JwtTokenServiceMultiKeyTests
             var handler = new JwtSecurityTokenHandler();
             return handler.ValidateToken(token, parameters, out _);
         }
-        catch
+        catch (SecurityTokenException)
         {
             return null;
         }

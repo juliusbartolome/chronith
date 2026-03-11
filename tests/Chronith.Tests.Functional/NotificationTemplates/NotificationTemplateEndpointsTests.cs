@@ -108,7 +108,7 @@ public sealed class NotificationTemplateEndpointsTests(FunctionalTestFixture fix
         var client = fixture.CreateClient("TenantAdmin");
         var response = await client.PutAsJsonAsync(
             $"/v1/tenant/notification-templates/{id}",
-            new { subject = (string?)null, body = "", isActive = true });
+            new { subject = default(string), body = "", isActive = true });
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

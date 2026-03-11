@@ -45,7 +45,7 @@ public sealed class BookingSnapshotResolverTests
 
         _tenantContext.TenantId.Returns(tenantId);
         _bookingRepo.GetByIdAsync(tenantId, bookingId, Arg.Any<CancellationToken>())
-            .Returns((Booking?)null);
+            .Returns(default(Booking));
 
         var sut = CreateSut();
         var result = await sut.ResolveSnapshotAsync(bookingId, CancellationToken.None);

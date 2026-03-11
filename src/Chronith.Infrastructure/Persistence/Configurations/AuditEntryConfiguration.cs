@@ -29,13 +29,13 @@ public sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntr
             .HasMaxLength(64);
 
         builder.Property(a => a.OldValues)
-            .HasColumnType("jsonb");
+            .HasColumnType("text");
 
         builder.Property(a => a.NewValues)
-            .HasColumnType("jsonb");
+            .HasColumnType("text");
 
         builder.Property(a => a.Metadata)
-            .HasColumnType("jsonb");
+            .HasColumnType("text");
 
         // Composite index: list by tenant + time range
         builder.HasIndex(a => new { a.TenantId, a.Timestamp });

@@ -22,7 +22,7 @@ public sealed class DefaultTemplateSeederTests
         // Default: no existing template found
         _templateRepo
             .GetByEventAndChannelAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns((NotificationTemplate?)null);
+            .Returns(default(NotificationTemplate));
 
         _sut = new DefaultTemplateSeeder(_templateRepo, _unitOfWork);
     }
