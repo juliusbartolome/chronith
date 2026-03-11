@@ -66,7 +66,7 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         tenantRepo.GetBySlugAsync(TenantSlug, Arg.Any<CancellationToken>()).Returns(tenant);
         authConfigRepo.GetByTenantIdAsync(tenant.Id, Arg.Any<CancellationToken>()).Returns(authConfig);
         customerRepo.GetByEmailAsync(tenant.Id, "test@example.com", Arg.Any<CancellationToken>())
-            .Returns(null as Customer);
+            .Returns(default(Customer?));
 
         var command = new CustomerMagicLinkRegisterCommand
         {
@@ -101,7 +101,7 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         tenantRepo.GetBySlugAsync(TenantSlug, Arg.Any<CancellationToken>()).Returns(tenant);
         authConfigRepo.GetByTenantIdAsync(tenant.Id, Arg.Any<CancellationToken>()).Returns(authConfig);
         customerRepo.GetByEmailAsync(tenant.Id, "test@example.com", Arg.Any<CancellationToken>())
-            .Returns(null as Customer);
+            .Returns(default(Customer?));
 
         var command = new CustomerMagicLinkRegisterCommand
         {
@@ -228,7 +228,7 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         tenantRepo.GetBySlugAsync(TenantSlug, Arg.Any<CancellationToken>()).Returns(tenant);
         authConfigRepo.GetByTenantIdAsync(tenant.Id, Arg.Any<CancellationToken>()).Returns(authConfig);
         customerRepo.GetByEmailAsync(tenant.Id, "test@example.com", Arg.Any<CancellationToken>())
-            .Returns(null as Customer);
+            .Returns(default(Customer?));
 
         var command = new CustomerMagicLinkRegisterCommand
         {
