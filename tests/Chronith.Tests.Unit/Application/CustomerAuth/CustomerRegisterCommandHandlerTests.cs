@@ -140,6 +140,35 @@ public sealed class CustomerRegisterCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_MagicLinkEnabled_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var (handler, tenantRepo, authConfigRepo, _, _, _, _) = Build();
+        var tenant = BuildTenant();
+
+        tenantRepo.GetBySlugAsync(TenantSlug, Arg.Any<CancellationToken>()).Returns(tenant);
+
+        var authConfig = TenantAuthConfig.Create(tenant.Id);
+        authConfig.Update(allowBuiltInAuth: true, null, null, null, magicLinkEnabled: true);
+        authConfigRepo.GetByTenantIdAsync(tenant.Id, Arg.Any<CancellationToken>()).Returns(authConfig);
+
+        var command = new CustomerRegisterCommand
+        {
+            TenantSlug = TenantSlug,
+            Email = "test@example.com",
+            Password = "Password1",
+            Name = "Test User"
+        };
+
+        // Act
+        var act = () => handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*magic-link*");
+    }
+
+    [Fact]
     public async Task Handle_TenantNotFound_ThrowsNotFoundException()
     {
         // Arrange

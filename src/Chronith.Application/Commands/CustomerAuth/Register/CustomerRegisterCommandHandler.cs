@@ -29,6 +29,10 @@ public sealed class CustomerRegisterCommandHandler(
         if (authConfig is not null && !authConfig.AllowBuiltInAuth)
             throw new UnauthorizedException("Built-in authentication is disabled for this tenant.");
 
+        if (authConfig is not null && authConfig.MagicLinkEnabled)
+            throw new InvalidOperationException(
+                $"Magic link is enabled for this tenant. Use POST /public/{request.TenantSlug}/auth/magic-link/register instead.");
+
         var existing = await customerRepository.GetByEmailAsync(tenant.Id, request.Email, cancellationToken);
         if (existing is not null)
             throw new ConflictException($"A customer with email '{request.Email}' already exists.");
