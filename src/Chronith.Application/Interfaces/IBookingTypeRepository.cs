@@ -19,6 +19,12 @@ public interface IBookingTypeRepository
     /// <summary>Cross-tenant lookup for dispatcher use only. Does not apply tenant filter.</summary>
     Task<BookingType?> GetByIdAsync(Guid bookingTypeId, CancellationToken ct = default);
 
+    /// <summary>
+    /// Cross-tenant lookup — bypasses tenant query filter.
+    /// Used by background services. Returns null if not found or soft-deleted.
+    /// </summary>
+    Task<BookingType?> GetByIdAcrossTenantsAsync(Guid bookingTypeId, CancellationToken ct = default);
+
     Task<IReadOnlyList<BookingType>> ListAsync(Guid tenantId, CancellationToken ct = default);
     Task AddAsync(BookingType bookingType, CancellationToken ct = default);
     Task UpdateAsync(BookingType bookingType, CancellationToken ct = default);

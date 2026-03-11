@@ -6,6 +6,12 @@ public interface ICustomerRepository
 {
     Task<Customer?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<Customer?> GetByIdCrossTenantAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>
+    /// Cross-tenant lookup — bypasses tenant query filter.
+    /// Used by background services. Returns null if not found or soft-deleted.
+    /// </summary>
+    Task<Customer?> GetByIdAcrossTenantsAsync(Guid customerId, CancellationToken ct = default);
     Task<Customer?> GetByEmailAsync(Guid tenantId, string email, CancellationToken ct = default);
     Task<Customer?> GetByExternalIdAsync(Guid tenantId, string externalId, CancellationToken ct = default);
     Task AddAsync(Customer customer, CancellationToken ct = default);

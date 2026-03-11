@@ -50,6 +50,19 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
         return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
     }
 
+    /// <inheritdoc cref="IBookingTypeRepository.GetByIdAcrossTenantsAsync"/>
+    public async Task<BookingType?> GetByIdAcrossTenantsAsync(Guid bookingTypeId, CancellationToken ct = default)
+    {
+        var entity = await _db.BookingTypes
+            .TagWith("GetByIdAcrossTenantsAsync — BookingTypeRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Include(bt => bt.AvailabilityWindows)
+            .FirstOrDefaultAsync(bt => bt.Id == bookingTypeId && !bt.IsDeleted, ct);
+
+        return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
+    }
+
     /// <inheritdoc cref="IBookingTypeRepository.GetBySlugAsync(string, CancellationToken)"/>
     public async Task<BookingType?> GetBySlugAsync(string slug, CancellationToken ct = default)
     {
