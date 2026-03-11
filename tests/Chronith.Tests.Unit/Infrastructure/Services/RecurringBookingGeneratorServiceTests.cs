@@ -301,7 +301,7 @@ public sealed class RecurringBookingGeneratorServiceTests
     public async Task GenerateBookingsAsync_DeactivatesRule_WhenSeriesEndHasPassed()
     {
         // Arrange
-        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, unitOfWork, publisher)
+        var (sut, recurrenceRuleRepo, _, _, _, _, unitOfWork, _)
             = BuildSut(horizonDays: 3);
 
         // Series ended yesterday
@@ -311,10 +311,73 @@ public sealed class RecurringBookingGeneratorServiceTests
         recurrenceRuleRepo.GetAllActiveAcrossTenantsAsync(Arg.Any<CancellationToken>())
             .Returns(new List<RecurrenceRule> { rule }.AsReadOnly());
 
-        // Booking type must be set up so rule processing can proceed to series-end check
-        var bookingType = BuildBookingType(capacity: 5);
-        bookingTypeRepo.GetByIdAcrossTenantsAsync(BookingTypeId, Arg.Any<CancellationToken>())
-            .Returns(bookingType);
+        // Act
+        await sut.GenerateBookingsAsync(CancellationToken.None);
+
+        // Assert: rule's SoftDelete was called → recurrenceRuleRepo.Update was called with the deactivated rule
+        recurrenceRuleRepo.Received(1).Update(Arg.Is<RecurrenceRule>(r => !r.IsActive && r.IsDeleted));
+
+        // Assert: save was persisted
+        await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GenerateBookingsAsync_ContinuesProcessing_WhenOneRuleThrows()
+    {
+        // Arrange
+        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, unitOfWork, publisher)
+            = BuildSut(horizonDays: 3);
+
+        var throwingBookingTypeId = Guid.NewGuid();
+        var workingBookingTypeId = Guid.NewGuid();
+
+        // Rule 1: causes GetByIdAcrossTenantsAsync to throw (simulates transient failure)
+        var rule1 = RecurrenceRule.Create(
+            tenantId: TenantId,
+            bookingTypeId: throwingBookingTypeId,
+            customerId: CustomerId,
+            staffMemberId: null,
+            frequency: RecurrenceFrequency.Daily,
+            interval: 1,
+            daysOfWeek: null,
+            startTime: new TimeOnly(9, 0),
+            duration: TimeSpan.FromHours(1),
+            seriesStart: DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)),
+            seriesEnd: null,
+            maxOccurrences: null);
+
+        // Rule 2: works fine
+        var rule2 = RecurrenceRule.Create(
+            tenantId: TenantId,
+            bookingTypeId: workingBookingTypeId,
+            customerId: CustomerId,
+            staffMemberId: null,
+            frequency: RecurrenceFrequency.Daily,
+            interval: 1,
+            daysOfWeek: null,
+            startTime: new TimeOnly(9, 0),
+            duration: TimeSpan.FromHours(1),
+            seriesStart: DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)),
+            seriesEnd: null,
+            maxOccurrences: null);
+
+        recurrenceRuleRepo.GetAllActiveAcrossTenantsAsync(Arg.Any<CancellationToken>())
+            .Returns(new List<RecurrenceRule> { rule1, rule2 }.AsReadOnly());
+
+        // First rule's booking type lookup throws
+        bookingTypeRepo.GetByIdAcrossTenantsAsync(throwingBookingTypeId, Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<BookingType?>(new InvalidOperationException("Simulated transient failure")));
+
+        // Second rule's booking type resolves successfully
+        var workingBookingType = BookingTypeBuilder.BuildTimeSlot(
+            durationMinutes: 60,
+            tenantId: TenantId,
+            priceInCentavos: 0);
+        SetProperty(workingBookingType, "Id", workingBookingTypeId);
+        SetProperty(workingBookingType, "Capacity", 5);
+
+        bookingTypeRepo.GetByIdAcrossTenantsAsync(workingBookingTypeId, Arg.Any<CancellationToken>())
+            .Returns(workingBookingType);
 
         var tenant = BuildTenant();
         tenantRepo.GetByIdAsync(TenantId, Arg.Any<CancellationToken>())
@@ -332,11 +395,13 @@ public sealed class RecurringBookingGeneratorServiceTests
                 Arg.Any<CancellationToken>())
             .Returns(0);
 
-        // Act
-        await sut.GenerateBookingsAsync(CancellationToken.None);
+        // Act: must not propagate the exception from rule 1
+        var act = async () => await sut.GenerateBookingsAsync(CancellationToken.None);
+        await act.Should().NotThrowAsync();
 
-        // Assert: rule's SoftDelete was called → recurrenceRuleRepo.Update was called with the deactivated rule
-        recurrenceRuleRepo.Received(1).Update(Arg.Is<RecurrenceRule>(r => !r.IsActive && r.IsDeleted));
+        // Assert: booking created at least once (for rule 2 — rule 1 threw before AddAsync)
+        await bookingRepo.ReceivedWithAnyArgs()
+            .AddAsync(default!, default);
     }
 
     [Fact]
