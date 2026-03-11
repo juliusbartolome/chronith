@@ -161,7 +161,7 @@ public sealed class CustomerMagicLinkVerifyCommandHandlerTests
 
         tokenService.ValidateMagicLinkToken(ValidToken, TenantSlug).Returns(customerId);
         customerRepo.GetByIdAcrossTenantsAsync(customerId, Arg.Any<CancellationToken>())
-            .Returns((Customer?)null);
+            .Returns(null as Customer);
 
         var command = new CustomerMagicLinkVerifyCommand
         {

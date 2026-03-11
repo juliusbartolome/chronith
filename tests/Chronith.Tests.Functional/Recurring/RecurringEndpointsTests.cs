@@ -24,7 +24,7 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         return new
         {
             customerId,
-            staffMemberId = (Guid?)null,
+            staffMemberId = null as Guid?,
             frequency,
             interval,
             daysOfWeek,
@@ -130,7 +130,7 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         // Update
         var updateResp = await client.PutAsJsonAsync($"/v1/recurring/{created!.Id}", new
         {
-            staffMemberId = (Guid?)null,
+            staffMemberId = null as Guid?,
             frequency = "Weekly",
             interval = 2,
             daysOfWeek = new[] { 1, 3 },

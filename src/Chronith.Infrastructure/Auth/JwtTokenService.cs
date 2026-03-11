@@ -143,7 +143,11 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
         {
             throw;
         }
-        catch
+        catch (SecurityTokenException)
+        {
+            throw new UnauthorizedException("Invalid or expired magic link token.");
+        }
+        catch (ArgumentException)
         {
             throw new UnauthorizedException("Invalid or expired magic link token.");
         }

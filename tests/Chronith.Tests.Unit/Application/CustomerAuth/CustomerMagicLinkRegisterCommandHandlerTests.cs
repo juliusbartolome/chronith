@@ -66,7 +66,7 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         tenantRepo.GetBySlugAsync(TenantSlug, Arg.Any<CancellationToken>()).Returns(tenant);
         authConfigRepo.GetByTenantIdAsync(tenant.Id, Arg.Any<CancellationToken>()).Returns(authConfig);
         customerRepo.GetByEmailAsync(tenant.Id, "test@example.com", Arg.Any<CancellationToken>())
-            .Returns((Customer?)null);
+            .Returns(null as Customer);
 
         var command = new CustomerMagicLinkRegisterCommand
         {
@@ -82,7 +82,7 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         await customerRepo.Received(1).AddAsync(
             Arg.Is<Customer>(c =>
                 c.AuthProvider == "magic-link" &&
-                c.IsEmailVerified == false &&
+                !c.IsEmailVerified &&
                 c.Email == "test@example.com" &&
                 c.Name == "Test User" &&
                 c.PasswordHash == null),
@@ -101,7 +101,7 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         tenantRepo.GetBySlugAsync(TenantSlug, Arg.Any<CancellationToken>()).Returns(tenant);
         authConfigRepo.GetByTenantIdAsync(tenant.Id, Arg.Any<CancellationToken>()).Returns(authConfig);
         customerRepo.GetByEmailAsync(tenant.Id, "test@example.com", Arg.Any<CancellationToken>())
-            .Returns((Customer?)null);
+            .Returns(null as Customer);
 
         var command = new CustomerMagicLinkRegisterCommand
         {
@@ -132,7 +132,7 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         tenantRepo.GetBySlugAsync(TenantSlug, Arg.Any<CancellationToken>()).Returns(tenant);
         authConfigRepo.GetByTenantIdAsync(tenant.Id, Arg.Any<CancellationToken>()).Returns(authConfig);
         customerRepo.GetByEmailAsync(tenant.Id, "test@example.com", Arg.Any<CancellationToken>())
-            .Returns((Customer?)null);
+            .Returns(null as Customer);
 
         var command = new CustomerMagicLinkRegisterCommand
         {
@@ -228,7 +228,7 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         tenantRepo.GetBySlugAsync(TenantSlug, Arg.Any<CancellationToken>()).Returns(tenant);
         authConfigRepo.GetByTenantIdAsync(tenant.Id, Arg.Any<CancellationToken>()).Returns(authConfig);
         customerRepo.GetByEmailAsync(tenant.Id, "test@example.com", Arg.Any<CancellationToken>())
-            .Returns((Customer?)null);
+            .Returns(null as Customer);
 
         var command = new CustomerMagicLinkRegisterCommand
         {

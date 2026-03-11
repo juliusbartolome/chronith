@@ -171,7 +171,7 @@ public sealed class RecurringBookingGeneratorServiceTests
     public async Task GenerateBookingsAsync_SkipsOccurrence_WhenSlotIsFull()
     {
         // Arrange
-        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, unitOfWork, publisher)
+        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, _, publisher)
             = BuildSut(horizonDays: 3);
 
         var rule = BuildDailyRule();
@@ -214,7 +214,7 @@ public sealed class RecurringBookingGeneratorServiceTests
     public async Task GenerateBookingsAsync_SkipsRule_WhenBookingTypeNotFound()
     {
         // Arrange
-        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, unitOfWork, publisher)
+        var (sut, recurrenceRuleRepo, bookingTypeRepo, _, _, bookingRepo, _, _)
             = BuildSut(horizonDays: 3);
 
         var rule = BuildDailyRule();
@@ -223,7 +223,7 @@ public sealed class RecurringBookingGeneratorServiceTests
 
         // Booking type not found (returns null)
         bookingTypeRepo.GetByIdAcrossTenantsAsync(BookingTypeId, Arg.Any<CancellationToken>())
-            .Returns((BookingType?)null);
+            .Returns(null as BookingType);
 
         // Act
         var act = async () => await sut.GenerateBookingsAsync(CancellationToken.None);
@@ -239,7 +239,7 @@ public sealed class RecurringBookingGeneratorServiceTests
     public async Task GenerateBookingsAsync_SkipsRule_WhenTenantNotFound()
     {
         // Arrange
-        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, unitOfWork, publisher)
+        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, _, bookingRepo, _, _)
             = BuildSut(horizonDays: 3);
 
         var rule = BuildDailyRule();
@@ -252,7 +252,7 @@ public sealed class RecurringBookingGeneratorServiceTests
 
         // Tenant not found
         tenantRepo.GetByIdAsync(TenantId, Arg.Any<CancellationToken>())
-            .Returns((Tenant?)null);
+            .Returns(null as Tenant);
 
         // Act
         var act = async () => await sut.GenerateBookingsAsync(CancellationToken.None);
@@ -268,7 +268,7 @@ public sealed class RecurringBookingGeneratorServiceTests
     public async Task GenerateBookingsAsync_SkipsOccurrence_WhenCustomerNotFound()
     {
         // Arrange
-        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, unitOfWork, publisher)
+        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, _, _)
             = BuildSut(horizonDays: 3);
 
         var rule = BuildDailyRule();
@@ -285,7 +285,7 @@ public sealed class RecurringBookingGeneratorServiceTests
 
         // Customer not found
         customerRepo.GetByIdAcrossTenantsAsync(CustomerId, Arg.Any<CancellationToken>())
-            .Returns((Customer?)null);
+            .Returns(null as Customer);
 
         // Act
         var act = async () => await sut.GenerateBookingsAsync(CancellationToken.None);
@@ -325,7 +325,7 @@ public sealed class RecurringBookingGeneratorServiceTests
     public async Task GenerateBookingsAsync_ContinuesProcessing_WhenOneRuleThrows()
     {
         // Arrange
-        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, unitOfWork, publisher)
+        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, _, _)
             = BuildSut(horizonDays: 3);
 
         var throwingBookingTypeId = Guid.NewGuid();
@@ -428,7 +428,7 @@ public sealed class RecurringBookingGeneratorServiceTests
     public async Task GenerateBookingsAsync_CreatesBookingWithCorrectCustomerId()
     {
         // Arrange
-        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, unitOfWork, publisher)
+        var (sut, recurrenceRuleRepo, bookingTypeRepo, tenantRepo, customerRepo, bookingRepo, _, _)
             = BuildSut(horizonDays: 3);
 
         var rule = BuildDailyRule();
