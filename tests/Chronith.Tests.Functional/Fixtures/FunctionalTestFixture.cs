@@ -38,6 +38,13 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
                 builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
                 builder.UseSetting("Security:EncryptionKey", TestConstants.EncryptionKey);
                 builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
+                // Raise rate-limit permits very high so functional tests never exhaust
+                // the shared in-process IP bucket. Rate-limit shape tests use their own
+                // isolated WebApplicationFactory instances with tight limits.
+                builder.UseSetting("RateLimiting:Auth:PermitLimit", "10000");
+                builder.UseSetting("RateLimiting:Auth:WindowSeconds", "300");
+                builder.UseSetting("RateLimiting:Authenticated:PermitLimit", "10000");
+                builder.UseSetting("RateLimiting:Authenticated:WindowSeconds", "300");
             });
 
         // Run migrations
