@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Notifications;
@@ -78,6 +79,8 @@ public sealed class NotificationDispatcherService(
             await outboxRepo.MarkAbandonedAsync(entry.Id, ct);
             return;
         }
+
+        using var activity = ChronithActivitySource.StartNotificationDispatch(entry.TenantId, channelType);
 
         var channel = channelFactory.GetChannel(channelType);
         if (channel is null)

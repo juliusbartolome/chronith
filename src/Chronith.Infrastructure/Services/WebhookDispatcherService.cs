@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -102,6 +103,7 @@ public sealed class WebhookDispatcherService(
         IWebhookOutboxRepository outboxRepo,
         CancellationToken ct)
     {
+        using var activity = ChronithActivitySource.StartWebhookDispatch(entry.TenantId, entry.Id);
         var now = DateTimeOffset.UtcNow;
         var httpClient = httpClientFactory.CreateClient("WebhookDispatcher");
 

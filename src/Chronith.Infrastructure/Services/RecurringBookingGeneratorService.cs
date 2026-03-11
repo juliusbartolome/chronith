@@ -1,5 +1,6 @@
 using Chronith.Application.Interfaces;
 using Chronith.Application.Notifications;
+using Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using MediatR;
@@ -121,6 +122,8 @@ public sealed class RecurringBookingGeneratorService(
                 rule.Id, rule.BookingTypeId);
             return;
         }
+
+        using var activity = ChronithActivitySource.StartRecurringGenerate(rule.TenantId, rule.Id);
 
         // Resolve tenant (for timezone)
         var tenant = await tenantRepo.GetByIdAsync(rule.TenantId, ct);
