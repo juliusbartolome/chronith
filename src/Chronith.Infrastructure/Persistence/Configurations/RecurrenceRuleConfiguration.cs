@@ -24,6 +24,7 @@ public sealed class RecurrenceRuleConfiguration : IEntityTypeConfiguration<Recur
             .IsConcurrencyToken();
 
         builder.HasIndex(r => new { r.TenantId, r.IsDeleted });
+        builder.HasIndex(r => new { r.TenantId, r.CustomerId });
 
         builder.HasOne<BookingTypeEntity>()
             .WithMany()
