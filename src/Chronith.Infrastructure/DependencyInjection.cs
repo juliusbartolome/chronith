@@ -21,6 +21,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using StackExchange.Redis;
 
 namespace Chronith.Infrastructure;
 
@@ -142,6 +143,8 @@ public static class DependencyInjection
         {
             var redisConnectionString = configuration["Redis:ConnectionString"]!;
             services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
+            services.AddSingleton<IConnectionMultiplexer>(
+                _ => ConnectionMultiplexer.Connect(redisConnectionString));
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = redisConnectionString;
