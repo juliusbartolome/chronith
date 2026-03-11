@@ -12,6 +12,30 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
 {
     private const string BookingTypeSlug = "recurring-endpoints-type";
 
+    private static object BuildCreatePayload(
+        string frequency = "Weekly",
+        int interval = 1,
+        int[]? daysOfWeek = null,
+        int? maxOccurrences = null,
+        string? seriesEnd = null)
+    {
+        var customerId = Guid.NewGuid();
+        var seriesStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)).ToString("yyyy-MM-dd");
+        return new
+        {
+            customerId,
+            staffMemberId = null as Guid?,
+            frequency,
+            interval,
+            daysOfWeek,
+            startTime = "09:00:00",
+            duration = "01:00:00",
+            seriesStart,
+            seriesEnd,
+            maxOccurrences
+        };
+    }
+
     private async Task EnsureSeedAsync()
     {
         await using var db = SeedData.CreateDbContext(fixture.Factory);
@@ -25,14 +49,8 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring", new
-        {
-            frequency = "Weekly",
-            interval = 1,
-            daysOfWeek = new[] { 1, 3, 5 },
-            seriesStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)).ToString("yyyy-MM-dd"),
-            maxOccurrences = 10
-        });
+        var response = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring",
+            BuildCreatePayload(frequency: "Weekly", interval: 1, daysOfWeek: [1, 3, 5], maxOccurrences: 10));
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var rule = await response.ReadFromApiJsonAsync<RecurrenceRuleDto>();
@@ -41,6 +59,7 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         rule.Frequency.Should().Be(RecurrenceFrequency.Weekly);
         rule.Interval.Should().Be(1);
         rule.MaxOccurrences.Should().Be(10);
+        rule.IsActive.Should().BeTrue();
     }
 
     [Fact]
@@ -49,13 +68,11 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("Customer");
 
-        var response = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring", new
-        {
-            frequency = "Daily",
-            interval = 2,
-            seriesStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)).ToString("yyyy-MM-dd"),
-            seriesEnd = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)).ToString("yyyy-MM-dd")
-        });
+        var response = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring",
+            BuildCreatePayload(
+                frequency: "Daily",
+                interval: 2,
+                seriesEnd: DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)).ToString("yyyy-MM-dd")));
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
@@ -67,12 +84,8 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("TenantAdmin");
 
         // Create a rule first
-        await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring", new
-        {
-            frequency = "Monthly",
-            interval = 1,
-            seriesStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)).ToString("yyyy-MM-dd")
-        });
+        await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring",
+            BuildCreatePayload(frequency: "Monthly", interval: 1));
 
         var listResp = await client.GetAsync("/v1/recurring");
         listResp.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -88,13 +101,8 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         var adminClient = fixture.CreateClient("TenantAdmin");
 
         // Create
-        var createResp = await adminClient.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring", new
-        {
-            frequency = "Daily",
-            interval = 1,
-            seriesStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)).ToString("yyyy-MM-dd"),
-            maxOccurrences = 5
-        });
+        var createResp = await adminClient.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring",
+            BuildCreatePayload(frequency: "Daily", interval: 1, maxOccurrences: 5));
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = await createResp.ReadFromApiJsonAsync<RecurrenceRuleDto>();
 
@@ -114,21 +122,20 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("TenantAdmin");
 
         // Create
-        var createResp = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring", new
-        {
-            frequency = "Daily",
-            interval = 1,
-            seriesStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)).ToString("yyyy-MM-dd")
-        });
+        var createResp = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring",
+            BuildCreatePayload(frequency: "Daily", interval: 1));
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = await createResp.ReadFromApiJsonAsync<RecurrenceRuleDto>();
 
         // Update
         var updateResp = await client.PutAsJsonAsync($"/v1/recurring/{created!.Id}", new
         {
+            staffMemberId = null as Guid?,
             frequency = "Weekly",
             interval = 2,
             daysOfWeek = new[] { 1, 3 },
+            startTime = "10:00:00",
+            duration = "00:30:00",
             seriesStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)).ToString("yyyy-MM-dd"),
             maxOccurrences = 20
         });
@@ -148,12 +155,8 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("Customer");
 
         // Create
-        var createResp = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring", new
-        {
-            frequency = "Daily",
-            interval = 1,
-            seriesStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)).ToString("yyyy-MM-dd")
-        });
+        var createResp = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring",
+            BuildCreatePayload(frequency: "Daily", interval: 1));
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = await createResp.ReadFromApiJsonAsync<RecurrenceRuleDto>();
 
@@ -169,13 +172,8 @@ public sealed class RecurringEndpointsTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient("TenantAdmin");
 
         var start = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
-        var createResp = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring", new
-        {
-            frequency = "Daily",
-            interval = 1,
-            seriesStart = start.ToString("yyyy-MM-dd"),
-            maxOccurrences = 7
-        });
+        var createResp = await client.PostAsJsonAsync($"/v1/booking-types/{BookingTypeSlug}/recurring",
+            BuildCreatePayload(frequency: "Daily", interval: 1, maxOccurrences: 7));
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = await createResp.ReadFromApiJsonAsync<RecurrenceRuleDto>();
 

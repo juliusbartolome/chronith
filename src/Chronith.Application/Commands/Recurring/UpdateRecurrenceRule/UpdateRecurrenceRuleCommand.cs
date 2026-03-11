@@ -13,9 +13,12 @@ namespace Chronith.Application.Commands.Recurring.UpdateRecurrenceRule;
 public sealed record UpdateRecurrenceRuleCommand : IRequest<RecurrenceRuleDto>, IAuditable
 {
     public required Guid Id { get; init; }
+    public Guid? StaffMemberId { get; init; }
     public required RecurrenceFrequency Frequency { get; init; }
     public required int Interval { get; init; }
     public IReadOnlyList<DayOfWeek>? DaysOfWeek { get; init; }
+    public required TimeOnly StartTime { get; init; }
+    public required TimeSpan Duration { get; init; }
     public required DateOnly SeriesStart { get; init; }
     public DateOnly? SeriesEnd { get; init; }
     public int? MaxOccurrences { get; init; }
@@ -34,6 +37,7 @@ public sealed class UpdateRecurrenceRuleValidator : AbstractValidator<UpdateRecu
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Frequency).IsInEnum();
         RuleFor(x => x.Interval).GreaterThanOrEqualTo(1);
+        RuleFor(x => x.Duration).GreaterThan(TimeSpan.Zero);
         RuleFor(x => x.MaxOccurrences)
             .GreaterThanOrEqualTo(1)
             .When(x => x.MaxOccurrences.HasValue);
@@ -56,9 +60,12 @@ public sealed class UpdateRecurrenceRuleHandler(
             ?? throw new NotFoundException("RecurrenceRule", cmd.Id);
 
         rule.Update(
+            cmd.StaffMemberId,
             cmd.Frequency,
             cmd.Interval,
             cmd.DaysOfWeek,
+            cmd.StartTime,
+            cmd.Duration,
             cmd.SeriesStart,
             cmd.SeriesEnd,
             cmd.MaxOccurrences);

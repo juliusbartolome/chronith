@@ -9,11 +9,16 @@ public static class RecurrenceRuleMapper
         new(rule.Id,
             rule.TenantId,
             rule.BookingTypeId,
+            rule.CustomerId,
+            rule.StaffMemberId,
             rule.Frequency,
             rule.Interval,
             rule.DaysOfWeek,
+            rule.StartTime,
+            rule.Duration,
             rule.SeriesStart,
             rule.SeriesEnd,
             rule.MaxOccurrences,
+            rule.IsActive,
             rule.CreatedAt);
 }

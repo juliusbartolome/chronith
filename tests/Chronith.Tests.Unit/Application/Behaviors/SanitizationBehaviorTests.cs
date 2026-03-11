@@ -8,10 +8,10 @@ public sealed class SanitizationBehaviorTests
 {
     // ── Test request types ─────────────────────────────────────────────────
 
-    // MutableRequest uses regular (non-init) setters so the behavior can mutate it.
-    // Real application commands use required init-only properties (see InitOnlyRequest below),
-    // which the behavior silently skips. Tests that verify sanitization logic must use
-    // MutableRequest to exercise the actual mutation path.
+    // MutableRequest uses regular (non-init) setters to exercise the property-setter path.
+    // Real application commands use required init-only properties (see InitOnlyRequest/InitOnlyTestCommand below).
+    // After the backing-field fix, the behavior sanitizes both mutable and init-only string properties.
+    // MutableRequest exercises the non-init path; InitOnlyTestCommand exercises the backing-field path.
     private sealed class MutableRequest : IRequest<string>
     {
         public string Name { get; set; } = string.Empty;
@@ -26,6 +26,20 @@ public sealed class SanitizationBehaviorTests
     {
         public required string Title { get; init; }
         public required string Body { get; init; }
+    }
+
+    // Request with a computed getter-only string property — must never be written to.
+    private sealed class ComputedGetterRequest : IRequest<string>
+    {
+        public string First { get; set; } = string.Empty;
+        public string Last { get; set; } = string.Empty;
+        public string Full => $"{First} {Last}";
+    }
+
+    private sealed record InitOnlyTestCommand : IRequest<string>
+    {
+        public required string Name { get; init; }
+        public required string Description { get; init; }
     }
 
     // ── Tests ──────────────────────────────────────────────────────────────
@@ -118,7 +132,7 @@ public sealed class SanitizationBehaviorTests
     [Fact]
     public async Task Handle_WithInitOnlyRecordProperties_DoesNotThrow()
     {
-        // Arrange — init-only properties cannot be mutated; behavior must skip silently
+        // Arrange
         var request = new InitOnlyRequest { Title = "<b>Title</b>", Body = "<p>Body</p>" };
         var behavior = new SanitizationBehavior<InitOnlyRequest, string>();
         RequestHandlerDelegate<string> next = _ => Task.FromResult("ok");
@@ -126,11 +140,42 @@ public sealed class SanitizationBehaviorTests
         // Act
         Func<Task> act = async () => await behavior.Handle(request, next, CancellationToken.None);
 
-        // Assert — must not throw; init-only properties are silently skipped
+        // Assert — must not throw; init-only properties are sanitized via backing field
         await act.Should().NotThrowAsync();
-        // The values remain unchanged since init-only can't be set via reflection
-        request.Title.Should().Be("<b>Title</b>");
-        request.Body.Should().Be("<p>Body</p>");
+        request.Title.Should().Be("Title");
+        request.Body.Should().Be("Body");
+    }
+
+    [Fact]
+    public async Task Handle_StripsTags_FromInitOnlyProperties()
+    {
+        var behavior = new SanitizationBehavior<InitOnlyTestCommand, string>();
+        var cmd = new InitOnlyTestCommand
+        {
+            Name = "<script>alert(1)</script>Hello",
+            Description = "<b>Bold</b> text"
+        };
+
+        await behavior.Handle(cmd, _ => Task.FromResult(cmd.Name), CancellationToken.None);
+
+        cmd.Name.Should().Be("Hello");
+        cmd.Description.Should().Be("Bold text");
+    }
+
+    [Fact]
+    public async Task Handle_StripsDangerousBlock_FromInitOnlyProperties()
+    {
+        var behavior = new SanitizationBehavior<InitOnlyTestCommand, string>();
+        var cmd = new InitOnlyTestCommand
+        {
+            Name = "<style>body{display:none}</style>Safe",
+            Description = "Normal"
+        };
+
+        await behavior.Handle(cmd, _ => Task.FromResult(""), CancellationToken.None);
+
+        cmd.Name.Should().Be("Safe");
+        cmd.Description.Should().Be("Normal");
     }
 
     [Fact]
@@ -170,5 +215,23 @@ public sealed class SanitizationBehaviorTests
 
         // Assert
         request.Name.Should().Be("Click me");
+    }
+
+    [Fact]
+    public async Task Handle_WithGetterOnlyStringProperty_DoesNotThrow()
+    {
+        // Arrange — computed getter-only property has no setter; behavior must skip it silently
+        var request = new ComputedGetterRequest { First = "<b>John</b>", Last = "Doe" };
+        var behavior = new SanitizationBehavior<ComputedGetterRequest, string>();
+        RequestHandlerDelegate<string> next = _ => Task.FromResult("ok");
+
+        // Act
+        Func<Task> act = async () => await behavior.Handle(request, next, CancellationToken.None);
+
+        // Assert — must not throw; getter-only properties must be skipped
+        await act.Should().NotThrowAsync();
+        // Settable properties are still sanitized
+        request.First.Should().Be("John");
+        request.Last.Should().Be("Doe");
     }
 }

@@ -7,10 +7,9 @@ namespace Chronith.Application.Behaviors;
 
 /// <summary>
 /// Strips HTML tags from string properties of MediatR requests.
-/// NOTE: Properties with init-only setters (records with positional or required init properties)
-/// are skipped, as they cannot be mutated after construction. This behavior is effective for
-/// future commands using mutable properties or for commands that explicitly opt in by
-/// declaring settable string properties.
+/// Supports both mutable properties (set via property setter) and init-only properties
+/// (set via compiler-generated backing field reflection, the same technique used in
+/// infrastructure entity mappers).
 /// </summary>
 public sealed partial class SanitizationBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
@@ -31,7 +30,7 @@ public sealed partial class SanitizationBehavior<TRequest, TResponse>
     {
         var properties = typeof(TRequest)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.PropertyType == typeof(string) && p.CanWrite && !IsInitOnly(p));
+            .Where(p => p.PropertyType == typeof(string) && (p.CanWrite || IsInitOnly(p)));
 
         foreach (var property in properties)
         {
@@ -41,7 +40,21 @@ public sealed partial class SanitizationBehavior<TRequest, TResponse>
 
             var sanitized = DangerousBlockRegex().Replace(value, string.Empty);
             sanitized = HtmlTagRegex().Replace(sanitized, string.Empty);
-            property.SetValue(request, sanitized);
+
+            if (!IsInitOnly(property))
+            {
+                property.SetValue(request, sanitized);
+            }
+            else
+            {
+                // For init-only properties (record types with required init),
+                // the CLR blocks SetValue through the property accessor.
+                // Set the compiler-generated backing field directly instead.
+                var backingField = typeof(TRequest).GetField(
+                    $"<{property.Name}>k__BackingField",
+                    BindingFlags.NonPublic | BindingFlags.Instance);
+                backingField?.SetValue(request, sanitized);
+            }
         }
 
         return await next(cancellationToken);

@@ -12,17 +12,86 @@ public sealed class RecurrenceRuleTests
         DateOnly seriesStart,
         DateOnly? seriesEnd = null,
         int? maxOccurrences = null,
-        IReadOnlyList<DayOfWeek>? daysOfWeek = null)
+        IReadOnlyList<DayOfWeek>? daysOfWeek = null,
+        Guid? customerId = null,
+        Guid? staffMemberId = null,
+        TimeOnly? startTime = null,
+        TimeSpan? duration = null)
     {
         return RecurrenceRule.Create(
             tenantId: Guid.NewGuid(),
             bookingTypeId: Guid.NewGuid(),
+            customerId: customerId ?? Guid.NewGuid(),
+            staffMemberId: staffMemberId,
             frequency: frequency,
             interval: interval,
             daysOfWeek: daysOfWeek,
+            startTime: startTime ?? new TimeOnly(9, 0),
+            duration: duration ?? TimeSpan.FromHours(1),
             seriesStart: seriesStart,
             seriesEnd: seriesEnd,
             maxOccurrences: maxOccurrences);
+    }
+
+    [Fact]
+    public void Create_SetsCustomerIdAndStartTimeAndDuration()
+    {
+        var customerId = Guid.NewGuid();
+        var staffId = Guid.NewGuid();
+        var startTime = new TimeOnly(10, 30);
+        var duration = TimeSpan.FromMinutes(45);
+
+        var rule = RecurrenceRule.Create(
+            tenantId: Guid.NewGuid(),
+            bookingTypeId: Guid.NewGuid(),
+            customerId: customerId,
+            staffMemberId: staffId,
+            frequency: RecurrenceFrequency.Daily,
+            interval: 1,
+            daysOfWeek: null,
+            startTime: startTime,
+            duration: duration,
+            seriesStart: new DateOnly(2026, 1, 1),
+            seriesEnd: null,
+            maxOccurrences: 5);
+
+        rule.CustomerId.Should().Be(customerId);
+        rule.StaffMemberId.Should().Be(staffId);
+        rule.StartTime.Should().Be(startTime);
+        rule.Duration.Should().Be(duration);
+        rule.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Create_StaffMemberIdIsOptional()
+    {
+        var rule = RecurrenceRule.Create(
+            tenantId: Guid.NewGuid(),
+            bookingTypeId: Guid.NewGuid(),
+            customerId: Guid.NewGuid(),
+            staffMemberId: null,
+            frequency: RecurrenceFrequency.Weekly,
+            interval: 1,
+            daysOfWeek: null,
+            startTime: new TimeOnly(9, 0),
+            duration: TimeSpan.FromHours(1),
+            seriesStart: new DateOnly(2026, 1, 5),
+            seriesEnd: null,
+            maxOccurrences: 10);
+
+        rule.StaffMemberId.Should().BeNull();
+        rule.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void SoftDelete_SetsIsActiveToFalse()
+    {
+        var rule = CreateRule(RecurrenceFrequency.Daily, 1, new DateOnly(2026, 1, 1));
+
+        rule.SoftDelete();
+
+        rule.IsActive.Should().BeFalse();
+        rule.IsDeleted.Should().BeTrue();
     }
 
     [Fact]

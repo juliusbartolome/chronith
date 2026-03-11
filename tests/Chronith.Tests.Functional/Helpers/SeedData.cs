@@ -306,9 +306,13 @@ public static class SeedData
     public static async Task<Guid> SeedRecurrenceRuleAsync(
         ChronithDbContext db,
         Guid bookingTypeId,
+        Guid? customerId = null,
+        Guid? staffMemberId = null,
         string frequency = "Weekly",
         int interval = 1,
         int[]? daysOfWeek = null,
+        TimeOnly? startTime = null,
+        TimeSpan? duration = null,
         DateOnly? seriesStart = null,
         DateOnly? seriesEnd = null,
         int? maxOccurrences = null)
@@ -319,12 +323,17 @@ public static class SeedData
             Id = id,
             TenantId = TestConstants.TenantId,
             BookingTypeId = bookingTypeId,
+            CustomerId = customerId ?? Guid.NewGuid(),
+            StaffMemberId = staffMemberId,
             Frequency = frequency,
             Interval = interval,
             DaysOfWeek = daysOfWeek,
+            StartTime = startTime ?? new TimeOnly(9, 0),
+            Duration = duration ?? TimeSpan.FromHours(1),
             SeriesStart = seriesStart ?? DateOnly.FromDateTime(DateTime.UtcNow),
             SeriesEnd = seriesEnd,
             MaxOccurrences = maxOccurrences,
+            IsActive = true,
             IsDeleted = false,
             CreatedAt = DateTimeOffset.UtcNow
         });

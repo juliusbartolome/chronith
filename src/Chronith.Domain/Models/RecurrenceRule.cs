@@ -7,12 +7,17 @@ public sealed class RecurrenceRule
     public Guid Id { get; private set; }
     public Guid TenantId { get; private set; }
     public Guid BookingTypeId { get; private set; }
+    public Guid CustomerId { get; private set; }
+    public Guid? StaffMemberId { get; private set; }
     public RecurrenceFrequency Frequency { get; private set; }
     public int Interval { get; private set; } = 1;
     public IReadOnlyList<DayOfWeek>? DaysOfWeek { get; private set; }
+    public TimeOnly StartTime { get; private set; }
+    public TimeSpan Duration { get; private set; }
     public DateOnly SeriesStart { get; private set; }
     public DateOnly? SeriesEnd { get; private set; }
     public int? MaxOccurrences { get; private set; }
+    public bool IsActive { get; private set; }
     public bool IsDeleted { get; private set; }
     public uint RowVersion { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
@@ -24,9 +29,13 @@ public sealed class RecurrenceRule
     public static RecurrenceRule Create(
         Guid tenantId,
         Guid bookingTypeId,
+        Guid customerId,
+        Guid? staffMemberId,
         RecurrenceFrequency frequency,
         int interval,
         IReadOnlyList<DayOfWeek>? daysOfWeek,
+        TimeOnly startTime,
+        TimeSpan duration,
         DateOnly seriesStart,
         DateOnly? seriesEnd,
         int? maxOccurrences)
@@ -41,12 +50,17 @@ public sealed class RecurrenceRule
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             BookingTypeId = bookingTypeId,
+            CustomerId = customerId,
+            StaffMemberId = staffMemberId,
             Frequency = frequency,
             Interval = interval,
             DaysOfWeek = daysOfWeek,
+            StartTime = startTime,
+            Duration = duration,
             SeriesStart = seriesStart,
             SeriesEnd = seriesEnd,
             MaxOccurrences = maxOccurrences,
+            IsActive = true,
             IsDeleted = false,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -56,12 +70,17 @@ public sealed class RecurrenceRule
         Guid id,
         Guid tenantId,
         Guid bookingTypeId,
+        Guid customerId,
+        Guid? staffMemberId,
         RecurrenceFrequency frequency,
         int interval,
         IReadOnlyList<DayOfWeek>? daysOfWeek,
+        TimeOnly startTime,
+        TimeSpan duration,
         DateOnly seriesStart,
         DateOnly? seriesEnd,
         int? maxOccurrences,
+        bool isActive,
         bool isDeleted,
         uint rowVersion,
         DateTimeOffset createdAt) => new()
@@ -69,21 +88,29 @@ public sealed class RecurrenceRule
         Id = id,
         TenantId = tenantId,
         BookingTypeId = bookingTypeId,
+        CustomerId = customerId,
+        StaffMemberId = staffMemberId,
         Frequency = frequency,
         Interval = interval,
         DaysOfWeek = daysOfWeek,
+        StartTime = startTime,
+        Duration = duration,
         SeriesStart = seriesStart,
         SeriesEnd = seriesEnd,
         MaxOccurrences = maxOccurrences,
+        IsActive = isActive,
         IsDeleted = isDeleted,
         RowVersion = rowVersion,
         CreatedAt = createdAt
     };
 
     public void Update(
+        Guid? staffMemberId,
         RecurrenceFrequency frequency,
         int interval,
         IReadOnlyList<DayOfWeek>? daysOfWeek,
+        TimeOnly startTime,
+        TimeSpan duration,
         DateOnly seriesStart,
         DateOnly? seriesEnd,
         int? maxOccurrences)
@@ -93,15 +120,22 @@ public sealed class RecurrenceRule
         if (seriesEnd.HasValue && seriesEnd.Value < seriesStart)
             throw new ArgumentException("SeriesEnd cannot be before SeriesStart.", nameof(seriesEnd));
 
+        StaffMemberId = staffMemberId;
         Frequency = frequency;
         Interval = interval;
         DaysOfWeek = daysOfWeek;
+        StartTime = startTime;
+        Duration = duration;
         SeriesStart = seriesStart;
         SeriesEnd = seriesEnd;
         MaxOccurrences = maxOccurrences;
     }
 
-    public void SoftDelete() => IsDeleted = true;
+    public void SoftDelete()
+    {
+        IsActive = false;
+        IsDeleted = true;
+    }
 
     /// <summary>
     /// Computes occurrence dates within the given [from, to] range,

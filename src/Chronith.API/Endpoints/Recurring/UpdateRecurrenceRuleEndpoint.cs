@@ -12,9 +12,12 @@ public sealed class UpdateRecurrenceRuleRequest
     public Guid Id { get; set; }
 
     // Body
+    public Guid? StaffMemberId { get; set; }
     public RecurrenceFrequency Frequency { get; set; }
     public int Interval { get; set; } = 1;
     public IReadOnlyList<DayOfWeek>? DaysOfWeek { get; set; }
+    public TimeOnly StartTime { get; set; }
+    public TimeSpan Duration { get; set; }
     public DateOnly SeriesStart { get; set; }
     public DateOnly? SeriesEnd { get; set; }
     public int? MaxOccurrences { get; set; }
@@ -35,9 +38,12 @@ public sealed class UpdateRecurrenceRuleEndpoint(ISender sender)
         var result = await sender.Send(new UpdateRecurrenceRuleCommand
         {
             Id = req.Id,
+            StaffMemberId = req.StaffMemberId,
             Frequency = req.Frequency,
             Interval = req.Interval,
             DaysOfWeek = req.DaysOfWeek,
+            StartTime = req.StartTime,
+            Duration = req.Duration,
             SeriesStart = req.SeriesStart,
             SeriesEnd = req.SeriesEnd,
             MaxOccurrences = req.MaxOccurrences

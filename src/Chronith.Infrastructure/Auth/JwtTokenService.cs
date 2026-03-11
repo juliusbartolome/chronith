@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Chronith.Application.Interfaces;
+using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -78,5 +79,77 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
         var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(raw));
         var hash = Convert.ToHexStringLower(hashBytes);
         return (raw, hash);
+    }
+
+    public string CreateMagicLinkToken(Customer customer, string tenantSlug)
+    {
+        var signingKey = GetPrimarySigningKey();
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, customer.Id.ToString()),
+            new Claim("email", customer.Email),
+            new Claim("tenantSlug", tenantSlug),
+            new Claim("purpose", "magic-link-verify"),
+        };
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(24),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public Guid ValidateMagicLinkToken(string token, string tenantSlug)
+    {
+        try
+        {
+            var signingKey = GetPrimarySigningKey();
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            var handler = new JwtSecurityTokenHandler();
+            var principal = handler.ValidateToken(token, validationParameters, out _);
+
+            var purpose = principal.FindFirstValue("purpose");
+            if (purpose != "magic-link-verify")
+                throw new UnauthorizedException("Invalid token purpose.");
+
+            var tokenTenantSlug = principal.FindFirstValue("tenantSlug");
+            if (tokenTenantSlug != tenantSlug)
+                throw new UnauthorizedException("Tenant slug mismatch.");
+
+            var sub = principal.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (sub is null || !Guid.TryParse(sub, out var customerId))
+                throw new UnauthorizedException("Invalid token subject.");
+
+            return customerId;
+        }
+        catch (UnauthorizedException)
+        {
+            throw;
+        }
+        catch (SecurityTokenException)
+        {
+            throw new UnauthorizedException("Invalid or expired magic link token.");
+        }
+        catch (ArgumentException)
+        {
+            throw new UnauthorizedException("Invalid or expired magic link token.");
+        }
     }
 }
