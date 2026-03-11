@@ -1,9 +1,10 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Chronith.Application.Interfaces;
 
 namespace Chronith.Infrastructure.Telemetry;
 
-public sealed class ChronithMetrics
+public sealed class ChronithMetrics : IBookingMetrics
 {
     public const string MeterName = "Chronith.API";
 

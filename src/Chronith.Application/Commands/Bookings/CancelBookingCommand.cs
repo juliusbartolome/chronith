@@ -43,7 +43,8 @@ public sealed class CancelBookingHandler(
     ITenantContext tenantContext,
     IBookingRepository bookingRepo,
     IUnitOfWork unitOfWork,
-    IPublisher publisher)
+    IPublisher publisher,
+    IBookingMetrics metrics)
     : IRequestHandler<CancelBookingCommand, BookingDto>
 {
     public async Task<BookingDto> Handle(CancelBookingCommand cmd, CancellationToken ct)
@@ -64,6 +65,8 @@ public sealed class CancelBookingHandler(
         var from = booking.Status;
         booking.Cancel(tenantContext.UserId, tenantContext.Role);
         await bookingRepo.UpdateAsync(booking, ct);
+
+        metrics.RecordBookingCancelled(tenantContext.TenantId.ToString());
 
         await publisher.Publish(
             new Notifications.BookingStatusChangedNotification(

@@ -1,10 +1,11 @@
 using System.Text.Json;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
-using Chronith.Application.Telemetry;
+using AppTelemetry = Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Notifications;
+using Chronith.Infrastructure.Telemetry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,7 @@ public sealed class NotificationDispatcherService(
     ITemplateRenderer templateRenderer,
     IOptions<NotificationDispatcherOptions> options,
     IBackgroundServiceHealthTracker healthTracker,
+    ChronithMetrics metrics,
     ILogger<NotificationDispatcherService> logger)
     : BackgroundService
 {
@@ -80,7 +82,7 @@ public sealed class NotificationDispatcherService(
             return;
         }
 
-        using var activity = ChronithActivitySource.StartNotificationDispatch(entry.TenantId, channelType);
+        using var activity = AppTelemetry.ChronithActivitySource.StartNotificationDispatch(entry.TenantId, channelType);
 
         var channel = channelFactory.GetChannel(channelType);
         if (channel is null)
@@ -158,6 +160,8 @@ public sealed class NotificationDispatcherService(
 
             await channel.SendAsync(message, ct);
             await outboxRepo.MarkDeliveredAsync(entry.Id, now, ct);
+
+            metrics.RecordNotificationSent(entry.TenantId.ToString(), channelType);
 
             logger.LogInformation(
                 "Delivered notification {EntryId} via {ChannelType}",

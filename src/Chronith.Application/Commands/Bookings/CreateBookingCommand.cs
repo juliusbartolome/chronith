@@ -46,7 +46,8 @@ public sealed class CreateBookingHandler(
     ITenantRepository tenantRepo,
     IUnitOfWork unitOfWork,
     IPublisher publisher,
-    IPaymentProviderFactory paymentProviderFactory)
+    IPaymentProviderFactory paymentProviderFactory,
+    IBookingMetrics metrics)
     : IRequestHandler<CreateBookingCommand, BookingDto>
 {
     private static readonly BookingStatus[] ConflictStatuses =
@@ -103,6 +104,10 @@ public sealed class CreateBookingHandler(
 
         activity?.SetTag("booking.id", booking.Id.ToString());
 
+        metrics.RecordBookingCreated(
+            tenantContext.TenantId.ToString(),
+            bookingType is TimeSlotBookingType ? "TimeSlot" : "Calendar");
+
         // For Automatic payment mode with a non-free booking, create a checkout session
         if (bookingType.PaymentMode == PaymentMode.Automatic && bookingType.PriceInCentavos > 0)
         {
@@ -119,6 +124,8 @@ public sealed class CreateBookingHandler(
                 ct);
 
             booking.SetCheckoutDetails(checkoutResult.CheckoutUrl, checkoutResult.ProviderTransactionId);
+
+            metrics.RecordPaymentProcessed(tenantContext.TenantId.ToString(), providerName);
 
             // Persist the updated PaymentReference and CheckoutUrl. The booking was
             // committed inside the advisory-lock transaction above, so the tracked entity

@@ -2,9 +2,10 @@ using System.Security.Cryptography;
 using System.Text;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
-using Chronith.Application.Telemetry;
+using AppTelemetry = Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
+using Chronith.Infrastructure.Telemetry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ public sealed class WebhookDispatcherService(
     IHttpClientFactory httpClientFactory,
     IOptions<WebhookDispatcherOptions> options,
     IBackgroundServiceHealthTracker healthTracker,
+    ChronithMetrics metrics,
     ILogger<WebhookDispatcherService> logger)
     : BackgroundService
 {
@@ -103,7 +105,7 @@ public sealed class WebhookDispatcherService(
         IWebhookOutboxRepository outboxRepo,
         CancellationToken ct)
     {
-        using var activity = ChronithActivitySource.StartWebhookDispatch(entry.TenantId, entry.Id);
+        using var activity = AppTelemetry.ChronithActivitySource.StartWebhookDispatch(entry.TenantId, entry.Id);
         var now = DateTimeOffset.UtcNow;
         var httpClient = httpClientFactory.CreateClient("WebhookDispatcher");
 
@@ -123,6 +125,7 @@ public sealed class WebhookDispatcherService(
             if (response.IsSuccessStatusCode)
             {
                 await outboxRepo.MarkDeliveredAsync(entry.Id, now, ct);
+                metrics.RecordWebhookDispatched(entry.TenantId.ToString());
                 logger.LogInformation("Delivered outbox entry {EntryId} to {Url}", entry.Id, url);
             }
             else

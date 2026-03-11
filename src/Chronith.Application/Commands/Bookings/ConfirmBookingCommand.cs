@@ -39,7 +39,8 @@ public sealed class ConfirmBookingHandler(
     ITenantContext tenantContext,
     IBookingRepository bookingRepo,
     IUnitOfWork unitOfWork,
-    IPublisher publisher)
+    IPublisher publisher,
+    IBookingMetrics metrics)
     : IRequestHandler<ConfirmBookingCommand, BookingDto>
 {
     public async Task<BookingDto> Handle(ConfirmBookingCommand cmd, CancellationToken ct)
@@ -52,6 +53,8 @@ public sealed class ConfirmBookingHandler(
         var from = booking.Status;
         booking.Confirm(tenantContext.UserId, tenantContext.Role);
         await bookingRepo.UpdateAsync(booking, ct);
+
+        metrics.RecordBookingConfirmed(tenantContext.TenantId.ToString());
 
         await publisher.Publish(
             new Notifications.BookingStatusChangedNotification(

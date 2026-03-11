@@ -1,14 +1,16 @@
+using System.Diagnostics.Metrics;
+using System.Net;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Services;
+using Chronith.Infrastructure.Telemetry;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using System.Net;
 
 namespace Chronith.Tests.Unit.Infrastructure;
 
@@ -55,9 +57,17 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
         var logger = Substitute.For<ILogger<WebhookDispatcherService>>();
         var healthTracker = Substitute.For<IBackgroundServiceHealthTracker>();
 
-        var sut = new WebhookDispatcherService(scopeFactory, httpClientFactory, options, healthTracker, logger);
+        var sut = new WebhookDispatcherService(scopeFactory, httpClientFactory, options, healthTracker, CreateMetrics(), logger);
 
         return (sut, outboxRepo, webhookRepo, httpHandler);
+    }
+
+    private static ChronithMetrics CreateMetrics()
+    {
+        var services = new ServiceCollection();
+        services.AddMetrics();
+        var sp = services.BuildServiceProvider();
+        return new ChronithMetrics(sp.GetRequiredService<IMeterFactory>());
     }
 
     [Fact]
