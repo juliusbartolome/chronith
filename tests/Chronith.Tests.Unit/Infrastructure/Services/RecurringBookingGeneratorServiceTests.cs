@@ -223,7 +223,7 @@ public sealed class RecurringBookingGeneratorServiceTests
 
         // Booking type not found (returns null)
         bookingTypeRepo.GetByIdAcrossTenantsAsync(BookingTypeId, Arg.Any<CancellationToken>())
-            .Returns(null as BookingType);
+            .Returns(default(BookingType?));
 
         // Act
         var act = async () => await sut.GenerateBookingsAsync(CancellationToken.None);
@@ -252,7 +252,7 @@ public sealed class RecurringBookingGeneratorServiceTests
 
         // Tenant not found
         tenantRepo.GetByIdAsync(TenantId, Arg.Any<CancellationToken>())
-            .Returns(null as Tenant);
+            .Returns(default(Tenant?));
 
         // Act
         var act = async () => await sut.GenerateBookingsAsync(CancellationToken.None);
@@ -285,7 +285,7 @@ public sealed class RecurringBookingGeneratorServiceTests
 
         // Customer not found
         customerRepo.GetByIdAcrossTenantsAsync(CustomerId, Arg.Any<CancellationToken>())
-            .Returns(null as Customer);
+            .Returns(default(Customer?));
 
         // Act
         var act = async () => await sut.GenerateBookingsAsync(CancellationToken.None);
