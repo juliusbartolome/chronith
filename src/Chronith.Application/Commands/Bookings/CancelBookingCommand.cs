@@ -66,8 +66,6 @@ public sealed class CancelBookingHandler(
         booking.Cancel(tenantContext.UserId, tenantContext.Role);
         await bookingRepo.UpdateAsync(booking, ct);
 
-        metrics.RecordBookingCancelled(tenantContext.TenantId.ToString());
-
         await publisher.Publish(
             new Notifications.BookingStatusChangedNotification(
                 BookingId: booking.Id,
@@ -83,6 +81,8 @@ public sealed class CancelBookingHandler(
             ct);
 
         await unitOfWork.SaveChangesAsync(ct);
+
+        metrics.RecordBookingCancelled(tenantContext.TenantId.ToString());
 
         return booking.ToDto();
     }

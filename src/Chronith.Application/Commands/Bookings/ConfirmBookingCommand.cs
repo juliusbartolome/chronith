@@ -54,8 +54,6 @@ public sealed class ConfirmBookingHandler(
         booking.Confirm(tenantContext.UserId, tenantContext.Role);
         await bookingRepo.UpdateAsync(booking, ct);
 
-        metrics.RecordBookingConfirmed(tenantContext.TenantId.ToString());
-
         await publisher.Publish(
             new Notifications.BookingStatusChangedNotification(
                 BookingId: booking.Id,
@@ -71,6 +69,8 @@ public sealed class ConfirmBookingHandler(
             ct);
 
         await unitOfWork.SaveChangesAsync(ct);
+
+        metrics.RecordBookingConfirmed(tenantContext.TenantId.ToString());
 
         return booking.ToDto();
     }
