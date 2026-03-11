@@ -26,15 +26,8 @@ public sealed class CustomerRepository(ChronithDbContext db) : ICustomerReposito
         return entity?.ToDomain();
     }
 
-    public async Task<Customer?> GetByIdAcrossTenantsAsync(Guid customerId, CancellationToken ct = default)
-    {
-        var entity = await db.Customers
-            .TagWith("GetByIdAcrossTenantsAsync — CustomerRepository")
-            .AsNoTracking()
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Id == customerId && !c.IsDeleted, ct);
-        return entity?.ToDomain();
-    }
+    public Task<Customer?> GetByIdAcrossTenantsAsync(Guid customerId, CancellationToken ct = default)
+        => GetByIdCrossTenantAsync(customerId, ct);
 
     public async Task<Customer?> GetByEmailAsync(Guid tenantId, string email, CancellationToken ct = default)
     {
