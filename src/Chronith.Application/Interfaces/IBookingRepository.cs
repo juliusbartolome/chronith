@@ -64,4 +64,13 @@ public interface IBookingRepository
     /// </summary>
     Task<IReadOnlyList<(Guid Id, DateTimeOffset Start, DateTimeOffset End)>> GetICalEntriesAsync(
         Guid bookingTypeId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Flat projection with booking type name and staff name joined — for export only.
+    /// </summary>
+    Task<IReadOnlyList<BookingExportRowDto>> ListForExportAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        CancellationToken ct = default);
 }

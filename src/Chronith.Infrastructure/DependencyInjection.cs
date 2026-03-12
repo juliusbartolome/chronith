@@ -3,6 +3,7 @@ using Chronith.Application.Options;
 using Chronith.Application.Services;
 using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Caching;
+using Chronith.Infrastructure.Export;
 using Chronith.Infrastructure.Notifications;
 using Chronith.Infrastructure.Payments;
 using Chronith.Infrastructure.Payments.PayMongo;
@@ -123,6 +124,10 @@ public static class DependencyInjection
         services.Configure<MayaOptions>(configuration.GetSection("PaymentProviders:Maya"));
         services.AddSingleton<IPaymentProvider, MayaProvider>();
         services.AddSingleton<IPaymentProviderFactory, PaymentProviderFactory>();
+
+        // Export services
+        services.AddScoped<ICsvExportService, CsvExportService>();
+        services.AddScoped<IPdfExportService, PdfExportService>();
 
         // Encryption
         services.Configure<EncryptionOptions>(configuration.GetSection(EncryptionOptions.SectionName));
