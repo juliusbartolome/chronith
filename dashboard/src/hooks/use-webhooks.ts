@@ -116,6 +116,7 @@ export function useRetryWebhookDelivery(bookingTypeSlug: string) {
 }
 
 export function useTestWebhook(bookingTypeSlug: string) {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: async (webhookId: string) => {
       const res = await fetch(
@@ -125,5 +126,7 @@ export function useTestWebhook(bookingTypeSlug: string) {
       if (!res.ok) throw new Error("Failed to send test event");
       return res.json();
     },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["webhooks", bookingTypeSlug] }),
   });
 }

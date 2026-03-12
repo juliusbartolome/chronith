@@ -62,6 +62,7 @@ function CreateWebhookDialog({
   const [url, setUrl] = useState("");
   const [secret, setSecret] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+  const [createError, setCreateError] = useState<string | null>(null);
   const create = useCreateWebhook(bookingTypeSlug);
 
   const toggleEvent = (event: string) => {
@@ -71,16 +72,23 @@ function CreateWebhookDialog({
   };
 
   const handleCreate = async () => {
-    await create.mutateAsync({
-      url,
-      events: selectedEvents,
-      ...(secret ? { secret } : {}),
-    });
-    setOpen(false);
-    setUrl("");
-    setSecret("");
-    setSelectedEvents([]);
-    onCreated?.();
+    setCreateError(null);
+    try {
+      await create.mutateAsync({
+        url,
+        events: selectedEvents,
+        secret: secret || undefined,
+      });
+      setOpen(false);
+      setUrl("");
+      setSecret("");
+      setSelectedEvents([]);
+      onCreated?.();
+    } catch (err) {
+      setCreateError(
+        err instanceof Error ? err.message : "Failed to create webhook",
+      );
+    }
   };
 
   const isDisabled = !url || selectedEvents.length === 0 || create.isPending;
@@ -108,6 +116,7 @@ function CreateWebhookDialog({
             <Label htmlFor="webhook-secret">Secret (optional)</Label>
             <Input
               id="webhook-secret"
+              type="password"
               placeholder="Signing secret"
               value={secret}
               onChange={(e) => setSecret(e.target.value)}
@@ -132,6 +141,9 @@ function CreateWebhookDialog({
               ))}
             </div>
           </div>
+          {createError && (
+            <p className="text-sm text-red-600">{createError}</p>
+          )}
         </div>
         <DialogFooter>
           <Button onClick={handleCreate} disabled={isDisabled}>
@@ -149,17 +161,30 @@ interface DeliveriesRowProps {
 }
 
 function DeliveriesRow({ bookingTypeSlug, webhookId }: DeliveriesRowProps) {
-  const { data: deliveries = [], isLoading } = useWebhookDeliveries(
+  const { data: deliveries = [], isLoading, isError } = useWebhookDeliveries(
     bookingTypeSlug,
     webhookId,
   );
   const retry = useRetryWebhookDelivery(bookingTypeSlug);
+  const [pendingDeliveryId, setPendingDeliveryId] = useState<string | null>(
+    null,
+  );
 
   if (isLoading) {
     return (
       <TableRow>
         <TableCell colSpan={5} className="text-sm text-zinc-500">
           Loading deliveries…
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  if (isError) {
+    return (
+      <TableRow>
+        <TableCell colSpan={5} className="text-sm text-red-600">
+          Failed to load deliveries.
         </TableCell>
       </TableRow>
     );
@@ -196,13 +221,18 @@ function DeliveriesRow({ bookingTypeSlug, webhookId }: DeliveriesRowProps) {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() =>
-                  retry.mutateAsync({
-                    webhookId,
-                    deliveryId: delivery.id,
-                  })
-                }
-                disabled={retry.isPending}
+                onClick={async () => {
+                  setPendingDeliveryId(delivery.id);
+                  try {
+                    await retry.mutateAsync({
+                      webhookId,
+                      deliveryId: delivery.id,
+                    });
+                  } finally {
+                    setPendingDeliveryId(null);
+                  }
+                }}
+                disabled={pendingDeliveryId === delivery.id}
               >
                 Retry
               </Button>
@@ -256,7 +286,9 @@ function WebhookRow({ webhook, bookingTypeSlug }: WebhookRowProps) {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => testWebhook.mutateAsync(webhook.id)}
+              onClick={() =>
+                testWebhook.mutateAsync(webhook.id).catch(() => {})
+              }
               disabled={testWebhook.isPending}
             >
               Test
@@ -264,7 +296,9 @@ function WebhookRow({ webhook, bookingTypeSlug }: WebhookRowProps) {
             <Button
               size="sm"
               variant="destructive"
-              onClick={() => deleteWebhook.mutateAsync(webhook.id)}
+              onClick={() =>
+                deleteWebhook.mutateAsync(webhook.id).catch(() => {})
+              }
               disabled={deleteWebhook.isPending}
             >
               Delete
@@ -304,7 +338,7 @@ interface WebhooksSectionProps {
 }
 
 export function WebhooksSection({ bookingTypeSlug }: WebhooksSectionProps) {
-  const { data: webhooks = [], isLoading } = useWebhooks(bookingTypeSlug);
+  const { data: webhooks, isLoading, isError } = useWebhooks(bookingTypeSlug);
 
   return (
     <Card>
@@ -315,8 +349,10 @@ export function WebhooksSection({ bookingTypeSlug }: WebhooksSectionProps) {
       <CardContent>
         {isLoading ? (
           <p className="text-sm text-zinc-500">Loading…</p>
-        ) : webhooks.length === 0 ? (
-          <p className="text-sm text-zinc-500">
+        ) : isError ? (
+          <p className="text-sm text-red-600">Failed to load webhooks.</p>
+        ) : !webhooks || webhooks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
             No webhooks configured. Add one to receive event notifications.
           </p>
         ) : (
