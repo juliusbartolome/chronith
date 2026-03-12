@@ -194,6 +194,19 @@ function RevenueTab() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      <div className="bg-white rounded-xl border border-neutral-200 p-6">
+        <h3 className="text-sm font-medium text-neutral-500 mb-4">Revenue by Staff Member</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={data.byStaffMember}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="staffMemberName" tick={{ fontSize: 12 }} />
+            <YAxis tickFormatter={(v) => `₱${Number(v).toFixed(0)}`} tick={{ fontSize: 12 }} />
+            <Tooltip formatter={(v) => [`₱${(Number(v) / 100).toFixed(2)}`, "Revenue"]} />
+            <Bar dataKey="totalRevenueCentavos" fill="#6366f1" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
