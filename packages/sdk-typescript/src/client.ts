@@ -19,11 +19,10 @@ export class ChronithClient {
 
     OpenAPI.BASE = options.baseUrl;
     OpenAPI.HEADERS = async () => {
-      const authHeader = this.getAuthHeader();
-      if (authHeader) {
-        return { Authorization: authHeader };
-      }
-      return {} as Record<string, string>;
+      return {
+        "X-Correlation-Id": this.correlationId,
+        ...this.getAuthHeaders(),
+      };
     };
   }
 
@@ -42,13 +41,13 @@ export class ChronithClient {
     this._apiKey = null;
   }
 
-  getAuthHeader(): string | null {
+  getAuthHeaders(): Record<string, string> {
     if (this._token) {
-      return `Bearer ${this._token}`;
+      return { Authorization: `Bearer ${this._token}` };
     }
     if (this._apiKey) {
-      return `ApiKey ${this._apiKey}`;
+      return { "X-Api-Key": this._apiKey };
     }
-    return null;
+    return {};
   }
 }

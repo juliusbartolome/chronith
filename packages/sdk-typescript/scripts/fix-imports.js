@@ -9,10 +9,15 @@ const generatedDir = new URL("../src/generated", import.meta.url).pathname;
 
 function fixFile(filePath) {
   const content = readFileSync(filePath, "utf8");
-  // Add .js to relative imports that lack an extension
-  const fixed = content.replace(
+  // Add .js to relative single-quoted imports that lack an extension
+  let fixed = content.replace(
     /from '(\.\.?\/[^']+)(?<!\.js)(?<!\.json)'/g,
     (match, p1) => `from '${p1}.js'`
+  );
+  // Add .js to relative double-quoted imports that lack an extension
+  fixed = fixed.replace(
+    /from "(\.\.?\/[^"]+)(?<!\.js)(?<!\.json)"/g,
+    (match, p1) => `from "${p1}.js"`
   );
   if (fixed !== content) {
     writeFileSync(filePath, fixed, "utf8");
