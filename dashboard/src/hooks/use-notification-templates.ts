@@ -2,11 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface NotificationTemplateDto {
   id: string;
+  tenantId: string;
   eventType: string;
-  channel: "Email" | "Sms" | "Push";
-  subjectTemplate?: string;
-  bodyTemplate: string;
-  variables: string[];
+  channelType: "Email" | "Sms" | "Push";
+  subject?: string;
+  body: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -30,7 +33,7 @@ export function useUpdateNotificationTemplate() {
       data,
     }: {
       id: string;
-      data: { subjectTemplate?: string; bodyTemplate: string };
+      data: { subject?: string; body: string; isActive: boolean };
     }) => {
       const res = await fetch(`/api/notification-templates/${id}`, {
         method: "PUT",
@@ -48,8 +51,8 @@ export function useUpdateNotificationTemplate() {
 export function useResetNotificationTemplate() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/notification-templates/${id}/reset`, {
+    mutationFn: async (eventType: string) => {
+      const res = await fetch(`/api/notification-templates/reset/${eventType}`, {
         method: "POST",
       });
       if (!res.ok) throw new Error(await res.text());
@@ -72,7 +75,7 @@ export function usePreviewNotificationTemplate() {
       const res = await fetch(`/api/notification-templates/${id}/preview`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sampleData }),
+        body: JSON.stringify({ variables: sampleData }),
       });
       if (!res.ok) throw new Error(await res.text());
       return res.json() as Promise<{ subject?: string; body: string }>;

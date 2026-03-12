@@ -7,9 +7,9 @@ import NotificationsPage from './page'
 vi.mock('@/hooks/use-notifications', () => ({
   useNotificationConfigs: vi.fn(() => ({
     data: [
-      { id: '1', channel: 'Email', isEnabled: true, fromEmail: 'noreply@example.com' },
-      { id: '2', channel: 'Sms', isEnabled: false },
-      { id: '3', channel: 'Push', isEnabled: false },
+      { id: '1', channelType: 'Email', isEnabled: true, settings: '{}' },
+      { id: '2', channelType: 'Sms', isEnabled: false, settings: '{}' },
+      { id: '3', channelType: 'Push', isEnabled: false, settings: '{}' },
     ],
     isLoading: false,
   })),
@@ -22,11 +22,14 @@ vi.mock('@/hooks/use-notification-templates', () => ({
     data: [
       {
         id: 'tmpl-1',
+        tenantId: 'tenant-1',
         eventType: 'BookingConfirmed',
-        channel: 'Email',
-        subjectTemplate: 'Booking Confirmed',
-        bodyTemplate: 'Your booking {{bookingId}} is confirmed.',
-        variables: ['bookingId', 'customerName'],
+        channelType: 'Email',
+        subject: 'Booking Confirmed',
+        body: 'Your booking {{bookingId}} is confirmed.',
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
       },
     ],
     isLoading: false,
@@ -50,7 +53,7 @@ describe('NotificationsPage', () => {
 
   it('shows email channel as enabled', () => {
     render(<NotificationsPage />, { wrapper })
-    expect(screen.getByText('noreply@example.com')).toBeInTheDocument()
+    expect(screen.getAllByText('Configured').length).toBeGreaterThan(0)
   })
 
   it('switches to Templates tab', async () => {

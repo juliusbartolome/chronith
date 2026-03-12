@@ -2,15 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface NotificationConfigDto {
   id: string;
-  channel: "Email" | "Sms" | "Push";
+  channelType: "Email" | "Sms" | "Push";
   isEnabled: boolean;
-  smtpHost?: string;
-  smtpPort?: number;
-  smtpUsername?: string;
-  fromEmail?: string;
-  twilioAccountSid?: string;
-  twilioFromNumber?: string;
-  firebaseProjectId?: string;
+  settings: string; // opaque encrypted JSON string
+  createdAt: string;
+  updatedAt: string;
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -34,7 +30,7 @@ export function useUpdateNotificationConfig() {
       data,
     }: {
       channel: string;
-      data: Partial<NotificationConfigDto>;
+      data: { channelType: string; settings: string };
     }) => {
       const res = await fetch(`/api/notifications/config/${channel}`, {
         method: "PUT",

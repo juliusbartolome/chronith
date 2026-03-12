@@ -11,9 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import {
   useNotificationConfigs,
   useUpdateNotificationConfig,
@@ -41,9 +41,12 @@ function ChannelCard({ config }: { config: NotificationConfigDto }) {
 
   const handleToggle = async (enabled: boolean) => {
     if (!enabled) {
-      await disable.mutateAsync(config.channel)
+      await disable.mutateAsync(config.channelType)
     } else {
-      await update.mutateAsync({ channel: config.channel, data: { isEnabled: true } })
+      await update.mutateAsync({
+        channel: config.channelType,
+        data: { channelType: config.channelType, settings: config.settings },
+      })
     }
   }
 
@@ -51,15 +54,7 @@ function ChannelCard({ config }: { config: NotificationConfigDto }) {
     <div className="rounded-lg border p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold">{CHANNEL_LABELS[config.channel]}</h3>
-          {config.isEnabled && config.fromEmail && (
-            <p className="text-sm text-muted-foreground">{config.fromEmail}</p>
-          )}
-          {config.isEnabled && config.twilioFromNumber && (
-            <p className="text-sm text-muted-foreground">
-              {config.twilioFromNumber}
-            </p>
-          )}
+          <h3 className="font-semibold">{CHANNEL_LABELS[config.channelType]}</h3>
           <Badge
             variant={config.isEnabled ? 'default' : 'secondary'}
             className="mt-1"
@@ -82,13 +77,13 @@ function ChannelCard({ config }: { config: NotificationConfigDto }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Configure {CHANNEL_LABELS[config.channel]}
+              Configure {CHANNEL_LABELS[config.channelType]}
             </DialogTitle>
           </DialogHeader>
           <ChannelConfigForm
             config={config}
             onSave={async (data) => {
-              await update.mutateAsync({ channel: config.channel, data })
+              await update.mutateAsync({ channel: config.channelType, data })
               setConfigOpen(false)
             }}
           />
@@ -103,79 +98,25 @@ function ChannelConfigForm({
   onSave,
 }: {
   config: NotificationConfigDto
-  onSave: (data: Partial<NotificationConfigDto>) => Promise<void>
+  onSave: (data: { channelType: string; settings: string }) => Promise<void>
 }) {
-  const [fields, setFields] = useState({ ...config })
-
-  const set = (key: string, value: string | number) =>
-    setFields((f) => ({ ...f, [key]: value }))
+  const [settings, setSettings] = useState(config.settings)
 
   return (
     <div className="space-y-4">
-      {config.channel === 'Email' && (
-        <>
-          <div className="space-y-1">
-            <Label>SMTP Host</Label>
-            <Input
-              value={fields.smtpHost ?? ''}
-              onChange={(e) => set('smtpHost', e.target.value)}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>SMTP Port</Label>
-            <Input
-              type="number"
-              value={fields.smtpPort ?? 587}
-              onChange={(e) => set('smtpPort', Number(e.target.value))}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>Username</Label>
-            <Input
-              value={fields.smtpUsername ?? ''}
-              onChange={(e) => set('smtpUsername', e.target.value)}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>From Email</Label>
-            <Input
-              value={fields.fromEmail ?? ''}
-              onChange={(e) => set('fromEmail', e.target.value)}
-            />
-          </div>
-        </>
-      )}
-      {config.channel === 'Sms' && (
-        <>
-          <div className="space-y-1">
-            <Label>Twilio Account SID</Label>
-            <Input
-              value={fields.twilioAccountSid ?? ''}
-              onChange={(e) => set('twilioAccountSid', e.target.value)}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>From Number</Label>
-            <Input
-              value={fields.twilioFromNumber ?? ''}
-              onChange={(e) => set('twilioFromNumber', e.target.value)}
-            />
-          </div>
-        </>
-      )}
-      {config.channel === 'Push' && (
-        <>
-          <div className="space-y-1">
-            <Label>Firebase Project ID</Label>
-            <Input
-              value={fields.firebaseProjectId ?? ''}
-              onChange={(e) => set('firebaseProjectId', e.target.value)}
-            />
-          </div>
-        </>
-      )}
+      <div className="space-y-1">
+        <Label>Settings (JSON)</Label>
+        <Textarea
+          rows={6}
+          value={settings}
+          onChange={(e) => setSettings(e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">
+          Enter settings as a JSON string.
+        </p>
+      </div>
       <div className="flex justify-end gap-2">
-        <Button onClick={() => onSave(fields)}>Save</Button>
+        <Button onClick={() => onSave({ channelType: config.channelType, settings })}>Save</Button>
       </div>
     </div>
   )
@@ -183,8 +124,8 @@ function ChannelConfigForm({
 
 function TemplateEditor({ template }: { template: NotificationTemplateDto }) {
   const [editOpen, setEditOpen] = useState(false)
-  const [subject, setSubject] = useState(template.subjectTemplate ?? '')
-  const [body, setBody] = useState(template.bodyTemplate)
+  const [subject, setSubject] = useState(template.subject ?? '')
+  const [body, setBody] = useState(template.body)
   const [preview, setPreview] = useState<string | null>(null)
   const update = useUpdateNotificationTemplate()
   const reset = useResetNotificationTemplate()
@@ -193,7 +134,7 @@ function TemplateEditor({ template }: { template: NotificationTemplateDto }) {
   const handleSave = async () => {
     await update.mutateAsync({
       id: template.id,
-      data: { subjectTemplate: subject, bodyTemplate: body },
+      data: { subject, body, isActive: template.isActive },
     })
     setEditOpen(false)
   }
@@ -201,13 +142,13 @@ function TemplateEditor({ template }: { template: NotificationTemplateDto }) {
   const handlePreview = async () => {
     const result = await doPreview.mutateAsync({
       id: template.id,
-      sampleData: Object.fromEntries(template.variables.map((v) => [v, `[${v}]`])),
+      sampleData: {},
     })
     setPreview(result.body)
   }
 
   const handleReset = async () => {
-    await reset.mutateAsync(template.id)
+    await reset.mutateAsync(template.eventType)
     setEditOpen(false)
   }
 
@@ -215,7 +156,7 @@ function TemplateEditor({ template }: { template: NotificationTemplateDto }) {
     <div className="flex items-center justify-between rounded-lg border p-4">
       <div>
         <p className="font-medium">{template.eventType}</p>
-        <Badge variant="outline">{template.channel}</Badge>
+        <Badge variant="outline">{template.channelType}</Badge>
       </div>
       <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
         Edit
@@ -225,11 +166,11 @@ function TemplateEditor({ template }: { template: NotificationTemplateDto }) {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {template.eventType} — {template.channel}
+              {template.eventType} — {template.channelType}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {template.subjectTemplate !== undefined && (
+            {template.subject !== undefined && (
               <div className="space-y-1">
                 <Label>Subject</Label>
                 <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
@@ -242,21 +183,6 @@ function TemplateEditor({ template }: { template: NotificationTemplateDto }) {
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
               />
-            </div>
-            <div className="space-y-1">
-              <Label>Available Variables</Label>
-              <div className="flex flex-wrap gap-1">
-                {template.variables.map((v) => (
-                  <Badge
-                    key={v}
-                    variant="secondary"
-                    className="cursor-pointer"
-                    onClick={() => setBody((b) => b + `{{${v}}}`)}
-                  >
-                    {`{{${v}}}`}
-                  </Badge>
-                ))}
-              </div>
             </div>
             {preview && (
               <div className="rounded border bg-muted p-3 text-sm">

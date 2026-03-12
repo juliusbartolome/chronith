@@ -2,21 +2,20 @@ import { NextRequest } from "next/server";
 import { proxyToApi } from "@/lib/proxy";
 
 export async function PUT(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ channel: string }> },
 ) {
   const { channel } = await params;
-  return proxyToApi(req, `/v1/notifications/config/${channel}`, {
-    method: "PUT",
-  });
+  const body = await request.text();
+  return proxyToApi(request, `/v1/tenant/notifications/${channel}`, { method: "PUT", body });
 }
 
 export async function DELETE(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ channel: string }> },
 ) {
   const { channel } = await params;
-  return proxyToApi(req, `/v1/notifications/config/${channel}`, {
+  return proxyToApi(request, `/v1/tenant/notifications/${channel}`, {
     method: "DELETE",
   });
 }
