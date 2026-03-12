@@ -49,6 +49,8 @@ public sealed class ChronithDbContext : DbContext
     // No global query filter: audit entries have no IsDeleted; filtered explicitly by TenantId.
     public DbSet<AuditEntryEntity> AuditEntries => Set<AuditEntryEntity>();
 
+    public DbSet<TenantSettingsEntity> TenantSettings => Set<TenantSettingsEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("chronith");

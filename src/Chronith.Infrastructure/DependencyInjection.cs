@@ -72,6 +72,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditEntryRepository, AuditEntryRepository>();
         services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
         services.AddScoped<IDefaultTemplateSeeder, DefaultTemplateSeeder>();
+        services.AddScoped<ITenantSettingsRepository, TenantSettingsRepository>();
         services.AddSingleton<ITemplateRenderer, TemplateRenderer>();
         services.AddScoped<IAuditSnapshotResolver, BookingSnapshotResolver>();
         services.AddScoped<IAuditSnapshotResolver, BookingTypeSnapshotResolver>();
