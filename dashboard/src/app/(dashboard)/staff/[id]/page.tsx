@@ -38,8 +38,8 @@ export default function StaffDetailPage() {
     setError(null);
     try {
       await updateStaff.mutateAsync({ id, data: values });
-    } catch (e: any) {
-      setError(e.message ?? "Failed to update staff member");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to update staff member");
     }
   };
 
@@ -47,8 +47,8 @@ export default function StaffDetailPage() {
     setAvailabilityError(null);
     try {
       await updateAvailability.mutateAsync({ id, windows });
-    } catch (e: any) {
-      setAvailabilityError(e.message ?? "Failed to update availability");
+    } catch (e: unknown) {
+      setAvailabilityError(e instanceof Error ? e.message : "Failed to update availability");
     }
   };
 

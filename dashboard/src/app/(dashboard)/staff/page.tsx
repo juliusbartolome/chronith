@@ -14,6 +14,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useStaffList, useDeactivateStaff } from "@/hooks/use-staff";
 
+interface StaffRow {
+  id: string;
+  name: string;
+  email: string;
+  isActive: boolean;
+}
+
 export default function StaffPage() {
   const [page, setPage] = useState(1);
   const { data, isLoading, isError } = useStaffList({ page, pageSize: 25 });
@@ -50,7 +57,7 @@ export default function StaffPage() {
                   </TableCell>
                 </TableRow>
               )}
-              {data.items?.map((s: any) => (
+              {data.items?.map((s: StaffRow) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.name}</TableCell>
                   <TableCell>{s.email}</TableCell>

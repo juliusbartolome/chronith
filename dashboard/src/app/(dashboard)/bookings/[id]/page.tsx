@@ -22,6 +22,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 
+interface StatusChange {
+  id: string;
+  changedAt: string;
+  fromStatus: string;
+  toStatus: string;
+  changedByRole: string;
+}
+
 export default function BookingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -118,7 +126,7 @@ export default function BookingDetailPage() {
           </CardHeader>
           <CardContent>
             <ol className="space-y-2">
-              {booking.statusChanges.map((sc: any) => (
+              {booking.statusChanges.map((sc: StatusChange) => (
                 <li key={sc.id} className="flex items-center gap-3 text-sm">
                   <span className="text-zinc-400">
                     {format(new Date(sc.changedAt), "PPp")}

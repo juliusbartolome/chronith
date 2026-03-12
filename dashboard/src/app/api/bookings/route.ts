@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { proxyToApi } from "@/lib/proxy";
 
 export async function GET(request: NextRequest) {

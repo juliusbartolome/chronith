@@ -28,6 +28,13 @@ function useBookingTypes() {
   });
 }
 
+interface BookingTypeOption {
+  id: string;
+  name: string;
+  slug: string;
+  kind: string;
+}
+
 function BookingTypeSelector({
   onSelect,
 }: {
@@ -39,7 +46,7 @@ function BookingTypeSelector({
 
   return (
     <div className="grid grid-cols-2 gap-3">
-      {data?.items?.map((bt: any) => (
+      {data?.items?.map((bt: BookingTypeOption) => (
         <button
           key={bt.id}
           className="rounded-lg border p-4 text-left hover:border-zinc-400 hover:bg-zinc-50"
@@ -56,7 +63,7 @@ function BookingTypeSelector({
 export default function CreateBookingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,8 +93,8 @@ export default function CreateBookingPage() {
         throw new Error(body.title ?? "Failed to create booking");
       }
       router.push("/bookings");
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to create booking");
     } finally {
       setIsSubmitting(false);
     }
@@ -191,14 +198,15 @@ export default function CreateBookingPage() {
             <div className="space-y-2 text-sm">
               <p>
                 <span className="font-medium">Type:</span>{" "}
-                {formData.bookingTypeSlug}
+                {String(formData.bookingTypeSlug ?? "")}
               </p>
               <p>
-                <span className="font-medium">Start:</span> {formData.start}
+                <span className="font-medium">Start:</span>{" "}
+                {String(formData.start ?? "")}
               </p>
               <p>
                 <span className="font-medium">Customer:</span>{" "}
-                {formData.customerEmail}
+                {String(formData.customerEmail ?? "")}
               </p>
             </div>
           )}

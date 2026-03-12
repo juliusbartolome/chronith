@@ -28,6 +28,14 @@ import {
   useDeleteBookingType,
 } from "@/hooks/use-booking-types";
 
+interface BookingTypeRow {
+  id: string;
+  name: string;
+  slug: string;
+  kind: string;
+  requiresStaffAssignment: boolean;
+}
+
 export default function BookingTypesPage() {
   const [page, setPage] = useState(1);
   const { data, isLoading, isError } = useBookingTypes({ page, pageSize: 25 });
@@ -67,7 +75,7 @@ export default function BookingTypesPage() {
                   </TableCell>
                 </TableRow>
               )}
-              {data.items?.map((bt: any) => (
+              {data.items?.map((bt: BookingTypeRow) => (
                 <TableRow key={bt.id}>
                   <TableCell className="font-medium">{bt.name}</TableCell>
                   <TableCell className="font-mono text-sm text-zinc-500">
@@ -99,7 +107,7 @@ export default function BookingTypesPage() {
                             Delete booking type?
                           </AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will delete "{bt.name}". This cannot be undone.
+                            This will delete &ldquo;{bt.name}&rdquo;. This cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

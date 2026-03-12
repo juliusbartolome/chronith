@@ -19,8 +19,8 @@ export default function NewBookingTypePage() {
     try {
       await createType.mutateAsync(values);
       router.push("/booking-types");
-    } catch (e: any) {
-      setError(e.message ?? "Failed to create booking type");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to create booking type");
     }
   };
 
