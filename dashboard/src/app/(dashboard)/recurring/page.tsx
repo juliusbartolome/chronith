@@ -1,5 +1,16 @@
 'use client'
 
+import { useState } from 'react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,7 +30,9 @@ const FREQ_COLORS: Record<string, 'default' | 'secondary' | 'outline'> = {
 }
 
 export default function RecurringPage() {
-  const { data, isLoading } = useRecurringRules()
+  const [page, setPage] = useState(1)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const { data, isLoading, isError } = useRecurringRules({ page })
   const cancel = useCancelRecurringSeries()
 
   return (
@@ -31,6 +44,7 @@ export default function RecurringPage() {
         </p>
       </div>
       {isLoading && <p>Loading...</p>}
+      {isError && <p className="text-sm text-red-600">Failed to load recurring bookings.</p>}
       {data && (
         <div className="rounded-md border">
           <Table>
@@ -71,7 +85,8 @@ export default function RecurringPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => cancel.mutateAsync(rule.id)}
+                        disabled={cancel.isPending}
+                        onClick={() => setConfirmId(rule.id)}
                       >
                         Cancel Series
                       </Button>
@@ -82,6 +97,51 @@ export default function RecurringPage() {
             </TableBody>
           </Table>
         </div>
+      )}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Total: {data?.totalCount ?? 0}
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!data || data.items.length < data.pageSize}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+      {confirmId && (
+        <AlertDialog open onOpenChange={() => setConfirmId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cancel recurring series?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will cancel all future occurrences in this series.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  cancel.mutateAsync(confirmId).finally(() => setConfirmId(null))
+                }}
+              >
+                Cancel Series
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   )

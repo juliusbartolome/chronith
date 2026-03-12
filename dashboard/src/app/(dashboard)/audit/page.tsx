@@ -79,7 +79,8 @@ function AuditDetailModal({
 
 export default function AuditPage() {
   const [selected, setSelected] = useState<AuditEntryDto | null>(null)
-  const { data, isLoading } = useAuditEntries()
+  const [page, setPage] = useState(1)
+  const { data, isLoading, isError } = useAuditEntries({ page })
 
   return (
     <div className="space-y-6 p-6">
@@ -90,6 +91,7 @@ export default function AuditPage() {
         </p>
       </div>
       {isLoading && <p>Loading...</p>}
+      {isError && <p className="text-sm text-red-600">Failed to load audit entries.</p>}
       {data && (
         <div className="rounded-md border">
           <Table>
@@ -139,6 +141,29 @@ export default function AuditPage() {
           </Table>
         </div>
       )}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Total: {data?.totalCount ?? 0}
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!data || data.items.length < data.pageSize}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
       {selected && (
         <AuditDetailModal entry={selected} onClose={() => setSelected(null)} />
       )}

@@ -49,14 +49,14 @@ export function useAuditEntries(params?: {
   const q = sp.toString();
 
   return useQuery<PagedResult<AuditEntryDto>>({
-    queryKey: ["audit", params],
+    queryKey: ["audit-entries", params],
     queryFn: () => fetchJson(`/api/audit${q ? `?${q}` : ""}`),
   });
 }
 
 export function useAuditEntry(id: string) {
   return useQuery<AuditEntryDto>({
-    queryKey: ["audit", id],
+    queryKey: ["audit-entry", id],
     queryFn: () => fetchJson(`/api/audit/${id}`),
     enabled: !!id,
   });

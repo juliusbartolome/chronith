@@ -1,6 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,7 +26,9 @@ import { useCustomers, useDeactivateCustomer } from '@/hooks/use-customers'
 
 export default function CustomersPage() {
   const [search, setSearch] = useState('')
-  const { data, isLoading } = useCustomers({ search: search || undefined })
+  const [page, setPage] = useState(1)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const { data, isLoading, isError } = useCustomers({ search: search || undefined, page })
   const deactivate = useDeactivateCustomer()
 
   return (
@@ -34,6 +46,7 @@ export default function CustomersPage() {
         className="max-w-sm"
       />
       {isLoading && <p>Loading...</p>}
+      {isError && <p className="text-sm text-red-600">Failed to load customers.</p>}
       {data && (
         <div className="rounded-md border">
           <Table>
@@ -66,7 +79,8 @@ export default function CustomersPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => deactivate.mutateAsync(c.id)}
+                        disabled={deactivate.isPending}
+                        onClick={() => setConfirmId(c.id)}
                       >
                         Deactivate
                       </Button>
@@ -77,6 +91,51 @@ export default function CustomersPage() {
             </TableBody>
           </Table>
         </div>
+      )}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Total: {data?.totalCount ?? 0}
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!data || data.items.length < data.pageSize}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+      {confirmId && (
+        <AlertDialog open onOpenChange={() => setConfirmId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Deactivate customer?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will prevent the customer from making new bookings.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  deactivate.mutateAsync(confirmId).finally(() => setConfirmId(null))
+                }}
+              >
+                Deactivate
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   )
