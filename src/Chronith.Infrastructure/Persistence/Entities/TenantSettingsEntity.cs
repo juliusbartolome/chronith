@@ -15,5 +15,5 @@ public sealed class TenantSettingsEntity
     public bool IsDeleted { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
-    public uint Version { get; set; }
+    public uint RowVersion { get; set; }
 }

@@ -34,12 +34,12 @@ public sealed class TenantSettings
     public void UpdateBranding(string? logoUrl, string? primaryColor, string? accentColor,
         string? welcomeMessage, string? termsUrl, string? privacyUrl)
     {
-        LogoUrl = logoUrl;
+        if (logoUrl is not null) LogoUrl = logoUrl;
         if (primaryColor is not null) PrimaryColor = primaryColor;
-        AccentColor = accentColor;
-        WelcomeMessage = welcomeMessage;
-        TermsUrl = termsUrl;
-        PrivacyUrl = privacyUrl;
+        if (accentColor is not null) AccentColor = accentColor;
+        if (welcomeMessage is not null) WelcomeMessage = welcomeMessage;
+        if (termsUrl is not null) TermsUrl = termsUrl;
+        if (privacyUrl is not null) PrivacyUrl = privacyUrl;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

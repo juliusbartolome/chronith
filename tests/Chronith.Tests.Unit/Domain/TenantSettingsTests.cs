@@ -73,4 +73,16 @@ public sealed class TenantSettingsTests
 
         settings.BookingPageEnabled.Should().BeTrue();
     }
+
+    [Fact]
+    public void UpdateBranding_WithNullFields_DoesNotClearExistingValues()
+    {
+        var settings = TenantSettings.Create(Guid.NewGuid());
+        settings.UpdateBranding("https://example.com/logo.png", null, null, null, null, null);
+
+        settings.UpdateBranding(null, "#FF0000", null, null, null, null);
+
+        settings.LogoUrl.Should().Be("https://example.com/logo.png"); // not cleared
+        settings.PrimaryColor.Should().Be("#FF0000");
+    }
 }

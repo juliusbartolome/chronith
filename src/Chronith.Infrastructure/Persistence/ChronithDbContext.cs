@@ -83,5 +83,8 @@ public sealed class ChronithDbContext : DbContext
 
         modelBuilder.Entity<NotificationTemplateEntity>()
             .HasQueryFilter(n => !n.IsDeleted && n.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<TenantSettingsEntity>()
+            .HasQueryFilter(s => !s.IsDeleted && s.TenantId == _tenantContext.TenantId);
     }
 }

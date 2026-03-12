@@ -20,13 +20,29 @@ public sealed class TenantSettingsRepository(ChronithDbContext db) : ITenantSett
 
     public async Task<TenantSettings> GetOrCreateAsync(Guid tenantId, CancellationToken ct = default)
     {
-        var existing = await GetByTenantIdAsync(tenantId, ct);
-        if (existing is not null) return existing;
+        var entity = await db.TenantSettings
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(s => s.TenantId == tenantId && !s.IsDeleted, ct);
 
-        var newSettings = TenantSettings.Create(tenantId);
-        await AddAsync(newSettings, ct);
-        await db.SaveChangesAsync(ct);
-        return newSettings;
+        if (entity is not null)
+            return TenantSettingsEntityMapper.ToDomain(entity);
+
+        var settings = TenantSettings.Create(tenantId);
+        try
+        {
+            await db.TenantSettings.AddAsync(TenantSettingsEntityMapper.ToEntity(settings), ct);
+            await db.SaveChangesAsync(ct);
+            return settings;
+        }
+        catch (DbUpdateException)
+        {
+            // Race condition: another request created the row concurrently
+            db.ChangeTracker.Clear();
+            var existing = await db.TenantSettings
+                .IgnoreQueryFilters()
+                .FirstAsync(s => s.TenantId == tenantId && !s.IsDeleted, ct);
+            return TenantSettingsEntityMapper.ToDomain(existing);
+        }
     }
 
     public async Task AddAsync(TenantSettings settings, CancellationToken ct = default)

@@ -36,7 +36,7 @@ public sealed class TenantSettingsConfiguration : IEntityTypeConfiguration<Tenan
 
         builder.HasIndex(s => s.TenantId).IsUnique();
 
-        builder.Property(s => s.Version)
+        builder.Property(s => s.RowVersion)
             .IsRowVersion()
             .IsConcurrencyToken();
     }
