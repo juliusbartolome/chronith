@@ -13,6 +13,7 @@ using Chronith.Infrastructure.Providers;
 using Chronith.Infrastructure.RateLimiting;
 using Chronith.Infrastructure.Security;
 using Chronith.Infrastructure.Services;
+using Chronith.Infrastructure.Persistence.Seeding;
 using Chronith.Infrastructure.Services.Audit;
 using Chronith.Infrastructure.Services.Notifications;
 using Chronith.Infrastructure.Telemetry;
@@ -73,6 +74,9 @@ public static class DependencyInjection
         services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
         services.AddScoped<IDefaultTemplateSeeder, DefaultTemplateSeeder>();
         services.AddScoped<ITenantSettingsRepository, TenantSettingsRepository>();
+        services.AddScoped<ITenantPlanRepository, TenantPlanRepository>();
+        services.AddScoped<ITenantSubscriptionRepository, TenantSubscriptionRepository>();
+        services.AddScoped<PlanSeeder>();
         services.AddSingleton<ITemplateRenderer, TemplateRenderer>();
         services.AddScoped<IAuditSnapshotResolver, BookingSnapshotResolver>();
         services.AddScoped<IAuditSnapshotResolver, BookingTypeSnapshotResolver>();
