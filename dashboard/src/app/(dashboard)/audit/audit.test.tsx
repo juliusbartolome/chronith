@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AuditPage from './page'
 
 vi.mock('@/hooks/use-audit', () => ({
+  useAuditEntry: vi.fn(() => ({ data: undefined })),
   useAuditEntries: vi.fn(() => ({
     data: {
       items: [
