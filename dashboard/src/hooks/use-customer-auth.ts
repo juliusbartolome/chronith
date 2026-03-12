@@ -102,5 +102,30 @@ export function useCustomerBookings() {
       if (!res.ok) throw new Error("Failed to fetch bookings");
       return res.json();
     },
+    staleTime: 60 * 1000,
+  });
+}
+
+export type BookingDetailDto = {
+  id: string;
+  bookingTypeName: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  staffName: string | null;
+  customerName: string;
+  customerEmail: string;
+  priceCentavos: number;
+  notes: string | null;
+};
+
+export function useBookingDetail(id: string) {
+  return useQuery<BookingDetailDto>({
+    queryKey: ["customer-booking", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/auth/customer/bookings/${id}`);
+      if (!res.ok) throw new Error("Failed to fetch booking");
+      return res.json();
+    },
   });
 }

@@ -4,35 +4,11 @@ import { useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-
-type BookingDetailDto = {
-  id: string;
-  bookingTypeName: string;
-  startTime: string;
-  endTime: string;
-  status: string;
-  staffName: string | null;
-  customerName: string;
-  customerEmail: string;
-  priceCentavos: number;
-  notes: string | null;
-};
-
-function useBookingDetail(id: string) {
-  return useQuery<BookingDetailDto>({
-    queryKey: ["customer-booking", id],
-    queryFn: async () => {
-      const res = await fetch(`/api/public/auth/customer/bookings/${id}`);
-      if (!res.ok) throw new Error("Failed to fetch booking");
-      return res.json();
-    },
-  });
-}
+import { useBookingDetail, BookingDetailDto } from "@/hooks/use-customer-auth";
 
 export default function BookingDetailPage() {
   const { id } = useParams<{ tenantSlug: string; id: string }>();
-  const { data: booking, isLoading } = useBookingDetail(id);
+  const { data: booking, isLoading, isError } = useBookingDetail(id);
 
   if (isLoading) {
     return (
@@ -40,6 +16,10 @@ export default function BookingDetailPage() {
         <Skeleton className="h-64 w-full" />
       </div>
     );
+  }
+
+  if (isError) {
+    return <div className="p-8 text-destructive">Failed to load booking. Please try again.</div>;
   }
 
   if (!booking) {
@@ -61,6 +41,10 @@ export default function BookingDetailPage() {
           <div className="flex justify-between">
             <span className="text-muted-foreground">Date &amp; Time</span>
             <span>{new Date(booking.startTime).toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">End Time</span>
+            <span>{new Date(booking.endTime).toLocaleString()}</span>
           </div>
           {booking.staffName && (
             <div className="flex justify-between">

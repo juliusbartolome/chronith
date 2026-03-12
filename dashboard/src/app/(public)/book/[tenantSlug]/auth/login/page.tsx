@@ -14,7 +14,8 @@ export default function CustomerLoginPage() {
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo") ?? `/book/${tenantSlug}`;
+  const raw = searchParams.get("returnTo");
+  const returnTo = raw?.startsWith("/") ? raw : `/book/${tenantSlug}`;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

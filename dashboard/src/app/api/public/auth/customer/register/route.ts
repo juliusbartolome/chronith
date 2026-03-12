@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE = process.env.API_BASE_URL ?? "http://localhost:5001";
+const API_BASE = process.env.CHRONITH_API_URL ?? "http://localhost:5001";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
