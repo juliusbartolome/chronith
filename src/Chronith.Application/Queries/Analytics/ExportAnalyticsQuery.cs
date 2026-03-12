@@ -24,14 +24,9 @@ public sealed class ExportAnalyticsQueryHandler(
         var analytics = await analyticsRepo.GetBookingAnalyticsAsync(
             tenantContext.TenantId, query.From, query.To, query.GroupBy, ct);
 
-        var rows = analytics.TimeSeries.Select(ts => new AnalyticsExportRowDto(
-            Date: ts.Date,
-            TotalBookings: ts.Count,
-            PendingPayment: analytics.ByStatus.GetValueOrDefault("PendingPayment"),
-            PendingVerification: analytics.ByStatus.GetValueOrDefault("PendingVerification"),
-            Confirmed: analytics.ByStatus.GetValueOrDefault("Confirmed"),
-            Cancelled: analytics.ByStatus.GetValueOrDefault("Cancelled")
-        )).ToList();
+        var rows = analytics.TimeSeries
+            .Select(ts => new AnalyticsExportRowDto(ts.Date, ts.Count))
+            .ToList();
 
         var from = query.From.ToString("yyyyMMdd");
         var to = query.To.ToString("yyyyMMdd");

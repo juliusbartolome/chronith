@@ -34,4 +34,12 @@ public sealed class ExportAuditEndpointTests(FunctionalTestFixture fixture)
         var response = await client.GetAsync("/v1/audit/export");
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task ExportAudit_Anonymous_Returns401()
+    {
+        var client = fixture.CreateAnonymousClient();
+        var response = await client.GetAsync("/v1/audit/export");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }

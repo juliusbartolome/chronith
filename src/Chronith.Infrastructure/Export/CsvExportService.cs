@@ -27,7 +27,7 @@ public sealed class CsvExportService : ICsvExportService
     private static byte[] Serialize<T>(IReadOnlyList<T> rows)
     {
         using var ms = new MemoryStream();
-        using var writer = new StreamWriter(ms, Encoding.UTF8, leaveOpen: true);
+        using var writer = new StreamWriter(ms, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false), leaveOpen: true);
         using var csv = new CsvWriter(writer, Config);
         csv.WriteRecords(rows);
         writer.Flush();

@@ -180,13 +180,20 @@ public sealed class BookingRepository : IBookingRepository
         Guid tenantId,
         DateTimeOffset from,
         DateTimeOffset to,
+        string? status = null,
+        string? bookingTypeSlug = null,
+        Guid? staffMemberId = null,
         CancellationToken ct = default)
     {
         return await _db.Bookings
             .TagWith("ListForExportAsync — BookingRepository")
             .AsNoTracking()
             .Where(b => b.TenantId == tenantId && b.Start >= from && b.Start <= to)
+            .Where(b => status == null || b.Status.ToString() == status)
+            .Where(b => bookingTypeSlug == null || b.BookingType!.Slug == bookingTypeSlug)
+            .Where(b => staffMemberId == null || b.StaffMemberId == staffMemberId)
             .OrderBy(b => b.Start)
+            .Take(10_000)
             .Select(b => new BookingExportRowDto(
                 b.Id,
                 b.BookingType != null ? b.BookingType.Name : string.Empty,
