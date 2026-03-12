@@ -1,3 +1,5 @@
+import CustomerAuthHeader from "@/components/public/customer-auth-header";
+
 // Server component — fetch tenant settings for branding
 async function getTenantBranding(tenantSlug: string) {
   const apiUrl = process.env.CHRONITH_API_URL ?? "http://localhost:5001";
@@ -52,6 +54,9 @@ export default async function PublicBookingLayout({
         ) : (
           <span className="font-semibold text-zinc-800">Chronith</span>
         )}
+        <div className="ml-auto">
+          <CustomerAuthHeader tenantSlug={tenantSlug} />
+        </div>
       </header>
 
       <main className="min-h-screen bg-zinc-50">
