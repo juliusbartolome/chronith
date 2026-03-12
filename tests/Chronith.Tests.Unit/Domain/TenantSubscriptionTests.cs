@@ -1,4 +1,5 @@
 using Chronith.Domain.Enums;
+using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using FluentAssertions;
 using Xunit;
@@ -79,8 +80,10 @@ public class TenantSubscriptionTests
     [Fact]
     public void RenewPeriod_SetsStatusActiveAndUpdatesPeriod()
     {
-        var sub = TenantSubscription.CreateTrial(TenantId, PlanId);
-        var newStart = DateTimeOffset.UtcNow;
+        var periodStart = DateTimeOffset.UtcNow;
+        var periodEnd = periodStart.AddDays(30);
+        var sub = TenantSubscription.CreatePaid(TenantId, PlanId, "pay_sub_456", periodStart, periodEnd);
+        var newStart = periodEnd;
         var newEnd = newStart.AddDays(30);
 
         sub.RenewPeriod(newStart, newEnd);
@@ -114,5 +117,35 @@ public class TenantSubscriptionTests
         var sub = TenantSubscription.CreateTrial(TenantId, PlanId);
 
         sub.IsExpiredOrCancelled.Should().BeFalse();
+    }
+
+    [Fact]
+    public void SetPastDue_WhenCancelled_ThrowsInvalidStateTransitionException()
+    {
+        var sub = TenantSubscription.CreateTrial(TenantId, PlanId);
+        sub.Cancel(null);
+
+        sub.Invoking(s => s.SetPastDue())
+            .Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void Cancel_WhenAlreadyCancelled_ThrowsInvalidStateTransitionException()
+    {
+        var sub = TenantSubscription.CreateTrial(TenantId, PlanId);
+        sub.Cancel(null);
+
+        sub.Invoking(s => s.Cancel(null))
+            .Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void RenewPeriod_WhenCancelled_ThrowsInvalidStateTransitionException()
+    {
+        var sub = TenantSubscription.CreateTrial(TenantId, PlanId);
+        sub.Cancel(null);
+
+        sub.Invoking(s => s.RenewPeriod(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(30)))
+            .Should().Throw<InvalidStateTransitionException>();
     }
 }

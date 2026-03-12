@@ -1,4 +1,5 @@
 using Chronith.Domain.Enums;
+using Chronith.Domain.Exceptions;
 
 namespace Chronith.Domain.Models;
 
@@ -57,19 +58,37 @@ public sealed class TenantSubscription
 
     internal TenantSubscription() { } // EF Core hydration only
 
-    public void SetPastDue() => Status = SubscriptionStatus.PastDue;
+    public void SetPastDue()
+    {
+        if (Status is not (SubscriptionStatus.Active or SubscriptionStatus.Trialing))
+            throw new InvalidStateTransitionException(
+                $"Cannot transition '{nameof(TenantSubscription)}' from '{Status}' to '{nameof(SubscriptionStatus.PastDue)}'.");
+        Status = SubscriptionStatus.PastDue;
+    }
 
     public void Cancel(string? reason)
     {
+        if (Status is SubscriptionStatus.Cancelled or SubscriptionStatus.Expired)
+            throw new InvalidStateTransitionException(
+                $"Cannot transition '{nameof(TenantSubscription)}' from '{Status}' to '{nameof(SubscriptionStatus.Cancelled)}'.");
         Status = SubscriptionStatus.Cancelled;
         CancelledAt = DateTimeOffset.UtcNow;
         CancelReason = reason;
     }
 
-    public void Expire() => Status = SubscriptionStatus.Expired;
+    public void Expire()
+    {
+        if (Status is not (SubscriptionStatus.Active or SubscriptionStatus.Trialing or SubscriptionStatus.PastDue))
+            throw new InvalidStateTransitionException(
+                $"Cannot transition '{nameof(TenantSubscription)}' from '{Status}' to '{nameof(SubscriptionStatus.Expired)}'.");
+        Status = SubscriptionStatus.Expired;
+    }
 
     public void RenewPeriod(DateTimeOffset newPeriodStart, DateTimeOffset newPeriodEnd)
     {
+        if (Status is not (SubscriptionStatus.Active or SubscriptionStatus.PastDue))
+            throw new InvalidStateTransitionException(
+                $"Cannot transition '{nameof(TenantSubscription)}' from '{Status}' to '{nameof(SubscriptionStatus.Active)}' via renewal.");
         Status = SubscriptionStatus.Active;
         CurrentPeriodStart = newPeriodStart;
         CurrentPeriodEnd = newPeriodEnd;
@@ -77,6 +96,9 @@ public sealed class TenantSubscription
 
     public void Activate(DateTimeOffset periodStart, DateTimeOffset periodEnd)
     {
+        if (Status is not (SubscriptionStatus.Trialing or SubscriptionStatus.PastDue))
+            throw new InvalidStateTransitionException(
+                $"Cannot transition '{nameof(TenantSubscription)}' from '{Status}' to '{nameof(SubscriptionStatus.Active)}' via activation.");
         Status = SubscriptionStatus.Active;
         CurrentPeriodStart = periodStart;
         CurrentPeriodEnd = periodEnd;
