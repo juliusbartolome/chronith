@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useBookingSession } from "@/lib/booking-session";
 import { useCreatePublicBooking } from "@/hooks/use-public-booking";
 import { Button } from "@/components/ui/button";
@@ -55,7 +56,7 @@ export default function ConfirmPage() {
       setConfirmedBookingId(result.id);
       router.push(`/book/${tenantSlug}/${btSlug}/success`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to create booking. Please try again.");
+      toast.error(err instanceof Error ? err.message : "Failed to create booking. Please try again.");
     }
   };
 
