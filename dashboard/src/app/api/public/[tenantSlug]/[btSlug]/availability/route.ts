@@ -11,5 +11,6 @@ export async function GET(
   return proxyToApi(
     request,
     `/v1/public/${tenantSlug}/${btSlug}/availability${query}`,
+    { unauthenticated: true },
   );
 }

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useBookingSession } from "@/lib/booking-session";
 import { usePublicAvailability } from "@/hooks/use-public-booking";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function StaffSelectionPage() {
   const { tenantSlug, btSlug } = useParams<{
@@ -30,7 +31,7 @@ export default function StaffSelectionPage() {
     }
   }, [session.selectedDate, router, tenantSlug, btSlug]);
 
-  const { data: availability } = usePublicAvailability(
+  const { data: availability, isLoading } = usePublicAvailability(
     tenantSlug,
     btSlug,
     session.selectedDate ?? "",
@@ -48,7 +49,15 @@ export default function StaffSelectionPage() {
       <p className="text-xs text-zinc-500 mb-6">Step 2 of 5 — Choose a Staff Member</p>
       <h1 className="text-xl font-bold text-zinc-900 mb-6">Select Staff</h1>
 
-      {staffList.length === 0 && (
+      {isLoading && (
+        <div className="flex flex-wrap gap-4">
+          {[1, 2].map((i) => (
+            <Skeleton key={i} className="h-28 w-40" />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && staffList.length === 0 && (
         <p className="text-sm text-zinc-500">No staff available for this time slot.</p>
       )}
 

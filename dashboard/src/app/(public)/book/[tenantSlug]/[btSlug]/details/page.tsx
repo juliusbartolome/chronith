@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -121,7 +122,7 @@ export default function CustomerDetailsPage() {
     // Validate required custom fields
     for (const field of session.customFieldSchema ?? []) {
       if (field.required && !customFieldValues[field.key]) {
-        alert(`"${field.label}" is required.`);
+        toast.error(`"${field.label}" is required.`);
         return;
       }
     }

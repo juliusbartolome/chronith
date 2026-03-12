@@ -79,6 +79,8 @@ export default function SuccessPage() {
     }
   }, [session.confirmedBookingId, router, tenantSlug, btSlug]);
 
+  if (!bookingId) return null;
+
   const handleBookAnother = () => {
     resetSession();
     router.push(`/book/${tenantSlug}`);

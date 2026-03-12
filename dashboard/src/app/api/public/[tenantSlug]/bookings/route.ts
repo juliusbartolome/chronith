@@ -10,5 +10,6 @@ export async function POST(
   return proxyToApi(request, `/v1/public/${tenantSlug}/bookings`, {
     method: "POST",
     body,
+    unauthenticated: true,
   });
 }

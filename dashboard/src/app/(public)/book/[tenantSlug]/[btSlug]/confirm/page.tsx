@@ -5,17 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useBookingSession } from "@/lib/booking-session";
 import { useCreatePublicBooking } from "@/hooks/use-public-booking";
+import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-
-function formatPrice(centavos: number): string {
-  if (centavos === 0) return "Free";
-  return `₱${(centavos / 100).toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
 
 export default function ConfirmPage() {
   const { tenantSlug, btSlug } = useParams<{
@@ -35,6 +28,8 @@ export default function ConfirmPage() {
       router.replace(`/book/${tenantSlug}/${btSlug}`);
     }
   }, [session.selectedDate, session.customerInfo, router, tenantSlug, btSlug]);
+
+  if (!session.selectedDate || !session.customerInfo) return null;
 
   const handleConfirm = async () => {
     if (!session.customerInfo) return;

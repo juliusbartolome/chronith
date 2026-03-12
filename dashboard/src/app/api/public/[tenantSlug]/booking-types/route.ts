@@ -6,5 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ tenantSlug: string }> },
 ) {
   const { tenantSlug } = await params;
-  return proxyToApi(request, `/v1/public/${tenantSlug}/booking-types`);
+  return proxyToApi(request, `/v1/public/${tenantSlug}/booking-types`, {
+    unauthenticated: true,
+  });
 }
