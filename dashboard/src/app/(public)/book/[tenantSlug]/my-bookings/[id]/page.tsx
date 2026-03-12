@@ -1,9 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,30 +30,9 @@ function useBookingDetail(id: string) {
   });
 }
 
-const CANCELLABLE = ["PendingPayment", "PendingVerification"];
-
 export default function BookingDetailPage() {
-  const { tenantSlug, id } = useParams<{ tenantSlug: string; id: string }>();
-  const router = useRouter();
+  const { id } = useParams<{ tenantSlug: string; id: string }>();
   const { data: booking, isLoading } = useBookingDetail(id);
-  const [cancelling, setCancelling] = useState(false);
-
-  async function handleCancel() {
-    if (!confirm("Cancel this booking?")) return;
-    setCancelling(true);
-    try {
-      const res = await fetch(`/api/bookings/${id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to cancel");
-      toast.success("Booking cancelled.");
-      router.push(`/book/${tenantSlug}/my-bookings`);
-    } catch {
-      toast.error("Could not cancel booking.");
-    } finally {
-      setCancelling(false);
-    }
-  }
 
   if (isLoading) {
     return (
@@ -108,16 +84,6 @@ export default function BookingDetailPage() {
           )}
         </CardContent>
       </Card>
-
-      {CANCELLABLE.includes(booking.status) && (
-        <Button
-          variant="destructive"
-          onClick={handleCancel}
-          disabled={cancelling}
-        >
-          {cancelling ? "Cancelling…" : "Cancel Booking"}
-        </Button>
-      )}
     </div>
   );
 }
