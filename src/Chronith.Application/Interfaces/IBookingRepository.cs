@@ -67,10 +67,14 @@ public interface IBookingRepository
 
     /// <summary>
     /// Flat projection with booking type name and staff name joined — for export only.
+    /// Capped at 10,000 rows. Optional filters narrow the result set.
     /// </summary>
     Task<IReadOnlyList<BookingExportRowDto>> ListForExportAsync(
         Guid tenantId,
         DateTimeOffset from,
         DateTimeOffset to,
+        string? status = null,
+        string? bookingTypeSlug = null,
+        Guid? staffMemberId = null,
         CancellationToken ct = default);
 }

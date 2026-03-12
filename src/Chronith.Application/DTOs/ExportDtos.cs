@@ -19,14 +19,12 @@ public sealed record BookingExportRowDto(
 
 /// <summary>
 /// One row per time-series point from the booking analytics query.
+/// Only Date and TotalBookings are exported — ByStatus aggregates cover the whole period
+/// and repeating them on every row would be misleading.
 /// </summary>
 public sealed record AnalyticsExportRowDto(
     string Date,
-    int TotalBookings,
-    int PendingPayment,
-    int PendingVerification,
-    int Confirmed,
-    int Cancelled);
+    int TotalBookings);
 
 /// <summary>
 /// Flat projection of AuditEntryDto for CSV export.
@@ -42,8 +40,10 @@ public sealed record AuditExportRowDto(
 
 /// <summary>
 /// Result returned by export query handlers — a file ready to stream.
+/// RowCount reflects the number of data rows; if it equals 10,000 the result was truncated.
 /// </summary>
 public sealed record ExportFileResult(
     byte[] Content,
     string ContentType,
-    string FileName);
+    string FileName,
+    int RowCount = 0);

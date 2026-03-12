@@ -98,12 +98,8 @@ public sealed class PdfExportService : IPdfExportService
                 {
                     table.ColumnsDefinition(cols =>
                     {
-                        cols.RelativeColumn(2);
-                        cols.RelativeColumn();
-                        cols.RelativeColumn();
-                        cols.RelativeColumn();
-                        cols.RelativeColumn();
-                        cols.RelativeColumn();
+                        cols.RelativeColumn(3);
+                        cols.RelativeColumn(1);
                     });
 
                     static IContainer HeaderCell(IContainer c) =>
@@ -111,7 +107,7 @@ public sealed class PdfExportService : IPdfExportService
 
                     table.Header(header =>
                     {
-                        foreach (var h in new[] { "Date", "Total", "Pending Payment", "Pending Verify", "Confirmed", "Cancelled" })
+                        foreach (var h in new[] { "Date", "Total Bookings" })
                             header.Cell().Element(HeaderCell).Text(h).Bold().FontSize(8);
                     });
 
@@ -119,10 +115,6 @@ public sealed class PdfExportService : IPdfExportService
                     {
                         table.Cell().Padding(4).Text(row.Date).FontSize(8);
                         table.Cell().Padding(4).Text(row.TotalBookings.ToString()).FontSize(8);
-                        table.Cell().Padding(4).Text(row.PendingPayment.ToString()).FontSize(8);
-                        table.Cell().Padding(4).Text(row.PendingVerification.ToString()).FontSize(8);
-                        table.Cell().Padding(4).Text(row.Confirmed.ToString()).FontSize(8);
-                        table.Cell().Padding(4).Text(row.Cancelled.ToString()).FontSize(8);
                     }
                 });
             });

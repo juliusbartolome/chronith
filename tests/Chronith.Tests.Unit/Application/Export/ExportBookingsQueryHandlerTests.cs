@@ -39,7 +39,8 @@ public sealed class ExportBookingsQueryHandlerTests
         };
         var expectedBytes = "id,bookingTypeName\r\n"u8.ToArray();
 
-        _bookingRepo.ListForExportAsync(TenantId, From, To, Arg.Any<CancellationToken>())
+        _bookingRepo.ListForExportAsync(TenantId, From, To,
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns(rows);
         _csvService.GenerateBookingsCsv(rows).Returns(expectedBytes);
 
@@ -57,7 +58,8 @@ public sealed class ExportBookingsQueryHandlerTests
         var rows = new List<BookingExportRowDto>();
         var pdfBytes = new byte[] { 0x25, 0x50, 0x44, 0x46 }; // %PDF
 
-        _bookingRepo.ListForExportAsync(TenantId, From, To, Arg.Any<CancellationToken>())
+        _bookingRepo.ListForExportAsync(TenantId, From, To,
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns(rows);
         _pdfService.GenerateBookingsPdf(rows, Arg.Any<string>(), From, To).Returns(pdfBytes);
 
@@ -72,7 +74,8 @@ public sealed class ExportBookingsQueryHandlerTests
     [Fact]
     public async Task Handle_UnknownFormat_DefaultsToCsv()
     {
-        _bookingRepo.ListForExportAsync(TenantId, From, To, Arg.Any<CancellationToken>())
+        _bookingRepo.ListForExportAsync(TenantId, From, To,
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns(new List<BookingExportRowDto>());
         _csvService.GenerateBookingsCsv(Arg.Any<IReadOnlyList<BookingExportRowDto>>())
             .Returns(Array.Empty<byte>());
