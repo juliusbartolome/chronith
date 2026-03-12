@@ -1,3 +1,40 @@
+/** RFC 7807 Problem Details */
+export interface ProblemDetails {
+  type?: string;
+  title: string;
+  status: number;
+  detail?: string;
+  errors?: Record<string, string[]>;
+}
+
+export class ChronithApiError extends Error {
+  readonly status: number;
+  readonly title: string;
+  readonly detail: string | undefined;
+  readonly errors: Record<string, string[]> | undefined;
+
+  constructor(problem: ProblemDetails) {
+    super(problem.title);
+    this.name = "ChronithApiError";
+    this.status = problem.status;
+    this.title = problem.title;
+    this.detail = problem.detail;
+    this.errors = problem.errors;
+  }
+}
+
+export function parseProblemDetails(body: unknown): ChronithApiError | null {
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    "status" in body &&
+    "title" in body
+  ) {
+    return new ChronithApiError(body as ProblemDetails);
+  }
+  return null;
+}
+
 export class ChronithError extends Error {
   constructor(
     message: string,
