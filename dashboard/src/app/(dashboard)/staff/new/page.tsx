@@ -16,8 +16,8 @@ export default function NewStaffPage() {
     try {
       await createStaff.mutateAsync(values);
       router.push("/staff");
-    } catch (e: any) {
-      setError(e.message ?? "Failed to create staff member");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to create staff member");
     }
   };
 

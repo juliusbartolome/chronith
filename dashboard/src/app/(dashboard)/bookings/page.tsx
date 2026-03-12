@@ -23,6 +23,15 @@ import { ExportButton } from "@/components/shared/export-button";
 import { useBookings } from "@/hooks/use-bookings";
 import { format } from "date-fns";
 
+interface BookingRow {
+  id: string;
+  customerEmail: string;
+  bookingTypeId: string;
+  start: string;
+  status: string;
+  staffMemberId?: string;
+}
+
 const STATUSES = [
   "All",
   "PendingPayment",
@@ -99,7 +108,7 @@ export default function BookingsPage() {
                   </TableCell>
                 </TableRow>
               )}
-              {data.items?.map((b: any) => (
+              {data.items?.map((b: BookingRow) => (
                 <TableRow key={b.id}>
                   <TableCell>{b.customerEmail}</TableCell>
                   <TableCell>{b.bookingTypeId}</TableCell>
