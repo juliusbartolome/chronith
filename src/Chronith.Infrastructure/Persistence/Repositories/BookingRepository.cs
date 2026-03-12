@@ -176,6 +176,40 @@ public sealed class BookingRepository : IBookingRepository
         await _db.Bookings.AddAsync(entity, ct);
     }
 
+    public async Task<IReadOnlyList<BookingExportRowDto>> ListForExportAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        string? status = null,
+        string? bookingTypeSlug = null,
+        Guid? staffMemberId = null,
+        CancellationToken ct = default)
+    {
+        return await _db.Bookings
+            .TagWith("ListForExportAsync — BookingRepository")
+            .AsNoTracking()
+            .Where(b => b.TenantId == tenantId && b.Start >= from && b.Start <= to)
+            .Where(b => status == null || b.Status.ToString() == status)
+            .Where(b => bookingTypeSlug == null || b.BookingType!.Slug == bookingTypeSlug)
+            .Where(b => staffMemberId == null || b.StaffMemberId == staffMemberId)
+            .OrderBy(b => b.Start)
+            .Take(10_000)
+            .Select(b => new BookingExportRowDto(
+                b.Id,
+                b.BookingType != null ? b.BookingType.Name : string.Empty,
+                b.BookingType != null ? b.BookingType.Slug : string.Empty,
+                b.Start,
+                b.End,
+                b.Status.ToString(),
+                b.CustomerEmail,
+                b.CustomerId,
+                b.StaffMember != null ? b.StaffMember.Name : null,
+                b.AmountInCentavos,
+                b.Currency,
+                b.PaymentReference))
+            .ToListAsync(ct);
+    }
+
     public async Task UpdateAsync(Booking booking, CancellationToken ct = default)
     {
         // Update scalar fields directly — avoids xmin concurrency token mismatch

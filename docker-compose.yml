@@ -87,5 +87,19 @@ services:
       Observability__EnableTracing: "true"
       Observability__EnableMetrics: "true"
 
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - CHRONITH_API_URL=http://chronith-api:8080
+      - NODE_ENV=production
+    depends_on:
+      - chronith-api
+    profiles:
+      - dashboard
+
 volumes:
   postgres_data:
