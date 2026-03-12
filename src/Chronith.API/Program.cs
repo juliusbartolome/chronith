@@ -26,6 +26,9 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// QuestPDF community license (free for open-source / internal use)
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var observabilityOptions = builder.Configuration
     .GetSection(ObservabilityOptions.SectionName)
     .Get<ObservabilityOptions>() ?? new ObservabilityOptions();
