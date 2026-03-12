@@ -1,0 +1,25 @@
+{
+  "name": "@chronith/sdk",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for the Chronith booking API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "generate": "openapi-ts && node scripts/fix-imports.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.56.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  }
+}
