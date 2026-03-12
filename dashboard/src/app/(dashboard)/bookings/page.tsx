@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BookingStatusBadge } from "@/components/bookings/booking-status-badge";
+import { ExportButton } from "@/components/shared/export-button";
 import { useBookings } from "@/hooks/use-bookings";
 import { format } from "date-fns";
 
@@ -43,9 +44,12 @@ export default function BookingsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-zinc-900">Bookings</h1>
-        <Button asChild>
-          <Link href="/bookings/new">Create Booking</Link>
-        </Button>
+        <div className="flex gap-2">
+          <ExportButton exportUrl="/api/bookings/export" filename="bookings" />
+          <Button asChild>
+            <Link href="/bookings/new">Create Booking</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-3">
