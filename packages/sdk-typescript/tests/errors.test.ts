@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   ChronithApiError,
+  ChronithNotFoundError,
+  ChronithUnauthorizedError,
+  ChronithValidationError,
   parseProblemDetails,
 } from "../src/errors.js";
 import type { ProblemDetails } from "../src/errors.js";
@@ -69,5 +72,57 @@ describe("parseProblemDetails", () => {
 
   it("returns null when title is missing", () => {
     expect(parseProblemDetails({ status: 400 })).toBeNull();
+  });
+});
+
+describe("ChronithNotFoundError", () => {
+  it("is an instance of ChronithApiError", () => {
+    const err = new ChronithNotFoundError();
+    expect(err).toBeInstanceOf(ChronithApiError);
+  });
+
+  it("has status 404", () => {
+    const err = new ChronithNotFoundError();
+    expect(err.status).toBe(404);
+  });
+
+  it("has a default message", () => {
+    const err = new ChronithNotFoundError();
+    expect(err.message).toBeTruthy();
+  });
+
+  it("accepts a custom message", () => {
+    const err = new ChronithNotFoundError("Booking not found");
+    expect(err.message).toBe("Booking not found");
+  });
+});
+
+describe("ChronithUnauthorizedError", () => {
+  it("is an instance of ChronithApiError", () => {
+    const err = new ChronithUnauthorizedError();
+    expect(err).toBeInstanceOf(ChronithApiError);
+  });
+
+  it("has status 401", () => {
+    const err = new ChronithUnauthorizedError();
+    expect(err.status).toBe(401);
+  });
+});
+
+describe("ChronithValidationError", () => {
+  it("is an instance of ChronithApiError", () => {
+    const err = new ChronithValidationError();
+    expect(err).toBeInstanceOf(ChronithApiError);
+  });
+
+  it("has status 422", () => {
+    const err = new ChronithValidationError();
+    expect(err.status).toBe(422);
+  });
+
+  it("exposes validation errors map", () => {
+    const errorsMap = { name: ["Name is required"] };
+    const err = new ChronithValidationError("Validation failed", errorsMap);
+    expect(err.errors).toEqual(errorsMap);
   });
 });

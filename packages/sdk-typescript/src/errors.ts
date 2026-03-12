@@ -35,36 +35,34 @@ export function parseProblemDetails(body: unknown): ChronithApiError | null {
   return null;
 }
 
-export class ChronithError extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode?: number,
-  ) {
-    super(message);
-    this.name = "ChronithError";
-  }
-}
-
-export class ChronithNotFoundError extends ChronithError {
+export class ChronithNotFoundError extends ChronithApiError {
   constructor(message = "Resource not found") {
-    super(message, 404);
+    super({ title: message, status: 404 });
     this.name = "ChronithNotFoundError";
   }
 }
 
-export class ChronithUnauthorizedError extends ChronithError {
+export class ChronithUnauthorizedError extends ChronithApiError {
   constructor(message = "Unauthorized") {
-    super(message, 401);
+    super({ title: message, status: 401 });
     this.name = "ChronithUnauthorizedError";
   }
 }
 
-export class ChronithValidationError extends ChronithError {
+export class ChronithValidationError extends ChronithApiError {
   constructor(
     message = "Validation failed",
-    public readonly errors?: Record<string, string[]>,
+    validationErrors?: Record<string, string[]>,
   ) {
-    super(message, 422);
+    super({ title: message, status: 422, errors: validationErrors });
     this.name = "ChronithValidationError";
+  }
+}
+
+/** @deprecated Use ChronithApiError instead */
+export class ChronithError extends ChronithApiError {
+  constructor(message: string, statusCode = 0) {
+    super({ title: message, status: statusCode });
+    this.name = "ChronithError";
   }
 }
