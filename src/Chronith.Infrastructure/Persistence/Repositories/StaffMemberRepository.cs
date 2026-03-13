@@ -129,5 +129,5 @@ public sealed class StaffMemberRepository : IStaffMemberRepository
             .TagWith("CountByTenantAsync — StaffMemberRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .CountAsync(s => s.TenantId == tenantId && !s.IsDeleted, ct);
+            .CountAsync(s => s.TenantId == tenantId && !s.IsDeleted && s.IsActive, ct);
 }

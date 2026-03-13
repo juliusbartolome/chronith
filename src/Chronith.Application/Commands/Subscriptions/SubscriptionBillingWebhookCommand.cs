@@ -44,8 +44,14 @@ public sealed class SubscriptionBillingWebhookCommandHandler(
         switch (command.EventType)
         {
             case "subscription.renewed":
-                if (command.NewPeriodStart.HasValue && command.NewPeriodEnd.HasValue)
-                    sub.RenewPeriod(command.NewPeriodStart.Value, command.NewPeriodEnd.Value);
+                if (!command.NewPeriodStart.HasValue || !command.NewPeriodEnd.HasValue)
+                {
+                    logger.LogWarning(
+                        "Billing webhook: 'subscription.renewed' for {ProviderId} is missing period dates; skipping renewal.",
+                        command.ProviderSubscriptionId);
+                    break;
+                }
+                sub.RenewPeriod(command.NewPeriodStart.Value, command.NewPeriodEnd.Value);
                 break;
 
             case "subscription.past_due":

@@ -16,8 +16,8 @@ public sealed class VerifyEmailEndpoint(ISender sender)
     {
         Post("/signup/verify-email");
         AllowAnonymous();
+        Options(x => x.WithTags("Signup").RequireRateLimiting("Auth"));
         Description(b => b
-            .WithTags("Signup")
             .WithSummary("Verify email address using the token sent during signup"));
     }
 

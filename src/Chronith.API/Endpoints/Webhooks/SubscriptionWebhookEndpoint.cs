@@ -1,6 +1,7 @@
 using Chronith.Application.Commands.Subscriptions;
 using FastEndpoints;
 using MediatR;
+using Microsoft.Extensions.Configuration;
 
 namespace Chronith.API.Endpoints.Webhooks;
 
@@ -14,21 +15,31 @@ public sealed class SubscriptionWebhookRequest
 
 /// <summary>
 /// Receives billing webhook events from the subscription provider (e.g. PayMongo).
-/// This endpoint should be secured via a shared secret validated in middleware or a dedicated header check.
-/// For now it accepts service-role tokens.
+/// Authenticated via X-Webhook-Secret header when Webhooks:SigningSecret is configured.
 /// </summary>
-public sealed class SubscriptionWebhookEndpoint(ISender sender)
+public sealed class SubscriptionWebhookEndpoint(ISender sender, IConfiguration configuration)
     : Endpoint<SubscriptionWebhookRequest>
 {
     public override void Configure()
     {
         Post("/webhooks/subscription");
-        AllowAnonymous();
+        AllowAnonymous(); // Public — validated via shared secret header
         Options(x => x.WithTags("Webhooks"));
     }
 
     public override async Task HandleAsync(SubscriptionWebhookRequest req, CancellationToken ct)
     {
+        var secret = configuration["Webhooks:SigningSecret"];
+        if (!string.IsNullOrEmpty(secret))
+        {
+            var incoming = HttpContext.Request.Headers["X-Webhook-Secret"].FirstOrDefault();
+            if (incoming != secret)
+            {
+                await Send.UnauthorizedAsync(ct);
+                return;
+            }
+        }
+
         await sender.Send(new SubscriptionBillingWebhookCommand
         {
             ProviderSubscriptionId = req.ProviderSubscriptionId,

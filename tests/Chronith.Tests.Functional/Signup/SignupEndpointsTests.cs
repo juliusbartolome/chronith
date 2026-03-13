@@ -121,6 +121,36 @@ public sealed class SignupEndpointsTests(FunctionalTestFixture fixture)
     }
 
     [Fact]
+    public async Task Signup_DuplicateSlug_Returns409()
+    {
+        var client = fixture.CreateAnonymousClient();
+        var slug = UniqueSlug();
+
+        // First signup — should succeed
+        await client.PostAsJsonAsync("/v1/signup", new
+        {
+            tenantName = "First Org",
+            tenantSlug = slug,
+            timeZoneId = "UTC",
+            email = $"{slug}@example.com",
+            password = "SecurePass123!"
+        });
+
+        // Second signup with same slug but different email
+        var secondEmail = $"{UniqueSlug()}@example.com";
+        var response = await client.PostAsJsonAsync("/v1/signup", new
+        {
+            tenantName = "Second Org",
+            tenantSlug = slug,
+            timeZoneId = "UTC",
+            email = secondEmail,
+            password = "SecurePass123!"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task Signup_MissingFields_Returns400()
     {
         var client = fixture.CreateAnonymousClient();
