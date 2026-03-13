@@ -29,16 +29,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      redis:
-        image: redis:8
-        ports:
-          - "6379:6379"
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
 
@@ -58,9 +48,8 @@ jobs:
           --no-restore
           --logger "trx;LogFileName=sdk-results.trx"
         env:
-          ConnectionStrings__DefaultConnection: >-
+          CI_SDK_CONNECTION_STRING: >-
             Host=localhost;Database=chronith_test;Username=postgres;Password=postgres
-          Redis__ConnectionString: "localhost:6379"
           ASPNETCORE_ENVIRONMENT: Test
 
       - name: Pack NuGet
