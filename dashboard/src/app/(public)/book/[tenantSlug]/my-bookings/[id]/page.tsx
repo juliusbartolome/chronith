@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBookingDetail, BookingDetailDto } from "@/hooks/use-customer-auth";
+import { useBookingDetail } from "@/hooks/use-customer-auth";
 
 export default function BookingDetailPage() {
   const { id } = useParams<{ tenantSlug: string; id: string }>();

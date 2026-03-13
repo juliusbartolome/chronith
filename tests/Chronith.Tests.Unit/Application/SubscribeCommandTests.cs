@@ -30,7 +30,7 @@ public sealed class SubscribeCommandTests
         _planRepo.GetByIdAsync(freePlan.Id, Arg.Any<CancellationToken>())
             .Returns(freePlan);
         _subRepo.GetActiveByTenantIdAsync(tenantId, Arg.Any<CancellationToken>())
-            .Returns((TenantSubscription?)null);
+            .Returns(default(TenantSubscription));
 
         var handler = new SubscribeCommandHandler(
             _subRepo, _planRepo, _provider, _tenantContext, _uow);
@@ -79,7 +79,7 @@ public sealed class SubscribeCommandTests
         _planRepo.GetByIdAsync(paidPlan.Id, Arg.Any<CancellationToken>())
             .Returns(paidPlan);
         _subRepo.GetActiveByTenantIdAsync(tenantId, Arg.Any<CancellationToken>())
-            .Returns((TenantSubscription?)null);
+            .Returns(default(TenantSubscription));
 
         var now = DateTimeOffset.UtcNow;
         _provider.CreateSubscriptionAsync(

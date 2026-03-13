@@ -87,14 +87,11 @@ function AccountStep({
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<AccountForm>({
     resolver: zodResolver(accountSchema),
     defaultValues,
   });
-
-  const tenantName = watch("tenantName");
 
   function slugify(name: string) {
     return name

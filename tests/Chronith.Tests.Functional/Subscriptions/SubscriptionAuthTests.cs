@@ -47,10 +47,11 @@ public sealed class SubscriptionAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureTenantAsync();
         var client = fixture.CreateClient(role, tenantId: SubTenantId);
+        string? paymentToken = null;
         var response = await client.PostAsJsonAsync("/v1/tenant/subscribe", new
         {
             planId = FreePlanId,
-            paymentMethodToken = (string?)null
+            paymentMethodToken = paymentToken
         });
         response.StatusCode.Should().Be(expected);
     }
@@ -59,10 +60,11 @@ public sealed class SubscriptionAuthTests(FunctionalTestFixture fixture)
     public async Task Subscribe_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
+        string? paymentToken = null;
         var response = await client.PostAsJsonAsync("/v1/tenant/subscribe", new
         {
             planId = FreePlanId,
-            paymentMethodToken = (string?)null
+            paymentMethodToken = paymentToken
         });
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -92,9 +94,10 @@ public sealed class SubscriptionAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureTenantAsync();
         var client = fixture.CreateClient(role, tenantId: SubTenantId);
-        var request = new HttpRequestMessage(HttpMethod.Delete, "/v1/tenant/subscription")
+        string? reason = null;
+        using var request = new HttpRequestMessage(HttpMethod.Delete, "/v1/tenant/subscription")
         {
-            Content = System.Net.Http.Json.JsonContent.Create(new { reason = (string?)null })
+            Content = System.Net.Http.Json.JsonContent.Create(new { reason })
         };
         var response = await client.SendAsync(request);
         response.StatusCode.Should().Be(expected);

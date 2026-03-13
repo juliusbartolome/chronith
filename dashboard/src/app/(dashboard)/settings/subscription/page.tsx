@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useSubscription, useChangePlan, useCancelSubscription } from "@/hooks/use-subscription";

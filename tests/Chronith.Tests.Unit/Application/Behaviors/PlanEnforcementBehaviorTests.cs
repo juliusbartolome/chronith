@@ -76,7 +76,7 @@ public sealed class PlanEnforcementBehaviorTests
         var tenantId = Guid.NewGuid();
         _tenantContext.TenantId.Returns(tenantId);
         _subRepo.GetActiveByTenantIdAsync(tenantId, Arg.Any<CancellationToken>())
-            .Returns((TenantSubscription?)null);
+            .Returns(default(TenantSubscription));
 
         var behavior = CreateBehavior<EnforcedRequest>();
         var nextCalled = false;
@@ -106,7 +106,7 @@ public sealed class PlanEnforcementBehaviorTests
         _subRepo.GetActiveByTenantIdAsync(tenantId, Arg.Any<CancellationToken>())
             .Returns(sub);
         _planRepo.GetByIdAsync(sub.PlanId, Arg.Any<CancellationToken>())
-            .Returns((TenantPlan?)null);
+            .Returns(default(TenantPlan));
 
         var behavior = CreateBehavior<EnforcedRequest>();
         var nextCalled = false;

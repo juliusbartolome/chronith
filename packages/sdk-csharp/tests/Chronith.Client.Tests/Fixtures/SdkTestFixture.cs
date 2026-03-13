@@ -36,22 +36,22 @@ public sealed class SdkTestFixture : IAsyncLifetime
 
         var connectionString = CiConnectionString ?? _postgres!.GetConnectionString();
 
-        Factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.UseEnvironment("Development");
-                builder.UseSetting("Database:Provider", "PostgreSQL");
-                builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
-                builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
-                builder.UseSetting("Security:EncryptionKey", TestConstants.EncryptionKey);
-                builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
-                // Raise rate-limit permits very high so SDK tests never exhaust
-                // the shared in-process IP bucket.
-                builder.UseSetting("RateLimiting:Auth:PermitLimit", "10000");
-                builder.UseSetting("RateLimiting:Auth:WindowSeconds", "300");
-                builder.UseSetting("RateLimiting:Authenticated:PermitLimit", "10000");
-                builder.UseSetting("RateLimiting:Authenticated:WindowSeconds", "300");
-            });
+        Factory = new WebApplicationFactory<Program>();
+        Factory = Factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Development");
+            builder.UseSetting("Database:Provider", "PostgreSQL");
+            builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
+            builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
+            builder.UseSetting("Security:EncryptionKey", TestConstants.EncryptionKey);
+            builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
+            // Raise rate-limit permits very high so SDK tests never exhaust
+            // the shared in-process IP bucket.
+            builder.UseSetting("RateLimiting:Auth:PermitLimit", "10000");
+            builder.UseSetting("RateLimiting:Auth:WindowSeconds", "300");
+            builder.UseSetting("RateLimiting:Authenticated:PermitLimit", "10000");
+            builder.UseSetting("RateLimiting:Authenticated:WindowSeconds", "300");
+        });
 
         // Run migrations
         using var scope = Factory.Services.CreateScope();

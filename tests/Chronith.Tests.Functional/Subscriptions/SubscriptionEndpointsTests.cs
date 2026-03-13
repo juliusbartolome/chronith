@@ -101,10 +101,11 @@ public sealed class SubscriptionEndpointsTests(FunctionalTestFixture fixture)
             """, SubTenantId);
 
         var client = AdminClient();
+        string? paymentToken = null;
         var response = await client.PostAsJsonAsync("/v1/tenant/subscribe", new
         {
             planId = FreePlanId,
-            paymentMethodToken = (string?)null
+            paymentMethodToken = paymentToken
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -121,10 +122,11 @@ public sealed class SubscriptionEndpointsTests(FunctionalTestFixture fixture)
         await SeedSubscriptionAsync();
 
         var client = AdminClient();
+        string? paymentToken = null;
         var response = await client.PostAsJsonAsync("/v1/tenant/subscribe", new
         {
             planId = FreePlanId,
-            paymentMethodToken = (string?)null
+            paymentMethodToken = paymentToken
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
@@ -178,7 +180,7 @@ public sealed class SubscriptionEndpointsTests(FunctionalTestFixture fixture)
         await SeedSubscriptionAsync();
 
         var client = AdminClient();
-        var request = new HttpRequestMessage(HttpMethod.Delete, "/v1/tenant/subscription")
+        using var request = new HttpRequestMessage(HttpMethod.Delete, "/v1/tenant/subscription")
         {
             Content = JsonContent.Create(new { reason = "Testing cancellation" })
         };

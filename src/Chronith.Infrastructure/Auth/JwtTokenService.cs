@@ -205,7 +205,7 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
 
             return userId;
         }
-        catch
+        catch (Exception ex) when (ex is SecurityTokenException or ArgumentException)
         {
             return null;
         }
