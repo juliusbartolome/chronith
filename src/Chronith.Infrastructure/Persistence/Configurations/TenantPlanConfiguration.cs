@@ -51,5 +51,6 @@ public sealed class TenantPlanConfiguration : IEntityTypeConfiguration<TenantPla
 
         builder.HasIndex(p => p.IsActive);
         builder.HasIndex(p => p.SortOrder);
+        builder.HasIndex(p => p.Name).IsUnique();
     }
 }

@@ -76,7 +76,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantSettingsRepository, TenantSettingsRepository>();
         services.AddScoped<ITenantPlanRepository, TenantPlanRepository>();
         services.AddScoped<ITenantSubscriptionRepository, TenantSubscriptionRepository>();
-        services.AddScoped<PlanSeeder>();
+        services.AddScoped<IPlanSeeder, PlanSeeder>();
         services.AddSingleton<ITemplateRenderer, TemplateRenderer>();
         services.AddScoped<IAuditSnapshotResolver, BookingSnapshotResolver>();
         services.AddScoped<IAuditSnapshotResolver, BookingTypeSnapshotResolver>();

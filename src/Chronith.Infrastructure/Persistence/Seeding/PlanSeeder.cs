@@ -1,24 +1,16 @@
+using Chronith.Application.Interfaces;
 using Chronith.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Chronith.Infrastructure.Persistence.Seeding;
 
-public sealed class PlanSeeder
+public sealed class PlanSeeder(ChronithDbContext db, ILogger<PlanSeeder> logger) : IPlanSeeder
 {
     public static readonly Guid FreePlanId = Guid.Parse("00000000-0000-0000-0000-000000000001");
     public static readonly Guid StarterPlanId = Guid.Parse("00000000-0000-0000-0000-000000000002");
     public static readonly Guid ProPlanId = Guid.Parse("00000000-0000-0000-0000-000000000003");
     public static readonly Guid EnterprisePlanId = Guid.Parse("00000000-0000-0000-0000-000000000004");
-
-    private readonly ChronithDbContext _db;
-    private readonly ILogger<PlanSeeder> _logger;
-
-    public PlanSeeder(ChronithDbContext db, ILogger<PlanSeeder> logger)
-    {
-        _db = db;
-        _logger = logger;
-    }
 
     public async Task SeedAsync(CancellationToken ct = default)
     {
@@ -26,18 +18,18 @@ public sealed class PlanSeeder
 
         foreach (var plan in plans)
         {
-            var exists = await _db.TenantPlans
+            var exists = await db.TenantPlans
                 .IgnoreQueryFilters()
                 .AnyAsync(p => p.Id == plan.Id, ct);
 
             if (!exists)
             {
-                await _db.TenantPlans.AddAsync(plan, ct);
-                _logger.LogInformation("Seeding plan {PlanName} ({PlanId})", plan.Name, plan.Id);
+                await db.TenantPlans.AddAsync(plan, ct);
+                logger.LogInformation("Seeding plan {PlanName} ({PlanId})", plan.Name, plan.Id);
             }
         }
 
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
     }
 
     public static IReadOnlyList<TenantPlanEntity> DefaultPlans() =>

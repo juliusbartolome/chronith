@@ -23,7 +23,7 @@ public sealed class TenantSubscriptionConfiguration : IEntityTypeConfiguration<T
             .HasMaxLength(30);
 
         builder.Property(s => s.PaymentProviderSubscriptionId)
-            .HasMaxLength(200);
+            .HasMaxLength(255);
 
         builder.Property(s => s.CancelReason)
             .HasMaxLength(500);

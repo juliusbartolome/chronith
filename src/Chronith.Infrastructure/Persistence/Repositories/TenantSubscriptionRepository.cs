@@ -6,27 +6,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Chronith.Infrastructure.Persistence.Repositories;
 
-public sealed class TenantSubscriptionRepository : ITenantSubscriptionRepository
+public sealed class TenantSubscriptionRepository(ChronithDbContext db) : ITenantSubscriptionRepository
 {
-    private readonly ChronithDbContext _db;
-
-    public TenantSubscriptionRepository(ChronithDbContext db) => _db = db;
+    private static readonly string[] _activeStatuses =
+    [
+        SubscriptionStatus.Active.ToString(),
+        SubscriptionStatus.Trialing.ToString(),
+        SubscriptionStatus.PastDue.ToString(),
+    ];
 
     public async Task<TenantSubscription?> GetActiveByTenantIdAsync(
         Guid tenantId, CancellationToken ct = default)
     {
-        var activeStatuses = new[]
-        {
-            SubscriptionStatus.Active.ToString(),
-            SubscriptionStatus.Trialing.ToString(),
-            SubscriptionStatus.PastDue.ToString(),
-        };
-
-        var entity = await _db.TenantSubscriptions
+        var entity = await db.TenantSubscriptions
             .TagWith("GetActiveByTenantIdAsync — TenantSubscriptionRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(s => s.TenantId == tenantId && !s.IsDeleted && activeStatuses.Contains(s.Status))
+            .Where(s => s.TenantId == tenantId && !s.IsDeleted && _activeStatuses.Contains(s.Status))
             .OrderByDescending(s => s.CreatedAt)
             .FirstOrDefaultAsync(ct);
 
@@ -36,12 +32,12 @@ public sealed class TenantSubscriptionRepository : ITenantSubscriptionRepository
     public async Task AddAsync(TenantSubscription subscription, CancellationToken ct = default)
     {
         var entity = TenantSubscriptionEntityMapper.ToEntity(subscription);
-        await _db.TenantSubscriptions.AddAsync(entity, ct);
+        await db.TenantSubscriptions.AddAsync(entity, ct);
     }
 
     public async Task UpdateAsync(TenantSubscription subscription, CancellationToken ct = default)
     {
-        var entity = await _db.TenantSubscriptions
+        var entity = await db.TenantSubscriptions
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(s => s.Id == subscription.Id, ct);
 

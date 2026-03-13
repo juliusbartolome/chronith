@@ -1,4 +1,5 @@
 using System.Text;
+using Chronith.Application.Interfaces;
 using Chronith.API.HealthChecks;
 using Chronith.API.Middleware;
 using Chronith.API.Processors;
@@ -7,7 +8,6 @@ using Chronith.Application.Options;
 using Chronith.Infrastructure;
 using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Persistence;
-using Chronith.Infrastructure.Persistence.Seeding;
 using Chronith.Application.Telemetry;
 using Chronith.Infrastructure.Telemetry;
 using Microsoft.IdentityModel.Tokens;
@@ -257,7 +257,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
 
     // Seed default subscription plans (idempotent)
-    var planSeeder = scope.ServiceProvider.GetRequiredService<PlanSeeder>();
+    var planSeeder = scope.ServiceProvider.GetRequiredService<IPlanSeeder>();
     await planSeeder.SeedAsync();
 }
 

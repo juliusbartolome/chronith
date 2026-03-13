@@ -5,15 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Chronith.Infrastructure.Persistence.Repositories;
 
-public sealed class TenantPlanRepository : ITenantPlanRepository
+public sealed class TenantPlanRepository(ChronithDbContext db) : ITenantPlanRepository
 {
-    private readonly ChronithDbContext _db;
-
-    public TenantPlanRepository(ChronithDbContext db) => _db = db;
-
     public async Task<IReadOnlyList<TenantPlan>> GetActivePlansAsync(CancellationToken ct = default)
     {
-        var entities = await _db.TenantPlans
+        var entities = await db.TenantPlans
             .TagWith("GetActivePlansAsync — TenantPlanRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
@@ -26,7 +22,7 @@ public sealed class TenantPlanRepository : ITenantPlanRepository
 
     public async Task<TenantPlan?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        var entity = await _db.TenantPlans
+        var entity = await db.TenantPlans
             .TagWith("GetByIdAsync — TenantPlanRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
