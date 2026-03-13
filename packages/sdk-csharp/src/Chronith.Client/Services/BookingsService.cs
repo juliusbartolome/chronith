@@ -21,6 +21,19 @@ public sealed class BookingsService(HttpClient httpClient) : ServiceBase(httpCli
         return await ReadJsonAsync<BookingDto>(response, ct);
     }
 
+    /// <summary>
+    /// Creates a new booking.
+    /// </summary>
+    /// <param name="request">
+    /// An object with the following fields:
+    /// <list type="bullet">
+    ///   <item><term>BookingTypeSlug</term><description>Required. The slug of the booking type.</description></item>
+    ///   <item><term>StartTime</term><description>Required. The requested start time (ISO 8601).</description></item>
+    ///   <item><term>CustomerEmail</term><description>Required. The customer's email address.</description></item>
+    ///   <item><term>CustomerId</term><description>Optional. The customer's identifier.</description></item>
+    /// </list>
+    /// </param>
+    /// <param name="ct">Cancellation token.</param>
     public async Task<BookingDto> CreateAsync(
         object request,
         CancellationToken ct = default)

@@ -4,7 +4,7 @@ namespace Chronith.Client.Services;
 
 public sealed class AvailabilityService(HttpClient httpClient) : ServiceBase(httpClient)
 {
-    public async Task<IReadOnlyList<AvailabilityDto>> QueryAsync(
+    public async Task<AvailabilityDto> QueryAsync(
         Guid bookingTypeId,
         DateTimeOffset from,
         DateTimeOffset to,
@@ -16,6 +16,6 @@ public sealed class AvailabilityService(HttpClient httpClient) : ServiceBase(htt
             url += $"&staffMemberId={staffMemberId.Value}";
 
         var response = await Http.GetAsync(url, ct);
-        return await ReadJsonAsync<IReadOnlyList<AvailabilityDto>>(response, ct);
+        return await ReadJsonAsync<AvailabilityDto>(response, ct);
     }
 }

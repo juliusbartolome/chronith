@@ -1,10 +1,13 @@
 namespace Chronith.Client.Models;
 
 public sealed record TenantUsageDto(
-    int BookingTypesCount,
-    int StaffMembersCount,
+    int BookingTypesUsed,
+    int BookingTypesLimit,
+    int StaffMembersUsed,
+    int StaffMembersLimit,
     int BookingsThisMonth,
-    int MaxBookingTypes,
-    int MaxStaffMembers,
-    int MaxBookingsPerMonth
+    int BookingsPerMonthLimit,
+    int CustomersUsed,
+    int CustomersLimit,
+    string PlanName
 );

@@ -21,6 +21,19 @@ public sealed class StaffService(HttpClient httpClient) : ServiceBase(httpClient
         return await ReadJsonAsync<StaffMemberDto>(response, ct);
     }
 
+    /// <summary>
+    /// Creates a new staff member.
+    /// </summary>
+    /// <param name="request">
+    /// An object with the following fields:
+    /// <list type="bullet">
+    ///   <item><term>Name</term><description>Required. The staff member's display name.</description></item>
+    ///   <item><term>Email</term><description>Required. The staff member's email address.</description></item>
+    ///   <item><term>TenantUserId</term><description>Optional. Links the staff member to a tenant user account.</description></item>
+    ///   <item><term>AvailabilityWindows</term><description>Required. Collection of availability windows for scheduling.</description></item>
+    /// </list>
+    /// </param>
+    /// <param name="ct">Cancellation token.</param>
     public async Task<StaffMemberDto> CreateAsync(
         object request,
         CancellationToken ct = default)
