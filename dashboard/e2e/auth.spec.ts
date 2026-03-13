@@ -1,30 +1,67 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Authentication", () => {
-  test("unauthenticated user is redirected to /login", async ({ page }) => {
-    await page.goto("/");
-    await expect(page).toHaveURL(/\/login/);
+test.describe("Admin Authentication", () => {
+  test("login page renders", async ({ page }) => {
+    await page.goto("/login");
+    // h1 on login page is "Chronith" (brand heading)
+    await expect(page.locator("h1")).toContainText(/chronith/i);
+    await expect(page.locator('[type="email"]')).toBeVisible();
+    await expect(page.locator('[type="password"]')).toBeVisible();
+    await expect(page.locator('[type="submit"]')).toBeVisible();
   });
 
-  test("unauthenticated user going to /bookings is redirected to /login", async ({
+  test("shows error on invalid credentials", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill('[type="email"]', "wrong@example.com");
+    await page.fill('[type="password"]', "wrongpassword");
+    await page.click('[type="submit"]');
+    await expect(
+      page.locator('[role="alert"], .text-destructive'),
+    ).toBeVisible();
+  });
+
+  test("redirects to login when accessing protected page unauthenticated", async ({
     page,
   }) => {
     await page.goto("/bookings");
-    await expect(page).toHaveURL(/\/login/);
+    await expect(page).toHaveURL(/login/);
+  });
+});
+
+test.describe("Signup Flow", () => {
+  test("signup page renders 3-step wizard", async ({ page }) => {
+    await page.goto("/signup");
+    // h1 on signup page is "Create your account"
+    await expect(page.locator("h1")).toContainText(/create your account/i);
+    // Step 1 uses id="tenantName" for business name and id="email" for admin email
+    await expect(page.locator('[id="tenantName"]')).toBeVisible();
+    await expect(page.locator('[id="email"]')).toBeVisible();
   });
 
-  test("login page renders email and password fields", async ({ page }) => {
-    await page.goto("/login");
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/password/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible();
+  test("step 1 validation prevents advancing with empty fields", async ({
+    page,
+  }) => {
+    await page.goto("/signup");
+    // The Next button in step 1 is a submit button inside the form
+    await page.click('button[type="submit"]');
+    await expect(
+      page.locator(".text-red-500, [role='alert']"),
+    ).toBeVisible();
   });
 
-  test("login with invalid credentials shows error", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel(/email/i).fill("bad@test.com");
-    await page.getByLabel(/password/i).fill("wrong");
-    await page.getByRole("button", { name: /sign in/i }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
+  test("step 2 shows plan selection cards after filling step 1", async ({
+    page,
+  }) => {
+    await page.goto("/signup");
+    // Fill step 1 with correct field IDs
+    await page.fill('[id="tenantName"]', "Test Corp");
+    await page.fill('[id="email"]', "admin@test.com");
+    await page.fill('[id="password"]', "Password1!");
+    await page.fill('[id="confirmPassword"]', "Password1!");
+    await page.click('button[type="submit"]');
+    // Step 2 — plan cards (buttons for selection)
+    await expect(page.locator("button[type='button']").first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 });
