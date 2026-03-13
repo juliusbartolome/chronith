@@ -16,7 +16,7 @@ public sealed class SubscribeEndpoint(ISender sender)
 {
     public override void Configure()
     {
-        Post("/tenant/subscription");
+        Post("/tenant/subscribe");
         Roles("TenantAdmin");
         Options(x => x.WithTags("Subscriptions").RequireRateLimiting("Authenticated"));
     }

@@ -39,10 +39,11 @@ public sealed class SignupEndpointsTests(FunctionalTestFixture fixture)
     }
 
     [Fact]
-    public async Task Signup_DuplicateSlug_Returns409()
+    public async Task Signup_DuplicateEmail_Returns409()
     {
         var client = fixture.CreateAnonymousClient();
         var slug = UniqueSlug();
+        var email = $"{slug}@example.com";
 
         // First signup — should succeed
         await client.PostAsJsonAsync("/v1/signup", new
@@ -50,17 +51,18 @@ public sealed class SignupEndpointsTests(FunctionalTestFixture fixture)
             tenantName = "First Org",
             tenantSlug = slug,
             timeZoneId = "UTC",
-            email = $"first-{slug}@example.com",
+            email,
             password = "SecurePass123!"
         });
 
-        // Second signup with same slug
+        // Second signup with same email but different slug
+        var secondSlug = UniqueSlug();
         var response = await client.PostAsJsonAsync("/v1/signup", new
         {
             tenantName = "Second Org",
-            tenantSlug = slug,
+            tenantSlug = secondSlug,
             timeZoneId = "UTC",
-            email = $"second-{slug}@example.com",
+            email,
             password = "SecurePass123!"
         });
 

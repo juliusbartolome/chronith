@@ -19,6 +19,11 @@ public sealed class PlansEndpointsTests(FunctionalTestFixture fixture)
         var body = await response.ReadFromApiJsonAsync<IReadOnlyList<TenantPlanDto>>();
         body.Should().NotBeNull();
         body!.Should().NotBeEmpty();
+        body!.Should().HaveCountGreaterThanOrEqualTo(4);
+        body.Should().Contain(p => p.Name == "Free");
+        body.Should().Contain(p => p.Name == "Starter");
+        body.Should().Contain(p => p.Name == "Pro");
+        body.Should().Contain(p => p.Name == "Enterprise");
     }
 
     [Fact]

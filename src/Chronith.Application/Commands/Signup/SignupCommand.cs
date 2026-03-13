@@ -61,6 +61,10 @@ public sealed class SignupCommandHandler(
         if (slugExists)
             throw new ConflictException($"Tenant slug '{command.TenantSlug}' is already taken.");
 
+        var emailExists = await userRepository.ExistsByEmailGloballyAsync(command.Email, cancellationToken);
+        if (emailExists)
+            throw new ConflictException($"A user with email '{command.Email}' already exists.");
+
         // Create tenant
         var tenant = Tenant.Create(command.TenantSlug, command.TenantName, command.TimeZoneId);
         await tenantRepository.AddAsync(tenant, cancellationToken);

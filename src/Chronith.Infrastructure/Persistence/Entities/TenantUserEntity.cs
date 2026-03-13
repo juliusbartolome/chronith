@@ -10,5 +10,6 @@ public sealed class TenantUserEntity
     public string PasswordHash { get; set; } = string.Empty;
     public TenantUserRole Role { get; set; }
     public bool IsActive { get; set; }
+    public bool IsEmailVerified { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }

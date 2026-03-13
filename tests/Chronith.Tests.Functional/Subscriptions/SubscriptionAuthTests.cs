@@ -38,7 +38,7 @@ public sealed class SubscriptionAuthTests(FunctionalTestFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    // ── POST /v1/tenant/subscription — only TenantAdmin ─────────────────────
+    // ── POST /v1/tenant/subscribe — only TenantAdmin ─────────────────────
 
     [Theory]
     [InlineData("TenantStaff", HttpStatusCode.Forbidden)]
@@ -47,7 +47,7 @@ public sealed class SubscriptionAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureTenantAsync();
         var client = fixture.CreateClient(role, tenantId: SubTenantId);
-        var response = await client.PostAsJsonAsync("/v1/tenant/subscription", new
+        var response = await client.PostAsJsonAsync("/v1/tenant/subscribe", new
         {
             planId = FreePlanId,
             paymentMethodToken = (string?)null
@@ -59,7 +59,7 @@ public sealed class SubscriptionAuthTests(FunctionalTestFixture fixture)
     public async Task Subscribe_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
-        var response = await client.PostAsJsonAsync("/v1/tenant/subscription", new
+        var response = await client.PostAsJsonAsync("/v1/tenant/subscribe", new
         {
             planId = FreePlanId,
             paymentMethodToken = (string?)null

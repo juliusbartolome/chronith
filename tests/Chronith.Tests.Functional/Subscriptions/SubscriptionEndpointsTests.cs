@@ -88,7 +88,7 @@ public sealed class SubscriptionEndpointsTests(FunctionalTestFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    // ── POST /v1/tenant/subscription ────────────────────────────────────────
+    // ── POST /v1/tenant/subscribe ────────────────────────────────────────
 
     [Fact]
     public async Task Subscribe_ToFreePlan_Returns201WithTrialingStatus()
@@ -101,7 +101,7 @@ public sealed class SubscriptionEndpointsTests(FunctionalTestFixture fixture)
             """, SubTenantId);
 
         var client = AdminClient();
-        var response = await client.PostAsJsonAsync("/v1/tenant/subscription", new
+        var response = await client.PostAsJsonAsync("/v1/tenant/subscribe", new
         {
             planId = FreePlanId,
             paymentMethodToken = (string?)null
@@ -121,7 +121,7 @@ public sealed class SubscriptionEndpointsTests(FunctionalTestFixture fixture)
         await SeedSubscriptionAsync();
 
         var client = AdminClient();
-        var response = await client.PostAsJsonAsync("/v1/tenant/subscription", new
+        var response = await client.PostAsJsonAsync("/v1/tenant/subscribe", new
         {
             planId = FreePlanId,
             paymentMethodToken = (string?)null

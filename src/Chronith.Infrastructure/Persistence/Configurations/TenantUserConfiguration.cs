@@ -16,6 +16,7 @@ public sealed class TenantUserConfiguration : IEntityTypeConfiguration<TenantUse
             .HasConversion<string>(); // store as string e.g. "Owner"
         builder.Property(u => u.CreatedAt).IsRequired();
         builder.Property(u => u.IsActive).IsRequired();
+        builder.Property(u => u.IsEmailVerified).IsRequired();
         // Unique email per tenant
         builder.HasIndex(u => new { u.TenantId, u.Email }).IsUnique();
     }

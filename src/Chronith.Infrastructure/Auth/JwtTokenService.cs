@@ -152,4 +152,62 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
             throw new UnauthorizedException("Invalid or expired magic link token.");
         }
     }
+
+    public string CreateEmailVerificationToken(Guid userId)
+    {
+        var signingKey = GetPrimarySigningKey();
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new Claim("purpose", "email-verify"),
+        };
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(24),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public Guid? ValidateEmailVerificationToken(string token)
+    {
+        try
+        {
+            var signingKey = GetPrimarySigningKey();
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            var handler = new JwtSecurityTokenHandler();
+            var principal = handler.ValidateToken(token, validationParameters, out _);
+
+            var purpose = principal.FindFirstValue("purpose");
+            if (purpose != "email-verify")
+                return null;
+
+            var sub = principal.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (sub is null || !Guid.TryParse(sub, out var userId))
+                return null;
+
+            return userId;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }

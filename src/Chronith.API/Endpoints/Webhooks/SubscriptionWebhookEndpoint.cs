@@ -22,9 +22,9 @@ public sealed class SubscriptionWebhookEndpoint(ISender sender)
 {
     public override void Configure()
     {
-        Post("/webhooks/subscription/billing");
-        Roles("TenantPaymentService");
-        Options(x => x.WithTags("Webhooks").RequireRateLimiting("Authenticated"));
+        Post("/webhooks/subscription");
+        AllowAnonymous();
+        Options(x => x.WithTags("Webhooks"));
     }
 
     public override async Task HandleAsync(SubscriptionWebhookRequest req, CancellationToken ct)

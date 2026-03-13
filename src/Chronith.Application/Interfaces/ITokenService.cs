@@ -27,4 +27,15 @@ public interface ITokenService
     /// Throws UnauthorizedException if invalid, expired, or wrong purpose/tenantSlug.
     /// </summary>
     Guid ValidateMagicLinkToken(string token, string tenantSlug);
+
+    /// <summary>
+    /// Creates a 24-hour signed JWT for email address verification during signup.
+    /// Claims: sub (user ID), purpose="email-verify"
+    /// </summary>
+    string CreateEmailVerificationToken(Guid userId);
+
+    /// <summary>
+    /// Validates an email verification token. Returns the user ID if valid, null if invalid/expired.
+    /// </summary>
+    Guid? ValidateEmailVerificationToken(string token);
 }
