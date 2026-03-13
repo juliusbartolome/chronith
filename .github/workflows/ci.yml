@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, "feat/v1.0-ga"]
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, "feat/v1.0-ga"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -104,6 +104,65 @@ jobs:
           tags: chronith-api:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  playwright-e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: dashboard
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: dashboard
+
+      - name: Build dashboard
+        run: npm run build
+        working-directory: dashboard
+
+      - name: Start dashboard server
+        run: npm start &
+        working-directory: dashboard
+        env:
+          PORT: 3000
+
+      - name: Wait for port 3000
+        run: |
+          echo "Waiting for dashboard on port 3000..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000 > /dev/null 2>&1; then
+              echo "Dashboard ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Timed out waiting for dashboard"
+          exit 1
+
+      - name: Run Playwright tests
+        run: npx playwright test --project="Desktop Chrome" --project="Mobile Chrome"
+        working-directory: dashboard
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          CI: "true"
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: dashboard/playwright-report/
+          retention-days: 7
 
   k6-load-tests:
     name: k6 Load Tests

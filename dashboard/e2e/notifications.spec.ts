@@ -13,9 +13,9 @@ test.describe("Notifications Dashboard", () => {
 
   test("channel configuration cards are visible", async ({ page }) => {
     await page.goto("/notifications");
-    const emailCard = page
-      .locator('[data-testid="channel-email"], :has-text("Email")')
-      .first();
+    // ChannelCard renders <div class="rounded-lg border p-6"><h3>Email</h3>...</div>
+    // Target the h3 channel label inside a border card to avoid matching nav/headings
+    const emailCard = page.locator('.rounded-lg.border h3:has-text("Email")');
     await expect(emailCard).toBeVisible({ timeout: 5000 });
   });
 });

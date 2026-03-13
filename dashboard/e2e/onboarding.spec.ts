@@ -2,42 +2,41 @@ import { test, expect } from "@playwright/test";
 import { loginAsAdmin } from "./helpers/auth";
 
 test.describe("Onboarding Wizard", () => {
+  test.describe.configure({ mode: "serial" });
+
   test.beforeEach(async ({ page }) => {
+    await loginAsAdmin(page);
     await page.goto("/onboarding");
-    await page.evaluate(() => localStorage.removeItem("onboarding-progress"));
+    // Clear progress using the actual localStorage key used by the page
+    await page.evaluate(() =>
+      localStorage.removeItem("chronith-onboarding-step"),
+    );
     await page.reload();
   });
 
   test("onboarding wizard renders", async ({ page }) => {
-    await loginAsAdmin(page);
-    await page.goto("/onboarding");
-    await expect(page.locator("h1")).toContainText(
-      /welcome|get started|onboarding/i,
-    );
+    // Step 0 title is "Welcome to Chronith" rendered in h1
+    await expect(page.locator("h1")).toContainText(/welcome to chronith/i);
   });
 
   test("shows step 1 by default", async ({ page }) => {
-    await loginAsAdmin(page);
-    await page.goto("/onboarding");
-    await expect(page.locator("h2, [data-testid='step-title']")).toContainText(
-      /booking type|step 1/i,
-    );
+    // Step 0 is the welcome step — h1 contains the step title
+    await expect(page.locator("h1")).toContainText(/welcome to chronith/i);
   });
 
   test("can dismiss wizard", async ({ page }) => {
-    await loginAsAdmin(page);
-    await page.goto("/onboarding");
-    const dismissButton = page.locator(
-      'button[title="Skip setup"], button:has(svg[data-lucide="x"])',
-    );
+    // Actual dismiss element: <button type="button">Skip setup</button>
+    const dismissButton = page.locator('button:has-text("Skip setup")');
     if (await dismissButton.isVisible()) {
       await dismissButton.click();
-      await expect(page).toHaveURL(/dashboard/);
+      await expect(page).toHaveURL(/bookings/);
     }
   });
 });
 
 test.describe("Subscription Settings", () => {
+  test.describe.configure({ mode: "serial" });
+
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
   });

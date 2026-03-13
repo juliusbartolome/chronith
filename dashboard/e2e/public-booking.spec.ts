@@ -5,23 +5,29 @@ const TENANT_SLUG = process.env.TEST_TENANT_SLUG ?? "test-tenant";
 test.describe("Public Booking Flow", () => {
   test("booking landing page renders", async ({ page }) => {
     await page.goto(`/book/${TENANT_SLUG}`);
+    // Page renders either booking type links, "No booking types" message, or the
+    // "Book an Appointment" h1 — all are valid states depending on API availability
     const hasCards = await page
-      .locator('.booking-type-card, [data-testid="booking-type-card"]')
+      .locator(`a[href*="/book/${TENANT_SLUG}/"]`)
       .first()
       .isVisible()
       .catch(() => false);
     const hasEmpty = await page
-      .locator(':has-text("No booking types")')
+      .locator('p:has-text("No booking types are currently available")')
       .isVisible()
       .catch(() => false);
-    const hasHeader = await page.locator("h1, h2").first().isVisible();
+    const hasHeader = await page
+      .locator('h1:has-text("Book an Appointment")')
+      .isVisible()
+      .catch(() => false);
     expect(hasCards || hasEmpty || hasHeader).toBe(true);
   });
 
   test("booking type detail page is accessible", async ({ page }) => {
     await page.goto(`/book/${TENANT_SLUG}`);
+    // Cards are <Link href="/book/{tenantSlug}/{slug}"> elements
     const card = page
-      .locator('.booking-type-card a, [data-testid="booking-type-card"] a')
+      .locator(`a[href*="/book/${TENANT_SLUG}/"]`)
       .first();
     if (await card.isVisible()) {
       await card.click();
@@ -44,10 +50,10 @@ test.describe("Public Booking Flow", () => {
     page,
   }) => {
     await page.goto(`/book/${TENANT_SLUG}/my-bookings`);
-    // Page stays at same URL, renders "Sign in" prompt (not a redirect)
+    // Page renders a sign-in prompt (not a redirect). Exact text from my-bookings/page.tsx:
+    // <p className="text-muted-foreground">Sign in to view your bookings.</p>
     await expect(
-      page.locator(':has-text("Sign in to view your bookings"), :has-text("Sign in")')
-        .first()
+      page.locator('p:has-text("Sign in to view your bookings.")'),
     ).toBeVisible({ timeout: 10000 });
   });
 });
