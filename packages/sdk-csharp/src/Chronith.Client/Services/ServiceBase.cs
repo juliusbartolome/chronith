@@ -8,7 +8,7 @@ namespace Chronith.Client.Services;
 /// </summary>
 public abstract class ServiceBase(HttpClient httpClient)
 {
-    protected HttpClient Http { get; } = httpClient;
+    protected HttpClient Http { get; } = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
     protected static async Task<T> ReadJsonAsync<T>(
         HttpResponseMessage response,

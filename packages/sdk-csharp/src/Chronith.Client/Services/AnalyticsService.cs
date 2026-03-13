@@ -4,7 +4,7 @@ namespace Chronith.Client.Services;
 
 public sealed class AnalyticsService(HttpClient httpClient) : ServiceBase(httpClient)
 {
-    public async Task<AnalyticsBookingsDto> GetBookingsAsync(
+    public async Task<BookingAnalyticsDto> GetBookingsAsync(
         DateTimeOffset from,
         DateTimeOffset to,
         string groupBy = "day",
@@ -12,6 +12,6 @@ public sealed class AnalyticsService(HttpClient httpClient) : ServiceBase(httpCl
     {
         var response = await Http.GetAsync(
             $"/v1/analytics/bookings?from={from:O}&to={to:O}&groupBy={groupBy}", ct);
-        return await ReadJsonAsync<AnalyticsBookingsDto>(response, ct);
+        return await ReadJsonAsync<BookingAnalyticsDto>(response, ct);
     }
 }

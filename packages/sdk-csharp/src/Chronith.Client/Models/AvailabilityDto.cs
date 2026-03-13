@@ -1,9 +1,10 @@
 namespace Chronith.Client.Models;
 
 public sealed record AvailabilityDto(
-    DateTimeOffset StartAt,
-    DateTimeOffset EndAt,
-    bool IsAvailable,
-    Guid? StaffMemberId,
-    string? StaffMemberName
+    IReadOnlyList<AvailableSlotDto> Slots
+);
+
+public sealed record AvailableSlotDto(
+    DateTimeOffset Start,
+    DateTimeOffset End
 );

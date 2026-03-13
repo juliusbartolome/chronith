@@ -28,6 +28,7 @@ public sealed class ChronithClientOptions
 
     /// <summary>
     /// Maximum number of retries on transient failures. Defaults to 3.
+    /// Reserved for future use; retry behaviour is not yet implemented.
     /// </summary>
     public int MaxRetries { get; set; } = 3;
 }

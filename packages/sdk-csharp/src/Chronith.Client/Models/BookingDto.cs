@@ -2,18 +2,25 @@ namespace Chronith.Client.Models;
 
 public sealed record BookingDto(
     Guid Id,
-    Guid TenantId,
     Guid BookingTypeId,
-    string BookingTypeTitle,
-    Guid? StaffMemberId,
-    string? StaffMemberName,
-    string CustomerName,
-    string CustomerEmail,
-    string? CustomerPhone,
+    DateTimeOffset Start,
+    DateTimeOffset End,
     string Status,
-    long PriceCentavos,
-    DateTimeOffset? StartAt,
-    DateTimeOffset? EndAt,
-    DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt
+    string CustomerId,
+    string CustomerEmail,
+    string? PaymentReference,
+    long AmountInCentavos,
+    string Currency,
+    string? CheckoutUrl,
+    Guid? StaffMemberId,
+    IReadOnlyList<BookingStatusChangeDto> StatusChanges
+);
+
+public sealed record BookingStatusChangeDto(
+    Guid Id,
+    string FromStatus,
+    string ToStatus,
+    string ChangedById,
+    string ChangedByRole,
+    DateTimeOffset ChangedAt
 );

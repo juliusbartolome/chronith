@@ -2,10 +2,15 @@ namespace Chronith.Client.Models;
 
 public sealed record StaffMemberDto(
     Guid Id,
-    Guid TenantId,
     string Name,
-    string? Email,
-    string? Phone,
+    string Email,
+    Guid? TenantUserId,
     bool IsActive,
-    DateTimeOffset CreatedAt
+    IReadOnlyList<StaffAvailabilityWindowDto> AvailabilityWindows
+);
+
+public sealed record StaffAvailabilityWindowDto(
+    string DayOfWeek,
+    string StartTime,
+    string EndTime
 );

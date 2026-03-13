@@ -5,11 +5,12 @@ public sealed record TenantSubscriptionDto(
     Guid TenantId,
     Guid PlanId,
     string PlanName,
-    string PlanTier,
     string Status,
-    DateTimeOffset StartedAt,
     DateTimeOffset? TrialEndsAt,
+    DateTimeOffset CurrentPeriodStart,
+    DateTimeOffset CurrentPeriodEnd,
+    string? PaymentProviderSubscriptionId,
+    DateTimeOffset CreatedAt,
     DateTimeOffset? CancelledAt,
-    DateTimeOffset? CurrentPeriodStart,
-    DateTimeOffset? CurrentPeriodEnd
+    string? CancelReason
 );
