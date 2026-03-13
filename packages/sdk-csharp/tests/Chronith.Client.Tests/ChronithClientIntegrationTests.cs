@@ -17,13 +17,12 @@ public sealed class ChronithClientIntegrationTests(SdkTestFixture fixture)
         result.Should().NotBeNull();
         result.Items.Should().NotBeNull();
         result.Page.Should().Be(1);
-        result.PageSize.Should().BeGreaterThanOrEqualTo(1);
+        result.PageSize.Should().Be(20);
     }
 
     [Fact]
     public async Task TenantSettings_Get_ReturnsDefaults()
     {
-        await fixture.EnsureTenantSeededAsync();
         var client = fixture.CreateChronithClient("TenantAdmin");
 
         var settings = await client.Tenant.GetSettingsAsync();

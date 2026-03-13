@@ -17,7 +17,7 @@ namespace Chronith.Client.Tests.Fixtures;
 public sealed class SdkTestFixture : IAsyncLifetime
 {
     private static readonly string? CiConnectionString =
-        Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+        Environment.GetEnvironmentVariable("CI_SDK_CONNECTION_STRING");
 
     private readonly PostgreSqlContainer? _postgres = CiConnectionString is null
         ? new PostgreSqlBuilder("postgres:17-alpine")
@@ -41,7 +41,7 @@ public sealed class SdkTestFixture : IAsyncLifetime
             {
                 builder.UseEnvironment("Development");
                 builder.UseSetting("Database:Provider", "PostgreSQL");
-                builder.UseSetting("Database:ConnectionString", connectionString);
+                builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
                 builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
                 builder.UseSetting("Security:EncryptionKey", TestConstants.EncryptionKey);
                 builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
@@ -57,6 +57,9 @@ public sealed class SdkTestFixture : IAsyncLifetime
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ChronithDbContext>();
         await db.Database.MigrateAsync();
+
+        // Seed test tenant (idempotent) so all tenant-scoped endpoints have a valid tenant row.
+        await EnsureTenantSeededAsync();
     }
 
     public async Task DisposeAsync()
@@ -68,9 +71,9 @@ public sealed class SdkTestFixture : IAsyncLifetime
 
     /// <summary>
     /// Seeds the test tenant row (idempotent via ON CONFLICT DO NOTHING).
-    /// Must be called before tests that require a tenant to exist in the database.
+    /// Called automatically from <see cref="InitializeAsync"/> before any test executes.
     /// </summary>
-    public async Task EnsureTenantSeededAsync()
+    private async Task EnsureTenantSeededAsync()
     {
         using var scope = Factory.Services.CreateScope();
         var options = scope.ServiceProvider
