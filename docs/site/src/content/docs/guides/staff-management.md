@@ -20,24 +20,9 @@ Authorization: Bearer <token>
 }
 ```
 
-## Assign availability windows
+## Availability windows
 
-Define when a staff member is available for bookings:
-
-```sh
-POST /v1/staff/{id}/availability-windows
-Authorization: Bearer <token>
-```
-
-```json
-{
-  "dayOfWeek": "Tuesday",
-  "startTime": "10:00",
-  "endTime": "18:00"
-}
-```
-
-Multiple windows can be added for different days.
+Availability windows define when a staff member is available for bookings. Configure availability windows through the tenant dashboard (`/v1/staff/{id}/availability` for read access).
 
 ## List staff members
 

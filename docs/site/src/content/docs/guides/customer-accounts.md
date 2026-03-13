@@ -8,7 +8,7 @@ Customers can create accounts to manage their bookings across a tenant.
 ## Register
 
 ```sh
-POST /v1/customers/register
+POST /v1/auth/register
 ```
 
 ```json
@@ -23,11 +23,12 @@ POST /v1/customers/register
 ## Login
 
 ```sh
-POST /v1/customers/login
+POST /v1/auth/login
 ```
 
 ```json
 {
+  "tenantSlug": "my-business",
   "email": "jane@example.com",
   "password": "SecurePassword123!"
 }
@@ -46,16 +47,12 @@ Response:
 ## Refresh token
 
 ```sh
-POST /v1/customers/refresh
+POST /v1/auth/refresh
 ```
 
 ```json
 { "refreshToken": "def50200..." }
 ```
-
-## OIDC integration
-
-Chronith supports OpenID Connect (OIDC) for customer authentication. Configure an OIDC provider in tenant settings to allow customers to sign in with their existing identity provider (Google, Microsoft, etc.).
 
 ## Customer profile
 

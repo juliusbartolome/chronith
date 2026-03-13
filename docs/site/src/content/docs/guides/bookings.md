@@ -22,18 +22,15 @@ PendingPayment → PendingVerification → Confirmed
 
 ## Create a booking
 
-```sh
-POST /v1/bookings
+```http
+POST /v1/booking-types/{slug}/bookings
 Authorization: Bearer <token>
+Content-Type: application/json
 ```
 
 ```json
 {
-  "bookingTypeId": "3fa85f64-...",
-  "startTime": "2026-04-15T09:00:00Z",
-  "customerName": "Jane Doe",
-  "customerEmail": "jane@example.com",
-  "customFields": {}
+  "customerEmail": "jane@example.com"
 }
 ```
 

@@ -46,13 +46,14 @@ Expected:
 ## 4. Create a tenant
 
 ```sh
-curl -X POST http://localhost:5001/v1/tenants/signup \
+curl -X POST http://localhost:5001/v1/signup \
   -H "Content-Type: application/json" \
   -d '{
-    "businessName": "My Business",
-    "slug": "my-business",
-    "adminEmail": "admin@mybusiness.com",
-    "adminPassword": "Admin1234!"
+    "tenantName": "My Business",
+    "tenantSlug": "my-business",
+    "timeZoneId": "Asia/Manila",
+    "email": "admin@mybusiness.com",
+    "password": "Admin1234!"
   }'
 ```
 
@@ -74,7 +75,7 @@ curl -X POST http://localhost:5001/v1/booking-types \
 
 ## 6. Open the dashboard
 
-Navigate to `http://localhost:3001` (if you started the dashboard with `npm run dev`).
+Navigate to `http://localhost:3001` — the dashboard starts automatically with `docker compose up -d`.
 
 ## Next steps
 

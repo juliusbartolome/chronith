@@ -8,15 +8,16 @@ description: Sign up, manage plans, and configure your tenant in Chronith.
 Create a new tenant account:
 
 ```sh
-POST /v1/tenants/signup
+POST /v1/signup
 ```
 
 ```json
 {
-  "businessName": "My Business",
-  "slug": "my-business",
-  "adminEmail": "admin@mybusiness.com",
-  "adminPassword": "Admin1234!"
+  "tenantName": "My Business",
+  "tenantSlug": "my-business",
+  "timeZoneId": "Asia/Manila",
+  "email": "admin@mybusiness.com",
+  "password": "Admin1234!"
 }
 ```
 

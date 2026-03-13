@@ -1,73 +1,35 @@
 ---
-title: Auth API
-description: REST endpoints for authentication in Chronith.
+title: Authentication
+description: JWT and API key authentication endpoints.
 ---
 
-## Admin and Staff auth
+## Tenant admin / staff authentication
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/v1/auth/admin/login` | Admin login |
-| `POST` | `/v1/auth/staff/login` | Staff login |
-| `POST` | `/v1/auth/refresh` | Refresh JWT token |
-| `POST` | `/v1/auth/logout` | Logout (invalidate refresh token) |
+| POST | `/v1/auth/login` | Login → JWT + refresh token |
+| POST | `/v1/auth/refresh` | Refresh access token |
+| GET | `/v1/auth/me` | Get current user info |
 
-### Request body: Login
-
-```json
-{
-  "email": "string",
-  "password": "string"
-}
-```
-
-### Response: Login
+### Login request body
 
 ```json
 {
-  "token": "string (JWT)",
-  "refreshToken": "string",
-  "expiresAt": "string (ISO 8601)",
-  "userId": "string (uuid)",
-  "role": "Admin | Staff"
+  "tenantSlug": "my-business",
+  "email": "admin@mybusiness.com",
+  "password": "Admin1234!"
 }
 ```
 
-## Customer auth
+## Customer authentication
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/v1/customers/register` | Register customer |
-| `POST` | `/v1/customers/login` | Customer login |
-| `POST` | `/v1/customers/refresh` | Refresh customer token |
+| POST | `/v1/auth/register` | Register a new user account |
+| POST | `/v1/auth/login` | Customer login (same endpoint) |
+| POST | `/v1/auth/refresh` | Refresh customer token |
+| GET | `/v1/auth/me` | Get current customer info |
 
-## API Keys
+## API keys
 
-| Method | Path | Description | Auth |
-|--------|------|-------------|------|
-| `GET` | `/v1/api-keys` | List API keys | Admin |
-| `POST` | `/v1/api-keys` | Create API key | Admin |
-| `DELETE` | `/v1/api-keys/{id}` | Revoke API key | Admin |
-
-### Request body: Create API key
-
-```json
-{
-  "name": "string (description for this key)",
-  "expiresAt": "string (ISO 8601, optional)"
-}
-```
-
-### Response: Create API key
-
-```json
-{
-  "id": "3fa85f64-...",
-  "name": "Production Key",
-  "key": "chron_live_xxxxxxxxxxxxxxxx",
-  "createdAt": "2026-01-01T00:00:00Z",
-  "expiresAt": null
-}
-```
-
-The `key` field is only returned once at creation time. Store it securely.
+API keys are passed via the `X-Api-Key` header. Management of API keys is handled through the tenant dashboard.
