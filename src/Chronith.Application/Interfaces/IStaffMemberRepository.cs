@@ -11,4 +11,7 @@ public interface IStaffMemberRepository
     Task UpdateAsync(StaffMember staff, CancellationToken ct = default);
     Task AssignToBookingTypeAsync(Guid bookingTypeId, Guid staffMemberId, CancellationToken ct = default);
     Task RemoveFromBookingTypeAsync(Guid bookingTypeId, Guid staffMemberId, CancellationToken ct = default);
+
+    /// <summary>COUNT of active staff members for a tenant. Used by plan enforcement.</summary>
+    Task<int> CountByTenantAsync(Guid tenantId, CancellationToken ct = default);
 }

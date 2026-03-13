@@ -17,8 +17,7 @@ using Chronith.Infrastructure.Persistence.Seeding;
 using Chronith.Infrastructure.Services.Audit;
 using Chronith.Infrastructure.Services.Notifications;
 using Chronith.Infrastructure.Telemetry;
-using Chronith.Infrastructure.TenantContext;
-using Microsoft.AspNetCore.Http;
+using Chronith.Infrastructure.TenantContext;using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -77,6 +76,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantPlanRepository, TenantPlanRepository>();
         services.AddScoped<ITenantSubscriptionRepository, TenantSubscriptionRepository>();
         services.AddScoped<IPlanSeeder, PlanSeeder>();
+        services.AddScoped<ISubscriptionProvider, StubSubscriptionProvider>();
         services.AddSingleton<ITemplateRenderer, TemplateRenderer>();
         services.AddScoped<IAuditSnapshotResolver, BookingSnapshotResolver>();
         services.AddScoped<IAuditSnapshotResolver, BookingTypeSnapshotResolver>();
