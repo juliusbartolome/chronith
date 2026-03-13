@@ -11,4 +11,8 @@
     <Project Path="tests/Chronith.Tests.Performance/Chronith.Tests.Performance.csproj" />
     <Project Path="tests/Chronith.Tests.Unit/Chronith.Tests.Unit.csproj" />
   </Folder>
+  <Folder Name="/packages/">
+    <Project Path="packages/sdk-csharp/src/Chronith.Client/Chronith.Client.csproj" />
+    <Project Path="packages/sdk-csharp/tests/Chronith.Client.Tests/Chronith.Client.Tests.csproj" />
+  </Folder>
 </Solution>
