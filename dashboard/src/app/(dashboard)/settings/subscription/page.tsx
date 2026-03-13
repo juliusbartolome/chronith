@@ -214,7 +214,7 @@ function CancelDialog({
           <DialogTitle>Cancel subscription</DialogTitle>
           <DialogDescription>
             Your subscription will remain active until the end of the current billing
-            period. After that, you'll be moved to the free plan.
+            period. After that, you&apos;ll be moved to the free plan.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -122,22 +122,30 @@ function StepList({
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [current, setCurrent] = useState(0);
-  const [completed, setCompleted] = useState<Set<number>>(new Set());
-
-  // Restore progress from localStorage
-  useEffect(() => {
+  const [current, setCurrent] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as { step: number; completed: number[] };
-        setCurrent(parsed.step ?? 0);
-        setCompleted(new Set(parsed.completed ?? []));
+        return parsed.step ?? 0;
       }
     } catch {
       // ignore
     }
-  }, []);
+    return 0;
+  });
+  const [completed, setCompleted] = useState<Set<number>>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as { step: number; completed: number[] };
+        return new Set(parsed.completed ?? []);
+      }
+    } catch {
+      // ignore
+    }
+    return new Set();
+  });
 
   // Persist progress to localStorage
   function saveProgress(step: number, done: Set<number>) {
