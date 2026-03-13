@@ -11,7 +11,7 @@ export async function loginAsAdmin(page: Page) {
     process.env.TEST_ADMIN_PASSWORD ?? "Password1!",
   );
   await page.click('[type="submit"]');
-  await page.waitForURL(/dashboard/);
+  await page.waitForURL(/\/(dashboard|onboarding)/);
 }
 
 export async function loginAsCustomer(
