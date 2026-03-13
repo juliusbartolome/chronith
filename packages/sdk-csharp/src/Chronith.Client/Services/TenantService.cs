@@ -39,7 +39,7 @@ public sealed class TenantService(HttpClient httpClient) : ServiceBase(httpClien
     public async Task<IReadOnlyList<TenantPlanDto>> GetPlansAsync(
         CancellationToken ct = default)
     {
-        var response = await Http.GetAsync("/v1/tenant/plans", ct);
+        var response = await Http.GetAsync("/v1/plans", ct);
         return await ReadJsonAsync<IReadOnlyList<TenantPlanDto>>(response, ct);
     }
 

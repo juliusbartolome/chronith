@@ -5,14 +5,11 @@ namespace Chronith.Client.Services;
 
 public sealed class StaffService(HttpClient httpClient) : ServiceBase(httpClient)
 {
-    public async Task<PagedResult<StaffMemberDto>> ListAsync(
-        int page = 1,
-        int pageSize = 20,
+    public async Task<IReadOnlyList<StaffMemberDto>> ListAsync(
         CancellationToken ct = default)
     {
-        var response = await Http.GetAsync(
-            $"/v1/staff?page={page}&pageSize={pageSize}", ct);
-        return await ReadJsonAsync<PagedResult<StaffMemberDto>>(response, ct);
+        var response = await Http.GetAsync("/v1/staff", ct);
+        return await ReadJsonAsync<IReadOnlyList<StaffMemberDto>>(response, ct);
     }
 
     public async Task<StaffMemberDto> GetAsync(Guid id, CancellationToken ct = default)

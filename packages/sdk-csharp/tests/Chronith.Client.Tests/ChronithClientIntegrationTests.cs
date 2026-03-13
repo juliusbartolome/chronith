@@ -15,9 +15,6 @@ public sealed class ChronithClientIntegrationTests(SdkTestFixture fixture)
         var result = await client.BookingTypes.ListAsync();
 
         result.Should().NotBeNull();
-        result.Items.Should().NotBeNull();
-        result.Page.Should().Be(1);
-        result.PageSize.Should().Be(20);
     }
 
     [Fact]
@@ -51,7 +48,6 @@ public sealed class ChronithClientIntegrationTests(SdkTestFixture fixture)
         var result = await client.Staff.ListAsync();
 
         result.Should().NotBeNull();
-        result.Items.Should().NotBeNull();
     }
 
     [Fact]

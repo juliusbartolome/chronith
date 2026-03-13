@@ -5,14 +5,11 @@ namespace Chronith.Client.Services;
 
 public sealed class BookingTypesService(HttpClient httpClient) : ServiceBase(httpClient)
 {
-    public async Task<PagedResult<BookingTypeDto>> ListAsync(
-        int page = 1,
-        int pageSize = 20,
+    public async Task<IReadOnlyList<BookingTypeDto>> ListAsync(
         CancellationToken ct = default)
     {
-        var response = await Http.GetAsync(
-            $"/v1/booking-types?page={page}&pageSize={pageSize}", ct);
-        return await ReadJsonAsync<PagedResult<BookingTypeDto>>(response, ct);
+        var response = await Http.GetAsync("/v1/booking-types", ct);
+        return await ReadJsonAsync<IReadOnlyList<BookingTypeDto>>(response, ct);
     }
 
     public async Task<BookingTypeDto> GetAsync(Guid id, CancellationToken ct = default)
