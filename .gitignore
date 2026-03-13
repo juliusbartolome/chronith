@@ -508,3 +508,8 @@ packages/sdk-typescript/openapi-ts-error-*.log
 # TypeScript SDK — build output and node_modules
 packages/sdk-typescript/dist/
 packages/sdk-typescript/node_modules/
+
+# Starlight documentation site — build artifacts
+docs/site/dist/
+docs/site/.astro/
+docs/site/node_modules/
