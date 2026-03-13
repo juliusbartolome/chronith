@@ -12,6 +12,7 @@ import {
   UserRound,
   ShieldCheck,
   RefreshCw,
+  CreditCard,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { href: "/recurring", label: "Recurring", icon: RefreshCw },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings/subscription", label: "Subscription", icon: CreditCard },
 ];
 
 export function Sidebar() {
