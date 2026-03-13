@@ -29,6 +29,20 @@ public sealed class TenantSubscriptionRepository(ChronithDbContext db) : ITenant
         return entity is null ? null : TenantSubscriptionEntityMapper.ToDomain(entity);
     }
 
+    public async Task<TenantSubscription?> GetByProviderIdAsync(
+        string providerSubscriptionId, CancellationToken ct = default)
+    {
+        var entity = await db.TenantSubscriptions
+            .TagWith("GetByProviderIdAsync — TenantSubscriptionRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(s => s.PaymentProviderSubscriptionId == providerSubscriptionId && !s.IsDeleted)
+            .OrderByDescending(s => s.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+
+        return entity is null ? null : TenantSubscriptionEntityMapper.ToDomain(entity);
+    }
+
     public async Task AddAsync(TenantSubscription subscription, CancellationToken ct = default)
     {
         var entity = TenantSubscriptionEntityMapper.ToEntity(subscription);

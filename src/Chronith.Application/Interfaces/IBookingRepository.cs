@@ -77,4 +77,9 @@ public interface IBookingRepository
         string? bookingTypeSlug = null,
         Guid? staffMemberId = null,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// COUNT of non-cancelled bookings since a given UTC timestamp. Used by plan enforcement.
+    /// </summary>
+    Task<int> CountByTenantSinceAsync(Guid tenantId, DateTimeOffset since, CancellationToken ct = default);
 }

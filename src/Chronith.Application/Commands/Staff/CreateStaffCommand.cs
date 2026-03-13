@@ -1,3 +1,4 @@
+using Chronith.Application.Behaviors;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
@@ -9,7 +10,7 @@ namespace Chronith.Application.Commands.Staff;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record CreateStaffCommand : IRequest<StaffMemberDto>, IAuditable
+public sealed record CreateStaffCommand : IRequest<StaffMemberDto>, IAuditable, IPlanEnforcedCommand
 {
     public required string Name { get; init; }
     public required string Email { get; init; }
@@ -20,6 +21,9 @@ public sealed record CreateStaffCommand : IRequest<StaffMemberDto>, IAuditable
     public Guid EntityId => Guid.Empty;
     public string EntityType => "StaffMember";
     public string Action => "Create";
+
+    // IPlanEnforcedCommand
+    public string EnforcedResourceType => "StaffMember";
 }
 
 public sealed record StaffAvailabilityWindowInput(

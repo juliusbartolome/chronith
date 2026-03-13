@@ -1,3 +1,4 @@
+using Chronith.Application.Behaviors;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
@@ -10,7 +11,7 @@ namespace Chronith.Application.Commands.BookingTypes;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record CreateBookingTypeCommand : IRequest<BookingTypeDto>, IAuditable
+public sealed record CreateBookingTypeCommand : IRequest<BookingTypeDto>, IAuditable, IPlanEnforcedCommand
 {
     public required string Slug { get; init; }
     public required string Name { get; init; }
@@ -35,6 +36,9 @@ public sealed record CreateBookingTypeCommand : IRequest<BookingTypeDto>, IAudit
     public Guid EntityId => Guid.Empty;
     public string EntityType => "BookingType";
     public string Action => "Create";
+
+    // IPlanEnforcedCommand
+    public string EnforcedResourceType => "BookingType";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
