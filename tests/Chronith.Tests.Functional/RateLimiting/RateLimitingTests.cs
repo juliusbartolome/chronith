@@ -52,9 +52,9 @@ public class RateLimitingTests : IAsyncLifetime
                 b.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
             });
 
-        _tightLimitFactory = new TightLimitWebApplicationFactory(connStr);
+        _tightLimitFactory = new TightLimitWebApplicationFactory(connStr); // codeql[cs/local-not-disposed]
 
-        _tightAuthPolicyFactory = new TightAuthPolicyWebApplicationFactory(connStr);
+        _tightAuthPolicyFactory = new TightAuthPolicyWebApplicationFactory(connStr); // codeql[cs/local-not-disposed]
 
         // Run migrations once (all factories share the same DB)
         using var scope = _defaultFactory.Services.CreateScope();

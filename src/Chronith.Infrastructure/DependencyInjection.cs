@@ -39,7 +39,7 @@ public static class DependencyInjection
 
         var configurator = provider switch
         {
-            "PostgreSQL" => (IDbProviderConfigurator)new PostgreSqlConfigurator(),
+            "PostgreSQL" => new PostgreSqlConfigurator(),
             _ => throw new NotSupportedException($"Database provider '{provider}' is not supported.")
         };
 

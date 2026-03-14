@@ -449,7 +449,7 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          queries: security-and-quality
+          config-file: .github/codeql/codeql-config.yml
 
       - name: Setup .NET (C# only)
         if: matrix.language == 'csharp'

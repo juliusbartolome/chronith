@@ -36,12 +36,7 @@ public sealed class TenantTimeZone
     private TimeZoneInfo.AdjustmentRule? GetAdjustmentForDate(DateTime localDt)
     {
         var rules = _tz.GetAdjustmentRules();
-        foreach (var rule in rules)
-        {
-            if (rule.DateStart <= localDt.Date && localDt.Date <= rule.DateEnd)
-                return rule;
-        }
-        return null;
+        return rules.FirstOrDefault(rule => rule.DateStart <= localDt.Date && localDt.Date <= rule.DateEnd);
     }
 
     /// <summary>Converts a UTC DateTimeOffset to local DateOnly in the tenant's timezone.</summary>

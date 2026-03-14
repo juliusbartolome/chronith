@@ -34,7 +34,7 @@ public static class BookingTypeBuilder
         Set(bt, "DurationMinutes", durationMinutes);
         Set(bt, "BufferBeforeMinutes", bufferBeforeMinutes);
         Set(bt, "BufferAfterMinutes", bufferAfterMinutes);
-        Set(bt, "AvailabilityWindows", (IReadOnlyList<TimeSlotWindow>)(windows ?? Array.Empty<TimeSlotWindow>()));
+        Set(bt, "AvailabilityWindows", windows ?? (IReadOnlyList<TimeSlotWindow>)Array.Empty<TimeSlotWindow>());
         Set(bt, "PriceInCentavos", priceInCentavos);
         Set(bt, "Currency", currency);
         Set(bt, "RequiresStaffAssignment", requiresStaffAssignment);
@@ -54,7 +54,7 @@ public static class BookingTypeBuilder
         Set(bt, "Name", "Test Calendar Booking");
         Set(bt, "Capacity", 1);
         Set(bt, "PaymentMode", PaymentMode.Manual);
-        Set(bt, "AvailableDays", (IReadOnlyList<DayOfWeek>)(availableDays ?? Array.Empty<DayOfWeek>()));
+        Set(bt, "AvailableDays", availableDays ?? (IReadOnlyList<DayOfWeek>)Array.Empty<DayOfWeek>());
         Set(bt, "PriceInCentavos", priceInCentavos);
         Set(bt, "Currency", currency);
         return bt;
