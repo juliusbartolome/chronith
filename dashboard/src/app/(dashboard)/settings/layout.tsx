@@ -4,6 +4,8 @@ const SETTINGS_NAV = [
   { href: "/settings/profile", label: "Profile" },
   { href: "/settings/auth", label: "Auth Config" },
   { href: "/settings/api-keys", label: "API Keys" },
+  { href: "/settings/branding", label: "Branding" },
+  { href: "/settings/subscription", label: "Subscription" },
 ];
 
 export default function SettingsLayout({

@@ -57,7 +57,6 @@ public class WebhookOutboxHandlerDualWriteTests
     {
         // Arrange
         var notification = MakeNotification(BookingStatus.Confirmed);
-        var webhookId = Guid.NewGuid();
         _webhookRepo.ListAsync(TenantId, BookingTypeId, Arg.Any<CancellationToken>())
             .Returns(new List<Webhook> { Webhook.Create(TenantId, BookingTypeId, "https://tenant.example.com/webhook", "secret") });
 

@@ -1,6 +1,6 @@
-# Chronith
+# Chronith v1.0.0
 
-A multi-tenant booking engine API built with .NET 10. Supports two booking models — fixed-duration time slots and whole-day calendar blocks — with a built-in payment and state machine workflow.
+A multi-tenant booking engine built with .NET 10. Supports two booking models — fixed-duration time slots and whole-day calendar blocks — with a built-in payment and state machine workflow. Ships with an admin dashboard (React + Next.js), a public customer-facing booking flow, a C# SDK, and a documentation site.
 
 ## Table of Contents
 
@@ -8,6 +8,10 @@ A multi-tenant booking engine API built with .NET 10. Supports two booking model
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
+- [Dashboard](#dashboard)
+- [Public Booking](#public-booking)
+- [C# SDK](#c-sdk)
+- [Documentation](#documentation)
 - [Configuration](#configuration)
 - [API Reference](#api-reference)
 - [Authentication](#authentication)
@@ -70,6 +74,85 @@ dotnet run --project src/Chronith.API
 ```
 
 The application applies EF Core migrations on startup. No manual migration step is required.
+
+## Dashboard
+
+The admin dashboard is a Next.js 15 app located in `dashboard/`. It provides analytics, booking management, staff management, customer management, notification channel configuration, webhook management, and tenant settings.
+
+```bash
+cd dashboard
+npm install
+npm run dev
+```
+
+The dashboard is available at `http://localhost:3000`. It connects to the API at `http://localhost:5001` by default (configured via `NEXT_PUBLIC_API_URL`).
+
+**Build for production:**
+
+```bash
+cd dashboard
+npm run build
+npm start
+```
+
+## Public Booking
+
+Customers can book directly via the public-facing booking flow at:
+
+```
+https://your-domain.com/book/{tenantSlug}/{bookingTypeSlug}
+```
+
+To embed the booking flow in an existing website, use an iframe:
+
+```html
+<iframe
+  src="https://your-domain.com/book/{tenantSlug}"
+  width="100%"
+  height="600"
+  frameborder="0">
+</iframe>
+```
+
+Replace `{tenantSlug}` with your tenant's URL slug (visible in tenant settings).
+
+## C# SDK
+
+A typed C# client for the Chronith API is available as a NuGet package:
+
+```bash
+dotnet add package Chronith.Client
+```
+
+Usage:
+
+```csharp
+var client = new ChronithClient(new ChronithClientOptions
+{
+    BaseUrl = "https://your-domain.com",
+    ApiKey = "cth_..."
+});
+
+var slots = await client.Availability.GetSlotsAsync("my-booking-type", from: DateOnly.Today, to: DateOnly.Today.AddDays(7));
+```
+
+The SDK mirrors the REST API surface and supports both JWT Bearer and API Key authentication.
+
+## Documentation
+
+Full API reference, integration guides, and self-hosting instructions are available at:
+
+```
+https://docs.chronith.dev
+```
+
+The documentation site is built with [Starlight](https://starlight.astro.build/) and lives in `docs/site/`.
+
+```bash
+cd docs/site
+npm install
+npm run dev
+```
 
 ## Configuration
 

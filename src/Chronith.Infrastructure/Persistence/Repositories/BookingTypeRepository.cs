@@ -151,4 +151,11 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
             await _db.AvailabilityWindows.AddRangeAsync(updated.AvailabilityWindows, ct);
         }
     }
+
+    public Task<int> CountByTenantAsync(Guid tenantId, CancellationToken ct = default) =>
+        _db.BookingTypes
+            .TagWith("CountByTenantAsync — BookingTypeRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .CountAsync(bt => bt.TenantId == tenantId && !bt.IsDeleted, ct);
 }

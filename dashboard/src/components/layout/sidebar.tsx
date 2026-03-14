@@ -9,16 +9,25 @@ import {
   BarChart3,
   Bell,
   Settings,
+  UserRound,
+  ShieldCheck,
+  RefreshCw,
+  CreditCard,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/bookings", label: "Bookings", icon: CalendarCheck },
-  { href: "/staff", label: "Staff", icon: Users },
+  { href: "/customers", label: "Customers", icon: Users },
+  { href: "/staff", label: "Staff", icon: UserRound },
   { href: "/booking-types", label: "Booking Types", icon: Layers },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/audit", label: "Audit Log", icon: ShieldCheck },
+  { href: "/recurring", label: "Recurring", icon: RefreshCw },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings/subscription", label: "Subscription", icon: CreditCard },
 ];
 
 export function Sidebar() {

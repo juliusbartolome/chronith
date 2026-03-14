@@ -28,7 +28,7 @@ public class SlotGenerationBenchmarks
     private DateTimeOffset _monthFrom;
     private DateTimeOffset _monthTo;
 
-    private IReadOnlyList<(DateTimeOffset Start, DateTimeOffset End)> _noBookings = [];
+    private readonly IReadOnlyList<(DateTimeOffset Start, DateTimeOffset End)> _noBookings = [];
     private IReadOnlyList<(DateTimeOffset Start, DateTimeOffset End)> _500Bookings = null!;
 
     [GlobalSetup]

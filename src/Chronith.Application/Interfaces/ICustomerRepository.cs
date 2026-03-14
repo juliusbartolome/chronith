@@ -16,4 +16,7 @@ public interface ICustomerRepository
     Task<Customer?> GetByExternalIdAsync(Guid tenantId, string externalId, CancellationToken ct = default);
     Task AddAsync(Customer customer, CancellationToken ct = default);
     void Update(Customer customer);
+
+    /// <summary>COUNT of non-deleted customers for a tenant. Used by plan enforcement.</summary>
+    Task<int> CountByTenantAsync(Guid tenantId, CancellationToken ct = default);
 }

@@ -16,6 +16,7 @@ import {
 } from "@/components/booking-types/custom-field-editor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { WebhooksSection } from "./webhooks-section";
 
 export default function BookingTypeDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -105,7 +106,9 @@ export default function BookingTypeDetailPage() {
             {updateType.isPending ? "Saving…" : "Save Custom Fields"}
           </Button>
         </CardContent>
-      </Card>
+        </Card>
+
+      <WebhooksSection bookingTypeSlug={slug} />
     </div>
   );
 }

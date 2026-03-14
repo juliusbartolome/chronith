@@ -31,4 +31,7 @@ public interface IBookingTypeRepository
     Task<bool> SlugExistsAsync(Guid tenantId, string slug, CancellationToken ct = default);
 
     Task<BookingTypeMetrics> GetTypeMetricsAsync(Guid tenantId, CancellationToken ct = default);
+
+    /// <summary>COUNT of non-deleted booking types for a tenant. Used by plan enforcement.</summary>
+    Task<int> CountByTenantAsync(Guid tenantId, CancellationToken ct = default);
 }

@@ -54,4 +54,11 @@ public sealed class CustomerRepository(ChronithDbContext db) : ICustomerReposito
 
     public void Update(Customer customer) =>
         db.Customers.Update(customer.ToEntity());
+
+    public Task<int> CountByTenantAsync(Guid tenantId, CancellationToken ct = default) =>
+        db.Customers
+            .TagWith("CountByTenantAsync — CustomerRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .CountAsync(c => c.TenantId == tenantId && !c.IsDeleted, ct);
 }

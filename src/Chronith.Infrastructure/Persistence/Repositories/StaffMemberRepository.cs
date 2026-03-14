@@ -123,4 +123,11 @@ public sealed class StaffMemberRepository : IStaffMemberRepository
             .Where(a => a.BookingTypeId == bookingTypeId && a.StaffMemberId == staffMemberId)
             .ExecuteDeleteAsync(ct);
     }
+
+    public Task<int> CountByTenantAsync(Guid tenantId, CancellationToken ct = default) =>
+        _db.StaffMembers
+            .TagWith("CountByTenantAsync — StaffMemberRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .CountAsync(s => s.TenantId == tenantId && !s.IsDeleted && s.IsActive, ct);
 }

@@ -10,6 +10,7 @@ public sealed class TenantUser
     public string PasswordHash { get; private set; } = string.Empty;
     public TenantUserRole Role { get; private set; }
     public bool IsActive { get; private set; }
+    public bool IsEmailVerified { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 
     // For Infrastructure hydration
@@ -25,16 +26,19 @@ public sealed class TenantUser
             PasswordHash = passwordHash,
             Role = role,
             IsActive = true,
+            IsEmailVerified = false,
             CreatedAt = DateTimeOffset.UtcNow
         };
     }
 
     internal static TenantUser Hydrate(Guid id, Guid tenantId, string email, string passwordHash,
-        TenantUserRole role, bool isActive, DateTimeOffset createdAt) => new()
+        TenantUserRole role, bool isActive, bool isEmailVerified, DateTimeOffset createdAt) => new()
     {
         Id = id, TenantId = tenantId, Email = email, PasswordHash = passwordHash,
-        Role = role, IsActive = isActive, CreatedAt = createdAt
+        Role = role, IsActive = isActive, IsEmailVerified = isEmailVerified, CreatedAt = createdAt
     };
+
+    public void MarkEmailVerified() => IsEmailVerified = true;
 
     /// <summary>
     /// Maps Role to the authorization role string used by existing endpoint policies.

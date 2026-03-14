@@ -1,4 +1,5 @@
 using System.Text;
+using Chronith.Application.Interfaces;
 using Chronith.API.HealthChecks;
 using Chronith.API.Middleware;
 using Chronith.API.Processors;
@@ -254,6 +255,10 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ChronithDbContext>();
     await db.Database.MigrateAsync();
+
+    // Seed default subscription plans (idempotent)
+    var planSeeder = scope.ServiceProvider.GetRequiredService<IPlanSeeder>();
+    await planSeeder.SeedAsync();
 }
 
 app.UseExceptionHandler(ExceptionHandlingMiddleware.Configure);

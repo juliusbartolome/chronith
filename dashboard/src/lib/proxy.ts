@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 const API_URL = process.env.CHRONITH_API_URL ?? "http://localhost:5001";
 
+export interface ProxyOptions extends RequestInit {
+  unauthenticated?: boolean;
+}
+
 export async function proxyToApi(
   request: NextRequest,
   path: string,
-  init?: RequestInit,
+  init?: ProxyOptions,
 ): Promise<NextResponse> {
-  const token = request.cookies.get("chronith-auth")?.value;
+  const token =
+    init?.unauthenticated !== true
+      ? request.cookies.get("chronith-auth")?.value
+      : undefined;
 
   const res = await fetch(`${API_URL}${path}`, {
     method: init?.method ?? request.method,

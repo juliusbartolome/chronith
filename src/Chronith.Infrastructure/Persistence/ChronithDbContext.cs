@@ -49,6 +49,12 @@ public sealed class ChronithDbContext : DbContext
     // No global query filter: audit entries have no IsDeleted; filtered explicitly by TenantId.
     public DbSet<AuditEntryEntity> AuditEntries => Set<AuditEntryEntity>();
 
+    public DbSet<TenantSettingsEntity> TenantSettings => Set<TenantSettingsEntity>();
+
+    // No global tenant query filter: TenantPlan is a global resource (shared across all tenants)
+    public DbSet<TenantPlanEntity> TenantPlans => Set<TenantPlanEntity>();
+    public DbSet<TenantSubscriptionEntity> TenantSubscriptions => Set<TenantSubscriptionEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("chronith");
@@ -81,5 +87,15 @@ public sealed class ChronithDbContext : DbContext
 
         modelBuilder.Entity<NotificationTemplateEntity>()
             .HasQueryFilter(n => !n.IsDeleted && n.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<TenantSettingsEntity>()
+            .HasQueryFilter(s => !s.IsDeleted && s.TenantId == _tenantContext.TenantId);
+
+        // TenantPlan has no tenant filter — it's a global resource
+        modelBuilder.Entity<TenantPlanEntity>()
+            .HasQueryFilter(p => !p.IsDeleted);
+
+        modelBuilder.Entity<TenantSubscriptionEntity>()
+            .HasQueryFilter(s => !s.IsDeleted && s.TenantId == _tenantContext.TenantId);
     }
 }

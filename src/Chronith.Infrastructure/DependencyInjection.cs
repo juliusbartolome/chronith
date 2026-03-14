@@ -13,6 +13,7 @@ using Chronith.Infrastructure.Providers;
 using Chronith.Infrastructure.RateLimiting;
 using Chronith.Infrastructure.Security;
 using Chronith.Infrastructure.Services;
+using Chronith.Infrastructure.Persistence.Seeding;
 using Chronith.Infrastructure.Services.Audit;
 using Chronith.Infrastructure.Services.Notifications;
 using Chronith.Infrastructure.Telemetry;
@@ -38,7 +39,7 @@ public static class DependencyInjection
 
         var configurator = provider switch
         {
-            "PostgreSQL" => (IDbProviderConfigurator)new PostgreSqlConfigurator(),
+            "PostgreSQL" => new PostgreSqlConfigurator(),
             _ => throw new NotSupportedException($"Database provider '{provider}' is not supported.")
         };
 
@@ -72,6 +73,11 @@ public static class DependencyInjection
         services.AddScoped<IAuditEntryRepository, AuditEntryRepository>();
         services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
         services.AddScoped<IDefaultTemplateSeeder, DefaultTemplateSeeder>();
+        services.AddScoped<ITenantSettingsRepository, TenantSettingsRepository>();
+        services.AddScoped<ITenantPlanRepository, TenantPlanRepository>();
+        services.AddScoped<ITenantSubscriptionRepository, TenantSubscriptionRepository>();
+        services.AddScoped<IPlanSeeder, PlanSeeder>();
+        services.AddScoped<ISubscriptionProvider, StubSubscriptionProvider>();
         services.AddSingleton<ITemplateRenderer, TemplateRenderer>();
         services.AddScoped<IAuditSnapshotResolver, BookingSnapshotResolver>();
         services.AddScoped<IAuditSnapshotResolver, BookingTypeSnapshotResolver>();

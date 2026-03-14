@@ -13,11 +13,12 @@ internal static class TenantUserEntityMapper
         PasswordHash = u.PasswordHash,
         Role = u.Role,
         IsActive = u.IsActive,
+        IsEmailVerified = u.IsEmailVerified,
         CreatedAt = u.CreatedAt
     };
 
     public static TenantUser ToDomain(this TenantUserEntity e) =>
-        TenantUser.Hydrate(e.Id, e.TenantId, e.Email, e.PasswordHash, e.Role, e.IsActive, e.CreatedAt);
+        TenantUser.Hydrate(e.Id, e.TenantId, e.Email, e.PasswordHash, e.Role, e.IsActive, e.IsEmailVerified, e.CreatedAt);
 
     public static TenantUserRefreshTokenEntity ToEntity(this TenantUserRefreshToken t) => new()
     {

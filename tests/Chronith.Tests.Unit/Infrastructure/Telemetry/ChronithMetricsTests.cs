@@ -7,13 +7,32 @@ namespace Chronith.Tests.Unit.Infrastructure.Telemetry;
 
 public sealed class ChronithMetricsTests
 {
-    private static (ChronithMetrics metrics, ServiceProvider provider) CreateMetrics()
+    /// <summary>
+    /// Creates an isolated ChronithMetrics + ServiceProvider pair.
+    /// Returns the Meter instance so tests can filter MeterListener by reference,
+    /// preventing cross-test interference from concurrently-alive Meter objects.
+    /// </summary>
+    private static (ChronithMetrics metrics, ServiceProvider provider, Meter meter) CreateMetrics()
     {
         var services = new ServiceCollection();
         services.AddMetrics();
         var provider = services.BuildServiceProvider();
         var meterFactory = provider.GetRequiredService<IMeterFactory>();
-        return (new ChronithMetrics(meterFactory), provider);
+        Meter? capturedMeter = null;
+
+        // Intercept meter creation by wrapping in a tracking factory
+        // We use a local listener to capture the meter reference on publish.
+        using var setupListener = new MeterListener();
+        setupListener.InstrumentPublished = (instrument, l) =>
+        {
+            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+                capturedMeter = instrument.Meter;
+        };
+        setupListener.Start();
+
+        var chronithMetrics = new ChronithMetrics(meterFactory);
+
+        return (chronithMetrics, provider, capturedMeter!);
     }
 
     [Fact]
@@ -29,10 +48,12 @@ public sealed class ChronithMetricsTests
         string? tenantTag = null;
         string? kindTag = null;
 
+        var (metrics, provider, meter) = CreateMetrics();
+
         using var listener = new MeterListener();
         listener.InstrumentPublished = (instrument, l) =>
         {
-            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+            if (ReferenceEquals(instrument.Meter, meter))
                 l.EnableMeasurementEvents(instrument);
         };
         listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
@@ -49,7 +70,6 @@ public sealed class ChronithMetricsTests
         });
         listener.Start();
 
-        var (metrics, provider) = CreateMetrics();
         using (provider)
         {
             metrics.RecordBookingCreated("tenant-1", "TimeSlot");
@@ -66,10 +86,12 @@ public sealed class ChronithMetricsTests
         long recorded = 0;
         string? tenantTag = null;
 
+        var (metrics, provider, meter) = CreateMetrics();
+
         using var listener = new MeterListener();
         listener.InstrumentPublished = (instrument, l) =>
         {
-            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+            if (ReferenceEquals(instrument.Meter, meter))
                 l.EnableMeasurementEvents(instrument);
         };
         listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
@@ -85,7 +107,6 @@ public sealed class ChronithMetricsTests
         });
         listener.Start();
 
-        var (metrics, provider) = CreateMetrics();
         using (provider)
         {
             metrics.RecordBookingConfirmed("tenant-2");
@@ -101,10 +122,12 @@ public sealed class ChronithMetricsTests
         long recorded = 0;
         string? tenantTag = null;
 
+        var (metrics, provider, meter) = CreateMetrics();
+
         using var listener = new MeterListener();
         listener.InstrumentPublished = (instrument, l) =>
         {
-            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+            if (ReferenceEquals(instrument.Meter, meter))
                 l.EnableMeasurementEvents(instrument);
         };
         listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
@@ -120,7 +143,6 @@ public sealed class ChronithMetricsTests
         });
         listener.Start();
 
-        var (metrics, provider) = CreateMetrics();
         using (provider)
         {
             metrics.RecordBookingCancelled("tenant-3");
@@ -137,10 +159,12 @@ public sealed class ChronithMetricsTests
         string? tenantTag = null;
         string? providerTag = null;
 
+        var (metrics, provider, meter) = CreateMetrics();
+
         using var listener = new MeterListener();
         listener.InstrumentPublished = (instrument, l) =>
         {
-            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+            if (ReferenceEquals(instrument.Meter, meter))
                 l.EnableMeasurementEvents(instrument);
         };
         listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
@@ -157,7 +181,6 @@ public sealed class ChronithMetricsTests
         });
         listener.Start();
 
-        var (metrics, provider) = CreateMetrics();
         using (provider)
         {
             metrics.RecordPaymentProcessed("tenant-1", "PayMongo");
@@ -174,10 +197,12 @@ public sealed class ChronithMetricsTests
         long recorded = 0;
         string? tenantTag = null;
 
+        var (metrics, provider, meter) = CreateMetrics();
+
         using var listener = new MeterListener();
         listener.InstrumentPublished = (instrument, l) =>
         {
-            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+            if (ReferenceEquals(instrument.Meter, meter))
                 l.EnableMeasurementEvents(instrument);
         };
         listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
@@ -193,7 +218,6 @@ public sealed class ChronithMetricsTests
         });
         listener.Start();
 
-        var (metrics, provider) = CreateMetrics();
         using (provider)
         {
             metrics.RecordWebhookDispatched("tenant-1");
@@ -210,10 +234,12 @@ public sealed class ChronithMetricsTests
         string? tenantTag = null;
         string? channelTag = null;
 
+        var (metrics, provider, meter) = CreateMetrics();
+
         using var listener = new MeterListener();
         listener.InstrumentPublished = (instrument, l) =>
         {
-            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+            if (ReferenceEquals(instrument.Meter, meter))
                 l.EnableMeasurementEvents(instrument);
         };
         listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
@@ -230,7 +256,6 @@ public sealed class ChronithMetricsTests
         });
         listener.Start();
 
-        var (metrics, provider) = CreateMetrics();
         using (provider)
         {
             metrics.RecordNotificationSent("tenant-1", "Email");
@@ -247,10 +272,12 @@ public sealed class ChronithMetricsTests
         double recorded = 0;
         string? tenantTag = null;
 
+        var (metrics, provider, meter) = CreateMetrics();
+
         using var listener = new MeterListener();
         listener.InstrumentPublished = (instrument, l) =>
         {
-            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+            if (ReferenceEquals(instrument.Meter, meter))
                 l.EnableMeasurementEvents(instrument);
         };
         listener.SetMeasurementEventCallback<double>((inst, value, tags, _) =>
@@ -266,7 +293,6 @@ public sealed class ChronithMetricsTests
         });
         listener.Start();
 
-        var (metrics, provider) = CreateMetrics();
         using (provider)
         {
             metrics.RecordAvailabilityDuration("tenant-1", 123.45);
@@ -281,10 +307,12 @@ public sealed class ChronithMetricsTests
     {
         var recordings = new List<(long value, string? tenant, string? kind)>();
 
+        var (metrics, provider, meter) = CreateMetrics();
+
         using var listener = new MeterListener();
         listener.InstrumentPublished = (instrument, l) =>
         {
-            if (instrument.Meter.Name == ChronithMetrics.MeterName)
+            if (ReferenceEquals(instrument.Meter, meter))
                 l.EnableMeasurementEvents(instrument);
         };
         listener.SetMeasurementEventCallback<long>((inst, value, tags, _) =>
@@ -302,7 +330,6 @@ public sealed class ChronithMetricsTests
         });
         listener.Start();
 
-        var (metrics, provider) = CreateMetrics();
         using (provider)
         {
             metrics.RecordBookingCreated("tenant-1", "TimeSlot");

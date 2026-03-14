@@ -116,13 +116,9 @@ public sealed class SlotGeneratorService : ISlotGeneratorService
                 var dayStart = tz.ToUtc(currentDate, TimeOnly.MinValue);
                 var dayEnd = tz.ToUtc(currentDate.AddDays(1), TimeOnly.MinValue);
 
-                // Check it's within the requested range
-                if (dayStart >= from || dayEnd <= to)
-                {
-                    // Calendar has no buffers — effective range = actual range
-                    if (!IsFullyBooked(dayStart, dayEnd, bookedSlots))
-                        result.Add((dayStart, dayEnd));
-                }
+                // Check it's within the requested range and not already booked
+                if ((dayStart >= from || dayEnd <= to) && !IsFullyBooked(dayStart, dayEnd, bookedSlots))
+                    result.Add((dayStart, dayEnd));
             }
 
             currentDate = currentDate.AddDays(1);
@@ -162,13 +158,6 @@ public sealed class SlotGeneratorService : ISlotGeneratorService
         DateTimeOffset dayStart,
         DateTimeOffset dayEnd,
         IReadOnlyList<(DateTimeOffset Start, DateTimeOffset End)> bookedSlots)
-    {
-        foreach (var booked in bookedSlots)
-        {
-            // Overlap check: booked.Start < dayEnd AND booked.End > dayStart
-            if (booked.Start < dayEnd && booked.End > dayStart)
-                return true;
-        }
-        return false;
-    }
+        // Overlap check: booked.Start < dayEnd AND booked.End > dayStart
+        => bookedSlots.Any(booked => booked.Start < dayEnd && booked.End > dayStart);
 }

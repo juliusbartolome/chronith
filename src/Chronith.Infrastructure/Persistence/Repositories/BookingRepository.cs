@@ -246,4 +246,17 @@ public sealed class BookingRepository : IBookingRepository
         if (newChanges.Count > 0)
             await _db.BookingStatusChanges.AddRangeAsync(newChanges, ct);
     }
+
+    public Task<int> CountByTenantSinceAsync(
+        Guid tenantId, DateTimeOffset since, CancellationToken ct = default) =>
+        _db.Bookings
+            .TagWith("CountByTenantSinceAsync — BookingRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .CountAsync(b =>
+                b.TenantId == tenantId &&
+                !b.IsDeleted &&
+                b.Status != BookingStatus.Cancelled &&
+                b.Start >= since,
+                ct);
 }
