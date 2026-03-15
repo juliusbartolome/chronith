@@ -125,6 +125,9 @@ jobs:
           cache-from: type=gha
 
       - name: Start stack
+        env:
+          JWT_SIGNING_KEY: change-me-in-production-at-least-32-chars
+          SECURITY_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
         run: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
       - name: Wait for API health
@@ -222,6 +225,9 @@ jobs:
           cache-from: type=gha
 
       - name: Start stack
+        env:
+          JWT_SIGNING_KEY: change-me-in-production-at-least-32-chars
+          SECURITY_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
         run: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
       - name: Wait for health

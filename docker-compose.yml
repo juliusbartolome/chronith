@@ -74,8 +74,8 @@ services:
     environment:
       Database__Provider: PostgreSQL
       Database__ConnectionString: "Host=pgbouncer;Port=5432;Database=chronith;Username=chronith;Password=chronith;Pooling=false"
-      Jwt__SigningKey: "${JWT_SIGNING_KEY:-change-me-in-production-at-least-32-chars}"
-      Security__EncryptionKey: "${SECURITY_ENCRYPTION_KEY:-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}"
+      Jwt__SigningKey: "${JWT_SIGNING_KEY:?JWT_SIGNING_KEY must be set in .env}"
+      Security__EncryptionKey: "${SECURITY_ENCRYPTION_KEY:?SECURITY_ENCRYPTION_KEY must be set in .env}"
       ASPNETCORE_URLS: "http://+:8080"
       Payments__Provider: "Stub"
       Payments__Currency: "PHP"
