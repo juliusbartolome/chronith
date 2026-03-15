@@ -12,6 +12,7 @@ test.describe("Admin Authentication", () => {
 
   test("shows error on invalid credentials", async ({ page }) => {
     await page.goto("/login");
+    await page.fill('[name="tenantSlug"]', "test-tenant");
     await page.fill('[type="email"]', "wrong@example.com");
     await page.fill('[type="password"]', "wrongpassword");
     await page.click('[type="submit"]');
