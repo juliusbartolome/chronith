@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const schema = z.object({
+  tenantSlug: z.string().min(1, "Workspace slug is required"),
   email: z.string().email("Invalid email"),
   password: z.string().min(1, "Password is required"),
 });
@@ -62,6 +63,23 @@ function LoginForm() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div>
+          <Label htmlFor="tenantSlug">Workspace</Label>
+          <Input
+            id="tenantSlug"
+            type="text"
+            autoComplete="organization"
+            placeholder="your-workspace"
+            {...register("tenantSlug")}
+            aria-describedby={errors.tenantSlug ? "slug-error" : undefined}
+          />
+          {errors.tenantSlug && (
+            <p id="slug-error" className="mt-1 text-xs text-red-600">
+              {errors.tenantSlug.message}
+            </p>
+          )}
+        </div>
+
         <div>
           <Label htmlFor="email">Email</Label>
           <Input
