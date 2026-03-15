@@ -109,6 +109,7 @@ jobs:
     name: Playwright E2E
     runs-on: ubuntu-latest
     needs: docker-build
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -140,6 +141,49 @@ jobs:
           echo "Timed out waiting for health endpoint"
           docker compose logs
           exit 1
+
+      - name: Seed database
+        run: |
+          docker exec -i chronith-postgres-1 psql -U chronith -d chronith <<'SQL'
+            SET search_path = chronith;
+
+            -- Tenant
+            INSERT INTO tenants ("Id", "Name", "Slug", "TimeZoneId", "IsDeleted", "CreatedAt")
+            VALUES ('00000000-0000-0000-0000-000000000001','Test Tenant','test-tenant','UTC',false,NOW())
+            ON CONFLICT ("Id") DO NOTHING;
+
+            -- Admin user (password: Password1!)
+            INSERT INTO "TenantUsers" ("Id", "TenantId", "Email", "PasswordHash", "Role", "IsActive", "IsEmailVerified", "CreatedAt")
+            VALUES (
+              '00000000-0000-0000-0000-000000000099',
+              '00000000-0000-0000-0000-000000000001',
+              'admin@test.com',
+              '$2b$12$Qj5PqpaFuFx64GY2FVgjSuoz/MGmZdR6qwLqhFSkIX4092S/m0Eh2',
+              'Owner',
+              true,
+              true,
+              NOW()
+            )
+            ON CONFLICT ("Id") DO NOTHING;
+
+            -- Booking types
+            INSERT INTO booking_types ("Id", "TenantId", "Name", "Slug", "DurationMinutes", "Capacity", "Kind", "PaymentMode", "PriceInCentavos", "IsDeleted")
+            VALUES
+              ('00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000001','Consultation','consultation',60,10,'TimeSlot','Manual',50000,false),
+              ('00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000001','Quick Check','quick-check',30,5,'TimeSlot','Manual',0,false)
+            ON CONFLICT ("Id") DO NOTHING;
+
+            -- Availability windows (Mon-Sun, 08:00-18:00 for both booking types)
+            INSERT INTO availability_windows ("Id", "BookingTypeId", "DayOfWeek", "StartTime", "EndTime")
+            SELECT gen_random_uuid(), bt."Id", d.day, '08:00'::time, '18:00'::time
+            FROM booking_types bt
+            CROSS JOIN (SELECT generate_series(0,6) AS day) d
+            WHERE bt."Id" IN (
+              '00000000-0000-0000-0000-000000000010',
+              '00000000-0000-0000-0000-000000000011'
+            )
+            ON CONFLICT DO NOTHING;
+          SQL
 
       - name: Setup Node
         uses: actions/setup-node@v4
