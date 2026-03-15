@@ -109,6 +109,9 @@ jobs:
     name: Playwright E2E
     runs-on: ubuntu-latest
     needs: docker-build
+    env:
+      JWT_SIGNING_KEY: change-me-in-production-at-least-32-chars
+      SECURITY_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
     steps:
       - uses: actions/checkout@v4
 
@@ -206,6 +209,9 @@ jobs:
     name: k6 Load Tests
     runs-on: ubuntu-latest
     needs: docker-build
+    env:
+      JWT_SIGNING_KEY: change-me-in-production-at-least-32-chars
+      SECURITY_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
     steps:
       - uses: actions/checkout@v4
 
