@@ -1,11 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { loginAsAdmin } from "./helpers/auth";
 
 test.describe("Bookings Dashboard", () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-  });
-
   test("bookings list page renders", async ({ page }) => {
     await page.goto("/bookings");
     await expect(page).toHaveURL(/bookings/);

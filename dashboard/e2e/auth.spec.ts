@@ -1,5 +1,8 @@
 import { test, expect } from "@playwright/test";
 
+// These tests require an unauthenticated browser context
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test.describe("Admin Authentication", () => {
   test("login page renders", async ({ page }) => {
     await page.goto("/login");

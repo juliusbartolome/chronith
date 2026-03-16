@@ -1,11 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { loginAsAdmin } from "./helpers/auth";
 
 test.describe("Onboarding Wizard", () => {
   test.describe.configure({ mode: "serial" });
 
   test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
     await page.goto("/onboarding");
     // Clear progress using the actual localStorage key used by the page
     await page.evaluate(() =>
@@ -36,10 +34,6 @@ test.describe("Onboarding Wizard", () => {
 
 test.describe("Subscription Settings", () => {
   test.describe.configure({ mode: "serial" });
-
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-  });
 
   test("subscription page renders", async ({ page }) => {
     await page.goto("/settings/subscription");
