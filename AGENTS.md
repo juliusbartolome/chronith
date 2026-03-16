@@ -382,7 +382,7 @@ git checkout develop && git pull && git branch -d {branch-name}
 | v0.4    | `v0.4.0` | JWT + API key auth, Redis caching, customer callbacks, rate limiting                                                                                                        |
 | v0.5    | `v0.5.0` | Payment/pricing integration, PayMongo provider, free booking flow                                                                                                           |
 | v0.6    | —        | Staff management, lifecycle enhancements (reschedule, waitlist, time blocks, custom fields), notifications (email/SMS/push), analytics, public booking endpoints, iCal feed |
-| v0.8    | —        | Audit logging, OpenTelemetry observability, security hardening, database optimization, notification templates                                                                |
+| v0.8    | —        | Audit logging, OpenTelemetry observability, security hardening, database optimization, notification templates                                                               |
 
 ### Upcoming — Design Docs
 
@@ -419,14 +419,16 @@ dotnet test tests/Chronith.Tests.Functional
 dotnet run -c Release --project tests/Chronith.Tests.Performance -- --filter "*"
 
 # k6 load tests (requires running stack)
-docker compose up -d
+podman compose up -d
 k6 run tests/Chronith.Tests.Load/scripts/availability.js \
   --env BASE_URL=http://localhost:5001 \
   --env JWT_SIGNING_KEY=change-me-in-production-at-least-32-chars
 
-# Docker
-docker compose up -d          # Start full stack
-docker compose down            # Stop
+# Podman
+# Requires Podman Desktop with Docker Compatibility enabled (Settings → Resources → Podman Compose Setup)
+# This provides /var/run/docker.sock — Testcontainers and act auto-discover it
+podman compose up -d          # Start full stack
+podman compose down            # Stop
 
 # EF migrations
 dotnet ef migrations add <Name> \
