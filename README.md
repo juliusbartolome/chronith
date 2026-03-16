@@ -53,19 +53,21 @@ All database tables are in the `chronith` PostgreSQL schema. The only supported 
 ## Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download) (`10.0.100` or later — see `global.json`)
-- [Docker](https://docs.docker.com/get-docker/) and Docker Compose (for local development and load tests)
+- [Podman Desktop](https://podman-desktop.io/) — installs Podman 4+ (required for `podman compose`)
+  - **macOS:** Docker Compatibility is enabled by default — Testcontainers and `act` discover `/var/run/docker.sock` automatically.
+  - If `podman compose` is not available after install, open Podman Desktop → Settings → Resources and use the **Setup** button under Podman Compose.
 
 ## Getting Started
 
-**Run with Docker Compose:**
+**Run with Podman Compose:**
 
 ```bash
-docker compose up
+podman compose up
 ```
 
 The API is available at `http://localhost:5001`. PostgreSQL is exposed on `localhost:5432`.
 
-**Run without Docker:**
+**Run without containers:**
 
 Start a PostgreSQL instance and set the connection string, then:
 
@@ -110,7 +112,8 @@ To embed the booking flow in an existing website, use an iframe:
   src="https://your-domain.com/book/{tenantSlug}"
   width="100%"
   height="600"
-  frameborder="0">
+  frameborder="0"
+>
 </iframe>
 ```
 
@@ -225,11 +228,11 @@ All endpoints require a valid JWT Bearer token unless noted otherwise.
 
 ### API Keys
 
-| Method   | Route                   | Roles         | Description                          |
-| -------- | ----------------------- | ------------- | ------------------------------------ |
+| Method   | Route                   | Roles         | Description                                 |
+| -------- | ----------------------- | ------------- | ------------------------------------------- |
 | `POST`   | `/tenant/api-keys`      | `TenantAdmin` | Create a new API key (returns raw key once) |
-| `GET`    | `/tenant/api-keys`      | `TenantAdmin` | List all API keys for the tenant     |
-| `DELETE` | `/tenant/api-keys/{id}` | `TenantAdmin` | Revoke an API key                    |
+| `GET`    | `/tenant/api-keys`      | `TenantAdmin` | List all API keys for the tenant            |
+| `DELETE` | `/tenant/api-keys/{id}` | `TenantAdmin` | Revoke an API key                           |
 
 ### Payments (Inbound Webhook Receiver)
 
@@ -324,10 +327,10 @@ Load tests are written with [k6](https://grafana.com/docs/k6/). They require the
 
 ```bash
 # Start the stack
-docker compose up -d
+podman compose up -d
 
 # Seed test data (tenant + booking types + availability windows)
-docker exec -i chronith-postgres-1 psql -U chronith -d chronith <<'SQL'
+podman exec -i chronith-postgres-1 psql -U chronith -d chronith <<'SQL'
   SET search_path = chronith;
   INSERT INTO tenants ("Id","Name","Slug","TimeZoneId","IsDeleted","CreatedAt")
   VALUES ('00000000-0000-0000-0000-000000000001','Test Tenant','test-tenant','UTC',false,NOW())
