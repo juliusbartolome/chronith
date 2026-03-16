@@ -17,6 +17,9 @@ export default defineConfig({
     {
       name: "setup",
       testMatch: /auth\.setup\.ts/,
+      // Longer timeout for setup: absorbs cold-start latency of the
+      // Next.js standalone server on first request in CI.
+      timeout: 60_000,
     },
     {
       name: "Desktop Chrome",
