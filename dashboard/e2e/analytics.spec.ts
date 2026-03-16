@@ -10,20 +10,15 @@ test.describe("Analytics Dashboard", () => {
     await page.goto("/analytics");
     await expect(page.locator("h1")).toContainText(/analytics/i);
     await expect(
-      page.locator('[role="tab"], button:has-text("Bookings")'),
+      page.getByRole("tab", { name: "Bookings" }),
     ).toBeVisible();
   });
 
   test("switching tabs works", async ({ page }) => {
     await page.goto("/analytics");
-    const revenueTab = page.locator(
-      '[role="tab"]:has-text("Revenue"), button:has-text("Revenue")',
-    );
-    if (await revenueTab.isVisible()) {
-      await revenueTab.click();
-      await expect(page.locator("h2, .recharts-wrapper")).toBeVisible({
-        timeout: 5000,
-      });
-    }
+    const revenueTab = page.getByRole("tab", { name: "Revenue" });
+    await expect(revenueTab).toBeVisible();
+    await revenueTab.click();
+    await expect(revenueTab).toHaveAttribute("aria-selected", "true");
   });
 });

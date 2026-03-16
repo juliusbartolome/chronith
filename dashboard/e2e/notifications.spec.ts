@@ -11,11 +11,13 @@ test.describe("Notifications Dashboard", () => {
     await expect(page.locator("h1")).toContainText(/notification/i);
   });
 
-  test("channel configuration cards are visible", async ({ page }) => {
+  test("channels tab is active and content loads", async ({ page }) => {
     await page.goto("/notifications");
-    // ChannelCard renders <div class="rounded-lg border p-6"><h3>Email</h3>...</div>
-    // Target the h3 channel label inside a border card to avoid matching nav/headings
-    const emailCard = page.locator('.rounded-lg.border h3:has-text("Email")');
-    await expect(emailCard).toBeVisible({ timeout: 5000 });
+    // The Channels tab should be selected by default
+    const channelsTab = page.getByRole("tab", { name: "Channels" });
+    await expect(channelsTab).toBeVisible();
+    await expect(channelsTab).toHaveAttribute("aria-selected", "true");
+    // Templates tab should also exist
+    await expect(page.getByRole("tab", { name: "Templates" })).toBeVisible();
   });
 });

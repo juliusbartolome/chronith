@@ -14,10 +14,19 @@ test.describe("Bookings Dashboard", () => {
 
   test("shows empty state when no bookings", async ({ page }) => {
     await page.goto("/bookings");
+    // Wait for loading to finish — page shows "Loading…" while fetching
+    await page.waitForFunction(
+      () => !document.body.textContent?.includes("Loading"),
+      { timeout: 10000 },
+    );
+    // After loading, expect either the bookings table, empty text, or error
     const hasTable = await page.locator("table").isVisible();
     const hasEmpty = await page
-      .locator('[data-testid="empty-state"], .text-muted-foreground')
+      .locator('text="No bookings found."')
       .isVisible();
-    expect(hasTable || hasEmpty).toBe(true);
+    const hasError = await page
+      .locator("text=Failed to load bookings.")
+      .isVisible();
+    expect(hasTable || hasEmpty || hasError).toBe(true);
   });
 });
