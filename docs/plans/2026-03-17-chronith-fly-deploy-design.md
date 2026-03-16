@@ -58,7 +58,7 @@ One new file at the repo root.
 | `auto_stop_machines`      | `stop`          | Scales to zero when idle (free tier friendly)                            |
 | `min_machines_running`    | `0`             | Allow full scale-to-zero                                                 |
 | Health check path         | `/health/live`  | Matches existing Dockerfile `HEALTHCHECK`                                |
-| Health check grace period | `20s`           | Allows migrations + seeding to complete before Fly marks machine healthy |
+| Health check grace period | `40s`           | Allows migrations + seeding to complete before Fly marks machine healthy |
 | VM memory                 | `256mb`         | Sufficient for the .NET runtime at low load                              |
 | VM CPU                    | `shared-cpu-1x` | Minimum for free/hobby tier                                              |
 
@@ -87,8 +87,8 @@ Set via `fly secrets set` — never committed to source control.
 
 | Secret                       | Source                                                            |
 | ---------------------------- | ----------------------------------------------------------------- |
-| `JWT_SIGNING_KEY`            | Minimum 32 chars — generate with `openssl rand -hex 32`           |
-| `SECURITY_ENCRYPTION_KEY`    | Base64-encoded 32 bytes — generate with `openssl rand -base64 32` |
+| `Jwt__SigningKey`            | Minimum 32 chars — generate with `openssl rand -hex 32`           |
+| `Security__EncryptionKey`    | Base64-encoded 32 bytes — generate with `openssl rand -base64 32` |
 | `Database__ConnectionString` | Neon project → Connection Details → Npgsql format                 |
 | `Redis__ConnectionString`    | Upstash → StackExchange.Redis format (see below)                  |
 
@@ -113,7 +113,7 @@ Upstash provides the URL as `rediss://:<password>@<host>:<port>` — convert to 
 1. Create Neon project, create database, copy Npgsql connection string
 2. Create Upstash database, copy Redis URL, convert to StackExchange.Redis format
 3. `fly launch --no-deploy` — registers the app name on Fly.io, links to org, generates initial `fly.toml` stub (overwritten by our handwritten one)
-4. `fly secrets set JWT_SIGNING_KEY=... SECURITY_ENCRYPTION_KEY=... "Database__ConnectionString=..." "Redis__ConnectionString=..."`
+4. `fly secrets set Jwt__SigningKey=... Security__EncryptionKey=... "Database__ConnectionString=..." "Redis__ConnectionString=..."`
 5. `fly deploy` — Fly builds from `Dockerfile`, pushes image, starts machine; migrations and seeding run automatically on startup
 
 ---

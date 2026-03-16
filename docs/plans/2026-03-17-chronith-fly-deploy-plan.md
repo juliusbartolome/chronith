@@ -101,7 +101,7 @@ primary_region = "sin"
     soft_limit = 20
 
   [[http_service.checks]]
-    grace_period = "20s"
+    grace_period = "40s"
     interval = "30s"
     method = "GET"
     path = "/health/live"
@@ -149,10 +149,10 @@ Expected: `New app created: chronith-api`
 **Step 2: Generate secrets locally**
 
 ```bash
-# JWT signing key (at least 32 chars)
+# Jwt__SigningKey (at least 32 chars)
 openssl rand -hex 32
 
-# Encryption key (Base64-encoded 32 bytes)
+# Security__EncryptionKey (Base64-encoded 32 bytes)
 openssl rand -base64 32
 ```
 
@@ -164,8 +164,8 @@ Replace the placeholders with your actual values:
 
 ```bash
 fly secrets set \
-  JWT_SIGNING_KEY="<output of openssl rand -hex 32>" \
-  SECURITY_ENCRYPTION_KEY="<output of openssl rand -base64 32>" \
+  Jwt__SigningKey="<output of openssl rand -hex 32>" \
+  Security__EncryptionKey="<output of openssl rand -base64 32>" \
   "Database__ConnectionString=Host=ep-xxx...;Database=neondb;Username=xxx;Password=xxx;Ssl Mode=Require;Trust Server Certificate=true" \
   "Redis__ConnectionString=<host>:<port>,password=<password>,ssl=True,abortConnect=False" \
   --app chronith-api
@@ -179,7 +179,7 @@ Expected: `Secrets are staged for the first deployment`
 fly secrets list --app chronith-api
 ```
 
-Expected: four secrets listed (`JWT_SIGNING_KEY`, `SECURITY_ENCRYPTION_KEY`, `Database__ConnectionString`, `Redis__ConnectionString`).
+Expected: four secrets listed (`Jwt__SigningKey`, `Security__EncryptionKey`, `Database__ConnectionString`, `Redis__ConnectionString`).
 
 ---
 
