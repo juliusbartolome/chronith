@@ -125,8 +125,8 @@ jobs:
           tags: chronith-chronith-api:latest
           cache-from: type=gha
 
-      - name: Start stack
-        run: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+      - name: Start stack (no grafana — port 3000 reserved for dashboard)
+        run: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d --scale grafana=0 --scale prometheus=0
 
       - name: Wait for API health
         run: |
