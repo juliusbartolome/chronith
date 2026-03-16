@@ -86,6 +86,8 @@ services:
       Observability__ServiceName: "chronith-api"
       Observability__EnableTracing: "true"
       Observability__EnableMetrics: "true"
+      RateLimiting__Auth__PermitLimit: "99999"
+      RateLimiting__Auth__WindowSeconds: "300"
 
   dashboard:
     build:

@@ -3,6 +3,10 @@ import { Page } from "@playwright/test";
 export async function loginAsAdmin(page: Page) {
   await page.goto("/login");
   await page.fill(
+    '[name="tenantSlug"]',
+    process.env.TEST_TENANT_SLUG ?? "test-tenant",
+  );
+  await page.fill(
     '[name="email"]',
     process.env.TEST_ADMIN_EMAIL ?? "admin@test.com",
   );
@@ -11,7 +15,7 @@ export async function loginAsAdmin(page: Page) {
     process.env.TEST_ADMIN_PASSWORD ?? "Password1!",
   );
   await page.click('[type="submit"]');
-  await page.waitForURL(/\/(dashboard|onboarding)/);
+  await page.waitForURL(/\/(bookings|onboarding)/);
 }
 
 export async function loginAsCustomer(

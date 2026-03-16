@@ -109,6 +109,7 @@ jobs:
     name: Playwright E2E
     runs-on: ubuntu-latest
     needs: docker-build
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -124,8 +125,8 @@ jobs:
           tags: chronith-chronith-api:latest
           cache-from: type=gha
 
-      - name: Start stack
-        run: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+      - name: Start stack (no grafana — port 3000 reserved for dashboard)
+        run: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d --scale grafana=0 --scale prometheus=0
 
       - name: Wait for API health
         run: |
@@ -140,6 +141,57 @@ jobs:
           echo "Timed out waiting for health endpoint"
           docker compose logs
           exit 1
+
+      - name: Seed database
+        run: |
+          docker exec -i chronith-postgres-1 psql -U chronith -d chronith <<'SQL'
+            SET search_path = chronith;
+
+            -- Tenant
+            INSERT INTO tenants ("Id", "Name", "Slug", "TimeZoneId", "IsDeleted", "CreatedAt")
+            VALUES ('00000000-0000-0000-0000-000000000001','Test Tenant','test-tenant','UTC',false,NOW())
+            ON CONFLICT ("Id") DO NOTHING;
+
+            -- Admin user (password: Password1!)
+            INSERT INTO "TenantUsers" ("Id", "TenantId", "Email", "PasswordHash", "Role", "IsActive", "IsEmailVerified", "CreatedAt")
+            VALUES (
+              '00000000-0000-0000-0000-000000000099',
+              '00000000-0000-0000-0000-000000000001',
+              'admin@test.com',
+              '$2b$12$Qj5PqpaFuFx64GY2FVgjSuoz/MGmZdR6qwLqhFSkIX4092S/m0Eh2',
+              'Owner',
+              true,
+              true,
+              NOW()
+            )
+            ON CONFLICT ("Id") DO NOTHING;
+
+            -- Booking types
+            INSERT INTO booking_types ("Id", "TenantId", "Name", "Slug", "DurationMinutes", "Capacity", "Kind", "PaymentMode", "PriceInCentavos", "IsDeleted")
+            VALUES
+              ('00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000001','Consultation','consultation',60,10,'TimeSlot','Manual',50000,false),
+              ('00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000001','Quick Check','quick-check',30,5,'TimeSlot','Manual',0,false)
+            ON CONFLICT ("Id") DO NOTHING;
+
+            -- Availability windows (Mon-Sun, 08:00-18:00 for both booking types)
+            INSERT INTO availability_windows ("Id", "BookingTypeId", "DayOfWeek", "StartTime", "EndTime")
+            SELECT gen_random_uuid(), bt."Id", d.day, '08:00'::time, '18:00'::time
+            FROM booking_types bt
+            CROSS JOIN (SELECT generate_series(0,6) AS day) d
+            WHERE bt."Id" IN (
+              '00000000-0000-0000-0000-000000000010',
+              '00000000-0000-0000-0000-000000000011'
+            )
+            ON CONFLICT DO NOTHING;
+
+            -- Tenant plans (needed for signup step 2)
+            INSERT INTO tenant_plans ("Id", "Name", "MaxBookingTypes", "MaxStaffMembers", "MaxBookingsPerMonth", "MaxCustomers", "NotificationsEnabled", "AnalyticsEnabled", "CustomBrandingEnabled", "ApiAccessEnabled", "AuditLogEnabled", "PriceCentavos", "IsActive", "SortOrder", "CreatedAt", "IsDeleted")
+            VALUES
+              ('00000000-0000-0000-0000-000000000020', 'Free', 2, 1, 50, 100, false, false, false, false, false, 0, true, 0, NOW(), false),
+              ('00000000-0000-0000-0000-000000000021', 'Pro', 10, 5, 500, 1000, true, true, false, true, false, 99900, true, 1, NOW(), false),
+              ('00000000-0000-0000-0000-000000000022', 'Business', 50, 25, 5000, 10000, true, true, true, true, true, 299900, true, 2, NOW(), false)
+            ON CONFLICT ("Id") DO NOTHING;
+          SQL
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -163,8 +215,14 @@ jobs:
           # Dashboard defaults to http://localhost:5001 when unset; set explicitly for clarity
           CHRONITH_API_URL: http://localhost:5001
 
+      - name: Prepare standalone server
+        run: |
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public 2>/dev/null || true
+        working-directory: dashboard
+
       - name: Start dashboard server
-        run: npm start &
+        run: node .next/standalone/server.js &
         working-directory: dashboard
         env:
           PORT: 3000
@@ -247,10 +305,10 @@ jobs:
             VALUES ('00000000-0000-0000-0000-000000000001','Test Tenant','test-tenant','UTC',false,NOW())
             ON CONFLICT ("Id") DO NOTHING;
 
-            INSERT INTO booking_types ("Id", "TenantId", "Name", "Slug", "DurationMinutes", "Capacity", "Kind", "PaymentMode", "IsDeleted")
+            INSERT INTO booking_types ("Id", "TenantId", "Name", "Slug", "DurationMinutes", "Capacity", "Kind", "PaymentMode", "PriceInCentavos", "IsDeleted")
             VALUES
-              ('00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000001','Test Type','test-type',60,100,'Fixed','Manual',false),
-              ('00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000001','Capacity One Type','capacity-one-type',60,1,'Fixed','Manual',false)
+              ('00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000001','Test Type','test-type',60,100,'TimeSlot','Manual',10000,false),
+              ('00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000001','Capacity One Type','capacity-one-type',60,1,'TimeSlot','Manual',0,false)
             ON CONFLICT ("Id") DO NOTHING;
 
             INSERT INTO availability_windows ("Id", "BookingTypeId", "DayOfWeek", "StartTime", "EndTime")
@@ -292,8 +350,8 @@ jobs:
           docker exec -i chronith-postgres-1 psql -U chronith -d chronith <<'SQL'
             SET search_path = chronith;
             DELETE FROM bookings
-            WHERE "StartTime" >= '2026-06-01T00:00:00+00:00'
-              AND "StartTime" <  '2026-07-01T00:00:00+00:00';
+            WHERE "Start" >= '2026-06-01T00:00:00+00:00'
+              AND "Start" <  '2026-07-01T00:00:00+00:00';
           SQL
 
       - name: Run booking-lifecycle.js
@@ -311,7 +369,7 @@ jobs:
           docker exec -i chronith-postgres-1 psql -U chronith -d chronith <<'SQL'
             SET search_path = chronith;
             DELETE FROM bookings
-            WHERE "StartTime" = '2026-05-04T10:00:00+00:00';
+            WHERE "Start" = '2026-05-04T10:00:00+00:00';
           SQL
 
       - name: Run concurrent-booking.js

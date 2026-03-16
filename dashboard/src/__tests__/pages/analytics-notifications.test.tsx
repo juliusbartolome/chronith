@@ -6,9 +6,9 @@ import { createElement } from "react";
 
 // Mock recharts to avoid SVG rendering issues in jsdom
 vi.mock("recharts", () => ({
-  LineChart: ({ children }: any) => <div data-testid="line-chart">{children}</div>,
-  BarChart: ({ children }: any) => <div data-testid="bar-chart">{children}</div>,
-  PieChart: ({ children }: any) => <div data-testid="pie-chart">{children}</div>,
+  LineChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="line-chart">{children}</div>,
+  BarChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="bar-chart">{children}</div>,
+  PieChart: ({ children }: { children?: React.ReactNode }) => <div data-testid="pie-chart">{children}</div>,
   Line: () => null,
   Bar: () => null,
   Pie: () => null,
@@ -17,7 +17,7 @@ vi.mock("recharts", () => ({
   YAxis: () => null,
   CartesianGrid: () => null,
   Tooltip: () => null,
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Legend: () => null,
 }));
 
@@ -120,34 +120,34 @@ describe("AnalyticsPage", () => {
   };
 
   it("renders heading", () => {
-    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as any);
-    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as any);
-    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as any);
+    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as unknown as ReturnType<typeof useBookingAnalytics>);
+    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as unknown as ReturnType<typeof useRevenueAnalytics>);
+    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as unknown as ReturnType<typeof useUtilizationAnalytics>);
     render(<AnalyticsPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Analytics")).toBeInTheDocument();
   });
 
   it("shows loading state", () => {
-    vi.mocked(useBookingAnalytics).mockReturnValue({ isLoading: true, isError: false, data: undefined } as any);
-    vi.mocked(useRevenueAnalytics).mockReturnValue({ isLoading: true, isError: false, data: undefined } as any);
-    vi.mocked(useUtilizationAnalytics).mockReturnValue({ isLoading: true, isError: false, data: undefined } as any);
+    vi.mocked(useBookingAnalytics).mockReturnValue({ isLoading: true, isError: false, data: undefined } as unknown as ReturnType<typeof useBookingAnalytics>);
+    vi.mocked(useRevenueAnalytics).mockReturnValue({ isLoading: true, isError: false, data: undefined } as unknown as ReturnType<typeof useRevenueAnalytics>);
+    vi.mocked(useUtilizationAnalytics).mockReturnValue({ isLoading: true, isError: false, data: undefined } as unknown as ReturnType<typeof useUtilizationAnalytics>);
     render(<AnalyticsPage />, { wrapper: createWrapper() });
     // BookingsTab shows loading indicator
     expect(document.body.textContent).toContain("Loading");
   });
 
   it("renders KPI cards when booking data is available", () => {
-    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as any);
-    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as any);
-    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as any);
+    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as unknown as ReturnType<typeof useBookingAnalytics>);
+    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as unknown as ReturnType<typeof useRevenueAnalytics>);
+    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as unknown as ReturnType<typeof useUtilizationAnalytics>);
     render(<AnalyticsPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Total Bookings")).toBeInTheDocument();
   });
 
   it("renders tab navigation", () => {
-    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as any);
-    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as any);
-    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as any);
+    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as unknown as ReturnType<typeof useBookingAnalytics>);
+    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as unknown as ReturnType<typeof useRevenueAnalytics>);
+    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as unknown as ReturnType<typeof useUtilizationAnalytics>);
     render(<AnalyticsPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Bookings")).toBeInTheDocument();
     expect(screen.getByText("Revenue")).toBeInTheDocument();
@@ -155,35 +155,35 @@ describe("AnalyticsPage", () => {
   });
 
   it("switches to Revenue tab on click", () => {
-    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as any);
-    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as any);
-    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as any);
+    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as unknown as ReturnType<typeof useBookingAnalytics>);
+    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as unknown as ReturnType<typeof useRevenueAnalytics>);
+    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as unknown as ReturnType<typeof useUtilizationAnalytics>);
     render(<AnalyticsPage />, { wrapper: createWrapper() });
     act(() => { fireEvent.click(screen.getByRole("tab", { name: "Revenue" })); });
     expect(screen.getByText("Total Revenue")).toBeInTheDocument();
   });
 
   it("shows Revenue loading when revenue isLoading", () => {
-    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as any);
-    vi.mocked(useRevenueAnalytics).mockReturnValue({ isLoading: true, data: undefined, error: null } as any);
-    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as any);
+    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as unknown as ReturnType<typeof useBookingAnalytics>);
+    vi.mocked(useRevenueAnalytics).mockReturnValue({ isLoading: true, data: undefined, error: null } as unknown as ReturnType<typeof useRevenueAnalytics>);
+    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as unknown as ReturnType<typeof useUtilizationAnalytics>);
     render(<AnalyticsPage />, { wrapper: createWrapper() });
     act(() => { fireEvent.click(screen.getByRole("tab", { name: "Revenue" })); });
     expect(document.body.textContent).toContain("Loading");
   });
 
   it("shows Revenue error when revenue errors", () => {
-    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as any);
-    vi.mocked(useRevenueAnalytics).mockReturnValue({ isLoading: false, data: undefined, error: new Error("fail") } as any);
-    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as any);
+    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as unknown as ReturnType<typeof useBookingAnalytics>);
+    vi.mocked(useRevenueAnalytics).mockReturnValue({ isLoading: false, data: undefined, error: new Error("fail") } as unknown as ReturnType<typeof useRevenueAnalytics>);
+    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as unknown as ReturnType<typeof useUtilizationAnalytics>);
     render(<AnalyticsPage />, { wrapper: createWrapper() });
     act(() => { fireEvent.click(screen.getByRole("tab", { name: "Revenue" })); });
     expect(screen.getByText(/Failed to load analytics/i)).toBeInTheDocument();
   });
 
   it("switches to Utilization tab on click", () => {
-    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as any);
-    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as any);
+    vi.mocked(useBookingAnalytics).mockReturnValue(mockBookingData as unknown as ReturnType<typeof useBookingAnalytics>);
+    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as unknown as ReturnType<typeof useRevenueAnalytics>);
     vi.mocked(useUtilizationAnalytics).mockReturnValue({
       isLoading: false,
       error: null,
@@ -194,16 +194,16 @@ describe("AnalyticsPage", () => {
         byBookingType: [],
         byStaffMember: [],
       },
-    } as any);
+    } as unknown as ReturnType<typeof useUtilizationAnalytics>);
     render(<AnalyticsPage />, { wrapper: createWrapper() });
     act(() => { fireEvent.click(screen.getByRole("tab", { name: "Utilization" })); });
     expect(screen.getByText("Overall Utilization")).toBeInTheDocument();
   });
 
   it("shows Bookings error when booking errors", () => {
-    vi.mocked(useBookingAnalytics).mockReturnValue({ isLoading: false, data: undefined, error: new Error("err") } as any);
-    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as any);
-    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as any);
+    vi.mocked(useBookingAnalytics).mockReturnValue({ isLoading: false, data: undefined, error: new Error("err") } as unknown as ReturnType<typeof useBookingAnalytics>);
+    vi.mocked(useRevenueAnalytics).mockReturnValue(mockRevenueData as unknown as ReturnType<typeof useRevenueAnalytics>);
+    vi.mocked(useUtilizationAnalytics).mockReturnValue(mockUtilizationData as unknown as ReturnType<typeof useUtilizationAnalytics>);
     render(<AnalyticsPage />, { wrapper: createWrapper() });
     expect(screen.getByText(/Failed to load analytics/i)).toBeInTheDocument();
   });
@@ -214,30 +214,30 @@ describe("AnalyticsPage", () => {
 describe("NotificationsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useUpdateNotificationConfig).mockReturnValue(mockMutation as any);
-    vi.mocked(useDisableNotificationChannel).mockReturnValue(mockMutation as any);
-    vi.mocked(useUpdateNotificationTemplate).mockReturnValue(mockMutation as any);
-    vi.mocked(useResetNotificationTemplate).mockReturnValue(mockMutation as any);
-    vi.mocked(usePreviewNotificationTemplate).mockReturnValue(mockMutation as any);
+    vi.mocked(useUpdateNotificationConfig).mockReturnValue(mockMutation as unknown as ReturnType<typeof useUpdateNotificationConfig>);
+    vi.mocked(useDisableNotificationChannel).mockReturnValue(mockMutation as unknown as ReturnType<typeof useDisableNotificationChannel>);
+    vi.mocked(useUpdateNotificationTemplate).mockReturnValue(mockMutation as unknown as ReturnType<typeof useUpdateNotificationTemplate>);
+    vi.mocked(useResetNotificationTemplate).mockReturnValue(mockMutation as unknown as ReturnType<typeof useResetNotificationTemplate>);
+    vi.mocked(usePreviewNotificationTemplate).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePreviewNotificationTemplate>);
   });
 
   it("renders heading", () => {
-    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
-    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationConfigs>);
+    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Notifications")).toBeInTheDocument();
   });
 
   it("shows loading state for configs", () => {
-    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: true, isError: false, data: undefined } as any);
-    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: true, isError: false, data: undefined } as unknown as ReturnType<typeof useNotificationConfigs>);
+    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("renders notification channels tab", () => {
-    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
-    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationConfigs>);
+    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Channels")).toBeInTheDocument();
   });
@@ -254,8 +254,8 @@ describe("NotificationsPage", () => {
           settings: {},
         },
       ],
-    } as any);
-    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    } as unknown as ReturnType<typeof useNotificationConfigs>);
+    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Email")).toBeInTheDocument();
   });
@@ -272,8 +272,8 @@ describe("NotificationsPage", () => {
           settings: "{}",
         },
       ],
-    } as any);
-    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    } as unknown as ReturnType<typeof useNotificationConfigs>);
+    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Configured")).toBeInTheDocument();
   });
@@ -290,15 +290,15 @@ describe("NotificationsPage", () => {
           settings: "{}",
         },
       ],
-    } as any);
-    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    } as unknown as ReturnType<typeof useNotificationConfigs>);
+    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Not configured")).toBeInTheDocument();
   });
 
   it("renders templates tab content", async () => {
     const user = userEvent.setup();
-    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationConfigs>);
     vi.mocked(useNotificationTemplates).mockReturnValue({
       isLoading: false,
       isError: false,
@@ -312,7 +312,7 @@ describe("NotificationsPage", () => {
           isActive: true,
         },
       ],
-    } as any);
+    } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     // Click Templates tab using userEvent for Radix UI
     await user.click(screen.getByRole("tab", { name: "Templates" }));
@@ -321,8 +321,8 @@ describe("NotificationsPage", () => {
 
   it("shows loading for templates when templatesLoading", async () => {
     const user = userEvent.setup();
-    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
-    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: true, isError: false, data: undefined } as any);
+    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationConfigs>);
+    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: true, isError: false, data: undefined } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     // Click Templates tab to reveal loading state
     await user.click(screen.getByRole("tab", { name: "Templates" }));
@@ -341,8 +341,8 @@ describe("NotificationsPage", () => {
           settings: "{}",
         },
       ],
-    } as any);
-    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    } as unknown as ReturnType<typeof useNotificationConfigs>);
+    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     act(() => { fireEvent.click(screen.getByRole("button", { name: /configure/i })); });
     expect(screen.getByText(/Settings \(JSON\)/i)).toBeInTheDocument();
@@ -350,7 +350,7 @@ describe("NotificationsPage", () => {
 
   it("ChannelConfigForm Save button calls update mutateAsync", async () => {
     const mutateAsync = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useUpdateNotificationConfig).mockReturnValue({ ...mockMutation, mutateAsync } as any);
+    vi.mocked(useUpdateNotificationConfig).mockReturnValue({ ...mockMutation, mutateAsync } as unknown as ReturnType<typeof useUpdateNotificationConfig>);
     vi.mocked(useNotificationConfigs).mockReturnValue({
       isLoading: false,
       isError: false,
@@ -362,8 +362,8 @@ describe("NotificationsPage", () => {
           settings: '{"host":"smtp.example.com"}',
         },
       ],
-    } as any);
-    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    } as unknown as ReturnType<typeof useNotificationConfigs>);
+    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     // Open configure dialog
     act(() => { fireEvent.click(screen.getByRole("button", { name: /configure/i })); });
@@ -374,7 +374,7 @@ describe("NotificationsPage", () => {
 
   it("ChannelCard toggle disable calls disable mutateAsync when turning off", async () => {
     const disableMutateAsync = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useDisableNotificationChannel).mockReturnValue({ ...mockMutation, mutateAsync: disableMutateAsync } as any);
+    vi.mocked(useDisableNotificationChannel).mockReturnValue({ ...mockMutation, mutateAsync: disableMutateAsync } as unknown as ReturnType<typeof useDisableNotificationChannel>);
     vi.mocked(useNotificationConfigs).mockReturnValue({
       isLoading: false,
       isError: false,
@@ -386,8 +386,8 @@ describe("NotificationsPage", () => {
           settings: "{}",
         },
       ],
-    } as any);
-    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    } as unknown as ReturnType<typeof useNotificationConfigs>);
+    vi.mocked(useNotificationTemplates).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     // The Switch is a button with role="switch"
     const switchEl = screen.getByRole("switch");
@@ -397,7 +397,7 @@ describe("NotificationsPage", () => {
 
   it("TemplateEditor opens edit dialog on Edit click", async () => {
     const user = userEvent.setup();
-    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationConfigs>);
     vi.mocked(useNotificationTemplates).mockReturnValue({
       isLoading: false,
       isError: false,
@@ -411,7 +411,7 @@ describe("NotificationsPage", () => {
           isActive: true,
         },
       ],
-    } as any);
+    } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     // Navigate to Templates tab
     await user.click(screen.getByRole("tab", { name: "Templates" }));
@@ -423,8 +423,8 @@ describe("NotificationsPage", () => {
   it("TemplateEditor handleSave calls update mutateAsync", async () => {
     const user = userEvent.setup();
     const mutateAsync = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useUpdateNotificationTemplate).mockReturnValue({ ...mockMutation, mutateAsync } as any);
-    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    vi.mocked(useUpdateNotificationTemplate).mockReturnValue({ ...mockMutation, mutateAsync } as unknown as ReturnType<typeof useUpdateNotificationTemplate>);
+    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationConfigs>);
     vi.mocked(useNotificationTemplates).mockReturnValue({
       isLoading: false,
       isError: false,
@@ -438,7 +438,7 @@ describe("NotificationsPage", () => {
           isActive: true,
         },
       ],
-    } as any);
+    } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     await user.click(screen.getByRole("tab", { name: "Templates" }));
     act(() => { fireEvent.click(screen.getByRole("button", { name: /^edit$/i })); });
@@ -450,8 +450,8 @@ describe("NotificationsPage", () => {
   it("TemplateEditor handlePreview calls preview mutateAsync", async () => {
     const user = userEvent.setup();
     const mutateAsync = vi.fn().mockResolvedValue({ body: "Rendered preview" });
-    vi.mocked(usePreviewNotificationTemplate).mockReturnValue({ ...mockMutation, mutateAsync } as any);
-    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    vi.mocked(usePreviewNotificationTemplate).mockReturnValue({ ...mockMutation, mutateAsync } as unknown as ReturnType<typeof usePreviewNotificationTemplate>);
+    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationConfigs>);
     vi.mocked(useNotificationTemplates).mockReturnValue({
       isLoading: false,
       isError: false,
@@ -465,7 +465,7 @@ describe("NotificationsPage", () => {
           isActive: true,
         },
       ],
-    } as any);
+    } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     await user.click(screen.getByRole("tab", { name: "Templates" }));
     act(() => { fireEvent.click(screen.getByRole("button", { name: /^edit$/i })); });
@@ -476,8 +476,8 @@ describe("NotificationsPage", () => {
   it("TemplateEditor handleReset calls reset mutateAsync", async () => {
     const user = userEvent.setup();
     const mutateAsync = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useResetNotificationTemplate).mockReturnValue({ ...mockMutation, mutateAsync } as any);
-    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as any);
+    vi.mocked(useResetNotificationTemplate).mockReturnValue({ ...mockMutation, mutateAsync } as unknown as ReturnType<typeof useResetNotificationTemplate>);
+    vi.mocked(useNotificationConfigs).mockReturnValue({ isLoading: false, isError: false, data: [] } as unknown as ReturnType<typeof useNotificationConfigs>);
     vi.mocked(useNotificationTemplates).mockReturnValue({
       isLoading: false,
       isError: false,
@@ -491,7 +491,7 @@ describe("NotificationsPage", () => {
           isActive: true,
         },
       ],
-    } as any);
+    } as unknown as ReturnType<typeof useNotificationTemplates>);
     render(<NotificationsPage />, { wrapper: createWrapper() });
     await user.click(screen.getByRole("tab", { name: "Templates" }));
     act(() => { fireEvent.click(screen.getByRole("button", { name: /^edit$/i })); });

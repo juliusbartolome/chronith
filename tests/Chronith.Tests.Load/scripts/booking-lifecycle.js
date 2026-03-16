@@ -114,8 +114,8 @@ export default function () {
     "get: status 200": (r) => r.status === 200,
     "get: status is Confirmed": (r) => {
       const body = JSON.parse(r.body);
-      // BookingStatus.Confirmed = 2 (enum serialized as integer, no JsonStringEnumConverter)
-      return body.status === 2;
+      // BookingStatus enum is serialized as a string via JsonStringEnumConverter
+      return body.status === "Confirmed";
     },
   });
 
