@@ -53,13 +53,13 @@ describe("AuditPage", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("shows loading state", () => {
-    vi.mocked(useAuditEntries).mockReturnValue({ isLoading: true, isError: false, data: undefined } as any);
+    vi.mocked(useAuditEntries).mockReturnValue({ isLoading: true, isError: false, data: undefined } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("shows error state", () => {
-    vi.mocked(useAuditEntries).mockReturnValue({ isLoading: false, isError: true, data: undefined } as any);
+    vi.mocked(useAuditEntries).mockReturnValue({ isLoading: false, isError: true, data: undefined } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     expect(screen.getByText(/Failed to load audit entries/i)).toBeInTheDocument();
   });
@@ -84,7 +84,7 @@ describe("AuditPage", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Alice")).toBeInTheDocument();
     expect(screen.getByText("Create")).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe("AuditPage", () => {
   });
 
   it("renders heading", () => {
-    vi.mocked(useAuditEntries).mockReturnValue({ isLoading: false, isError: false, data: undefined } as any);
+    vi.mocked(useAuditEntries).mockReturnValue({ isLoading: false, isError: false, data: undefined } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Audit Log")).toBeInTheDocument();
   });
@@ -102,7 +102,7 @@ describe("AuditPage", () => {
       isLoading: false,
       isError: false,
       data: { items: [], totalCount: 42, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Total: 42")).toBeInTheDocument();
   });
@@ -122,10 +122,10 @@ describe("AuditPage", () => {
       isLoading: false,
       isError: false,
       data: { items: [entry], totalCount: 1, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntries>);
     vi.mocked(useAuditEntry).mockReturnValue({
       data: { ...entry, ipAddress: "127.0.0.1", oldValues: null, newValues: null },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntry>);
 
     const { getByRole } = render(<AuditPage />, { wrapper: createWrapper() });
     act(() => { fireEvent.click(getByRole("button", { name: /view/i })); });
@@ -148,10 +148,10 @@ describe("AuditPage", () => {
       isLoading: false,
       isError: false,
       data: { items: [entry], totalCount: 1, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntries>);
     vi.mocked(useAuditEntry).mockReturnValue({
       data: { ...entry, ipAddress: "192.168.1.1", oldValues: null, newValues: null },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntry>);
 
     render(<AuditPage />, { wrapper: createWrapper() });
     act(() => { fireEvent.click(screen.getByRole("button", { name: /view/i })); });
@@ -173,7 +173,7 @@ describe("AuditPage", () => {
       isLoading: false,
       isError: false,
       data: { items: [entry], totalCount: 1, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntries>);
     vi.mocked(useAuditEntry).mockReturnValue({
       data: {
         ...entry,
@@ -181,7 +181,7 @@ describe("AuditPage", () => {
         oldValues: { price: 100 },
         newValues: { price: 200 },
       },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntry>);
 
     render(<AuditPage />, { wrapper: createWrapper() });
     act(() => { fireEvent.click(screen.getByRole("button", { name: /view/i })); });
@@ -194,7 +194,7 @@ describe("AuditPage", () => {
       isLoading: false,
       isError: false,
       data: { items: [], totalCount: 0, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     expect(screen.getByRole("button", { name: /previous/i })).toBeDisabled();
   });
@@ -204,7 +204,7 @@ describe("AuditPage", () => {
       isLoading: false,
       isError: false,
       data: { items: [], totalCount: 0, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     expect(screen.getByRole("button", { name: /^next$/i })).toBeDisabled();
   });
@@ -224,7 +224,7 @@ describe("AuditPage", () => {
       isLoading: false,
       isError: false,
       data: { items, totalCount: 40, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     const next = screen.getByRole("button", { name: /^next$/i });
     expect(next).not.toBeDisabled();
@@ -248,7 +248,7 @@ describe("AuditPage", () => {
       isLoading: false,
       isError: false,
       data: { items, totalCount: 40, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     // Advance to page 2
     act(() => { fireEvent.click(screen.getByRole("button", { name: /^next$/i })); });
@@ -266,17 +266,17 @@ describe("AuditPage", () => {
 describe("CustomersPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useDeactivateCustomer).mockReturnValue(mockMutation as any);
+    vi.mocked(useDeactivateCustomer).mockReturnValue(mockMutation as unknown as ReturnType<typeof useDeactivateCustomer>);
   });
 
   it("shows loading state", () => {
-    vi.mocked(useCustomers).mockReturnValue({ isLoading: true, isError: false, data: undefined } as any);
+    vi.mocked(useCustomers).mockReturnValue({ isLoading: true, isError: false, data: undefined } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("shows error state", () => {
-    vi.mocked(useCustomers).mockReturnValue({ isLoading: false, isError: true, data: undefined } as any);
+    vi.mocked(useCustomers).mockReturnValue({ isLoading: false, isError: true, data: undefined } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     expect(screen.getByText(/Failed to load customers/i)).toBeInTheDocument();
   });
@@ -300,14 +300,14 @@ describe("CustomersPage", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Bob Smith")).toBeInTheDocument();
     expect(screen.getByText("bob@example.com")).toBeInTheDocument();
   });
 
   it("renders heading", () => {
-    vi.mocked(useCustomers).mockReturnValue({ isLoading: false, isError: false, data: undefined } as any);
+    vi.mocked(useCustomers).mockReturnValue({ isLoading: false, isError: false, data: undefined } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Customers")).toBeInTheDocument();
   });
@@ -317,7 +317,7 @@ describe("CustomersPage", () => {
       isLoading: false,
       isError: false,
       data: { items: [], totalCount: 7, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     expect(screen.getByText(/Total: 7/i)).toBeInTheDocument();
   });
@@ -341,7 +341,7 @@ describe("CustomersPage", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Inactive")).toBeInTheDocument();
   });
@@ -352,7 +352,7 @@ describe("CustomersPage", () => {
 describe("CustomersPage — deactivate dialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useDeactivateCustomer).mockReturnValue(mockMutation as any);
+    vi.mocked(useDeactivateCustomer).mockReturnValue(mockMutation as unknown as ReturnType<typeof useDeactivateCustomer>);
   });
 
   it("shows Deactivate button for active customers", () => {
@@ -375,7 +375,7 @@ describe("CustomersPage — deactivate dialog", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     expect(screen.getByRole("button", { name: /deactivate/i })).toBeInTheDocument();
   });
@@ -400,7 +400,7 @@ describe("CustomersPage — deactivate dialog", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     act(() => { fireEvent.click(screen.getByRole("button", { name: /deactivate/i })); });
     expect(screen.getByText("Deactivate customer?")).toBeInTheDocument();
@@ -411,7 +411,7 @@ describe("CustomersPage — deactivate dialog", () => {
       isLoading: false,
       isError: false,
       data: { items: [], totalCount: 0, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     const prev = screen.getByRole("button", { name: /previous/i });
     expect(prev).toBeDisabled();
@@ -422,7 +422,7 @@ describe("CustomersPage — deactivate dialog", () => {
       isLoading: false,
       isError: false,
       data: { items: [], totalCount: 0, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     const next = screen.getByRole("button", { name: /^next$/i });
     expect(next).toBeDisabled();
@@ -448,7 +448,7 @@ describe("CustomersPage — deactivate dialog", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     expect(screen.queryByRole("button", { name: /deactivate/i })).not.toBeInTheDocument();
   });
@@ -473,9 +473,9 @@ describe("CustomersPage — deactivate dialog", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useCustomers>);
     const mutateAsync = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useDeactivateCustomer).mockReturnValue({ ...mockMutation, mutateAsync } as any);
+    vi.mocked(useDeactivateCustomer).mockReturnValue({ ...mockMutation, mutateAsync } as unknown as ReturnType<typeof useDeactivateCustomer>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     act(() => { fireEvent.click(screen.getByRole("button", { name: /deactivate/i })); });
     // Dialog is open, click the Deactivate action button
@@ -499,7 +499,7 @@ describe("CustomersPage — deactivate dialog", () => {
       isLoading: false,
       isError: false,
       data: { items, totalCount: 40, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     const next = screen.getByRole("button", { name: /^next$/i });
     expect(next).not.toBeDisabled();
@@ -513,17 +513,17 @@ describe("CustomersPage — deactivate dialog", () => {
 describe("RecurringPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useCancelRecurringSeries).mockReturnValue(mockMutation as any);
+    vi.mocked(useCancelRecurringSeries).mockReturnValue(mockMutation as unknown as ReturnType<typeof useCancelRecurringSeries>);
   });
 
   it("shows loading state", () => {
-    vi.mocked(useRecurringRules).mockReturnValue({ isLoading: true, isError: false, data: undefined } as any);
+    vi.mocked(useRecurringRules).mockReturnValue({ isLoading: true, isError: false, data: undefined } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("shows error state", () => {
-    vi.mocked(useRecurringRules).mockReturnValue({ isLoading: false, isError: true, data: undefined } as any);
+    vi.mocked(useRecurringRules).mockReturnValue({ isLoading: false, isError: true, data: undefined } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     expect(screen.getByText(/Failed to load recurring bookings/i)).toBeInTheDocument();
   });
@@ -546,14 +546,14 @@ describe("RecurringPage", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Haircut")).toBeInTheDocument();
     expect(screen.getByText("Carol")).toBeInTheDocument();
   });
 
   it("renders heading", () => {
-    vi.mocked(useRecurringRules).mockReturnValue({ isLoading: false, isError: false, data: undefined } as any);
+    vi.mocked(useRecurringRules).mockReturnValue({ isLoading: false, isError: false, data: undefined } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Recurring Bookings")).toBeInTheDocument();
   });
@@ -563,7 +563,7 @@ describe("RecurringPage", () => {
       isLoading: false,
       isError: false,
       data: { items: [], totalCount: 5, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Total: 5")).toBeInTheDocument();
   });
@@ -586,7 +586,7 @@ describe("RecurringPage", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     expect(screen.getByRole("button", { name: /cancel series/i })).toBeInTheDocument();
   });
@@ -609,7 +609,7 @@ describe("RecurringPage", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     expect(screen.queryByRole("button", { name: /cancel series/i })).not.toBeInTheDocument();
   });
@@ -632,7 +632,7 @@ describe("RecurringPage", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     act(() => { fireEvent.click(screen.getByRole("button", { name: /cancel series/i })); });
     expect(screen.getByText("Cancel recurring series?")).toBeInTheDocument();
@@ -643,7 +643,7 @@ describe("RecurringPage", () => {
       isLoading: false,
       isError: false,
       data: { items: [], totalCount: 0, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     expect(screen.getByRole("button", { name: /previous/i })).toBeDisabled();
   });
@@ -666,7 +666,7 @@ describe("RecurringPage", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     expect(screen.getByText("—")).toBeInTheDocument();
   });
@@ -689,9 +689,9 @@ describe("RecurringPage", () => {
         totalCount: 1,
         pageSize: 20,
       },
-    } as any);
+    } as unknown as ReturnType<typeof useRecurringRules>);
     const mutateAsync = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useCancelRecurringSeries).mockReturnValue({ ...mockMutation, mutateAsync } as any);
+    vi.mocked(useCancelRecurringSeries).mockReturnValue({ ...mockMutation, mutateAsync } as unknown as ReturnType<typeof useCancelRecurringSeries>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     // Open the dialog
     act(() => { fireEvent.click(screen.getByRole("button", { name: /cancel series/i })); });
@@ -715,7 +715,7 @@ describe("RecurringPage", () => {
       isLoading: false,
       isError: false,
       data: { items, totalCount: 40, pageSize: 20 },
-    } as any);
+    } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     const next = screen.getByRole("button", { name: /^next$/i });
     expect(next).not.toBeDisabled();
