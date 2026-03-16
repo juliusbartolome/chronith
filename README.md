@@ -2,6 +2,14 @@
 
 A multi-tenant booking engine built with .NET 10. Supports two booking models — fixed-duration time slots and whole-day calendar blocks — with a built-in payment and state machine workflow. Ships with an admin dashboard (React + Next.js), a public customer-facing booking flow, a C# SDK, and a documentation site.
 
+## Deployed
+
+| Environment        | URL                                                 |
+| ------------------ | --------------------------------------------------- |
+| Production (Azure) | https://chronith-api.azurewebsites.net              |
+| OpenAPI spec       | https://chronith-api.azurewebsites.net/openapi.json |
+| Health             | https://chronith-api.azurewebsites.net/health/ready |
+
 ## Table of Contents
 
 - [Features](#features)

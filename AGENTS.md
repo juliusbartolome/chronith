@@ -441,6 +441,21 @@ act pull_request --workflows .github/workflows/ci.yml
 
 # Check PR review comments
 gh api repos/{owner}/{repo}/pulls/{number}/comments
+
+# Deploy to Azure App Service (F1 free tier, southeastasia)
+# https://chronith-api.azurewebsites.net
+dotnet publish src/Chronith.API/Chronith.API.csproj -c Release -o ./azure-publish
+cd azure-publish && zip -r ../chronith-deploy.zip . && cd ..
+az webapp deploy --name chronith-api --resource-group rg-chronith --src-path chronith-deploy.zip --type zip
+
+# Tail live logs
+az webapp log tail --name chronith-api --resource-group rg-chronith
+
+# Update a secret / app setting
+az webapp config appsettings set --name chronith-api --resource-group rg-chronith --settings Key="Value"
+
+# Restart the app
+az webapp restart --name chronith-api --resource-group rg-chronith
 ```
 
 ---
