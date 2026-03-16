@@ -305,10 +305,10 @@ jobs:
             VALUES ('00000000-0000-0000-0000-000000000001','Test Tenant','test-tenant','UTC',false,NOW())
             ON CONFLICT ("Id") DO NOTHING;
 
-            INSERT INTO booking_types ("Id", "TenantId", "Name", "Slug", "DurationMinutes", "Capacity", "Kind", "PaymentMode", "IsDeleted")
+            INSERT INTO booking_types ("Id", "TenantId", "Name", "Slug", "DurationMinutes", "Capacity", "Kind", "PaymentMode", "PriceInCentavos", "IsDeleted")
             VALUES
-              ('00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000001','Test Type','test-type',60,100,'Fixed','Manual',false),
-              ('00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000001','Capacity One Type','capacity-one-type',60,1,'Fixed','Manual',false)
+              ('00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000001','Test Type','test-type',60,100,'TimeSlot','Manual',10000,false),
+              ('00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000001','Capacity One Type','capacity-one-type',60,1,'TimeSlot','Manual',0,false)
             ON CONFLICT ("Id") DO NOTHING;
 
             INSERT INTO availability_windows ("Id", "BookingTypeId", "DayOfWeek", "StartTime", "EndTime")
@@ -350,8 +350,8 @@ jobs:
           docker exec -i chronith-postgres-1 psql -U chronith -d chronith <<'SQL'
             SET search_path = chronith;
             DELETE FROM bookings
-            WHERE "StartTime" >= '2026-06-01T00:00:00+00:00'
-              AND "StartTime" <  '2026-07-01T00:00:00+00:00';
+            WHERE "Start" >= '2026-06-01T00:00:00+00:00'
+              AND "Start" <  '2026-07-01T00:00:00+00:00';
           SQL
 
       - name: Run booking-lifecycle.js
@@ -369,7 +369,7 @@ jobs:
           docker exec -i chronith-postgres-1 psql -U chronith -d chronith <<'SQL'
             SET search_path = chronith;
             DELETE FROM bookings
-            WHERE "StartTime" = '2026-05-04T10:00:00+00:00';
+            WHERE "Start" = '2026-05-04T10:00:00+00:00';
           SQL
 
       - name: Run concurrent-booking.js
