@@ -12,6 +12,8 @@ on:
       - ".github/workflows/docs-ci.yml"
       - ".github/workflows/sdk-ci.yml"
       - ".github/workflows/auto-approve.yml"
+      - "packages/sdk-csharp/**"
+      - ".github/workflows/sdk-csharp-ci.yml"
   pull_request:
     branches: [main]
     paths-ignore:
@@ -23,6 +25,8 @@ on:
       - ".github/workflows/docs-ci.yml"
       - ".github/workflows/sdk-ci.yml"
       - ".github/workflows/auto-approve.yml"
+      - "packages/sdk-csharp/**"
+      - ".github/workflows/sdk-csharp-ci.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
