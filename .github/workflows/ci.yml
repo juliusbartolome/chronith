@@ -78,12 +78,14 @@ jobs:
               - 'dashboard/**'
               - 'Dockerfile'
               - 'docker-compose*.yml'
+              - 'docker/**'
               - '.github/workflows/ci.yml'
             load:
               - 'src/**'
               - 'tests/Chronith.Tests.Load/**'
               - 'Dockerfile'
               - 'docker-compose*.yml'
+              - 'docker/**'
               - '.github/workflows/ci.yml'
             benchmarks:
               - 'src/**'
@@ -99,8 +101,6 @@ jobs:
               - '.github/workflows/ci.yml'
             javascript:
               - 'dashboard/**'
-              - 'packages/**'
-              - 'docs/site/**'
               - '.github/workflows/ci.yml'
 
   dotnet-test:
