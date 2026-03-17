@@ -44,6 +44,42 @@ public interface IBookingRepository
 
     Task UpdateAsync(Booking booking, CancellationToken ct = default);
 
+    /// <summary>
+    /// Looks up a booking by its payment reference (provider transaction ID).
+    /// When tenantId is Guid.Empty, searches across all tenants (for webhook processing).
+    /// </summary>
+    Task<Booking?> GetByPaymentReferenceAsync(Guid tenantId, string paymentReference, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns all bookings for a specific customer (identified by CustomerId string field) within a tenant.
+    /// </summary>
+    Task<IReadOnlyList<Booking>> GetByCustomerIdAsync(
+        Guid tenantId, string customerId, CancellationToken ct = default);
+
     Task<BookingMetrics> GetMetricsAsync(
         Guid tenantId, DateTimeOffset monthStartUtc, CancellationToken ct = default);
+
+    /// <summary>
+    /// Lightweight projection for iCal feed — returns only Id, Start, End for confirmed bookings.
+    /// </summary>
+    Task<IReadOnlyList<(Guid Id, DateTimeOffset Start, DateTimeOffset End)>> GetICalEntriesAsync(
+        Guid bookingTypeId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Flat projection with booking type name and staff name joined — for export only.
+    /// Capped at 10,000 rows. Optional filters narrow the result set.
+    /// </summary>
+    Task<IReadOnlyList<BookingExportRowDto>> ListForExportAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        string? status = null,
+        string? bookingTypeSlug = null,
+        Guid? staffMemberId = null,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// COUNT of non-cancelled bookings since a given UTC timestamp. Used by plan enforcement.
+    /// </summary>
+    Task<int> CountByTenantSinceAsync(Guid tenantId, DateTimeOffset since, CancellationToken ct = default);
 }

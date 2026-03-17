@@ -13,7 +13,11 @@ public sealed class Booking
     public string CustomerId { get; private set; } = string.Empty;
     public string CustomerEmail { get; private set; } = string.Empty;
     public string? PaymentReference { get; private set; }
+    public long AmountInCentavos { get; private set; }
+    public string Currency { get; private set; } = "PHP";
     public string? CheckoutUrl { get; private set; }
+    public Guid? StaffMemberId { get; private set; }
+    public string? CustomFields { get; private set; }
     public bool IsDeleted { get; private set; }
     public uint RowVersion { get; private set; }
 
@@ -30,8 +34,12 @@ public sealed class Booking
         DateTimeOffset end,
         string customerId,
         string customerEmail,
-        string? paymentReference = null)
+        long amountInCentavos,
+        string currency,
+        string? paymentReference = null,
+        string? customFields = null)
     {
+        var isFree = amountInCentavos == 0;
         return new Booking
         {
             Id = Guid.NewGuid(),
@@ -39,11 +47,20 @@ public sealed class Booking
             BookingTypeId = bookingTypeId,
             Start = start,
             End = end,
-            Status = BookingStatus.PendingPayment,
+            Status = isFree ? BookingStatus.PendingVerification : BookingStatus.PendingPayment,
             CustomerId = customerId,
             CustomerEmail = customerEmail,
-            PaymentReference = paymentReference
+            AmountInCentavos = amountInCentavos,
+            Currency = currency,
+            PaymentReference = paymentReference,
+            CustomFields = customFields
         };
+    }
+
+    public void SetCheckoutDetails(string checkoutUrl, string providerTransactionId)
+    {
+        CheckoutUrl = checkoutUrl;
+        PaymentReference = providerTransactionId;
     }
 
     public void Pay(string changedById, string changedByRole)
@@ -65,6 +82,28 @@ public sealed class Booking
         if (Status == BookingStatus.Cancelled)
             throw new InvalidStateTransitionException(Status, "cancel");
         Transition(BookingStatus.Cancelled, changedById, changedByRole);
+    }
+
+    public void AssignStaff(Guid staffMemberId, string changedById, string changedByRole)
+    {
+        if (Status == BookingStatus.Cancelled)
+            throw new InvalidStateTransitionException(Status, "assign staff");
+        StaffMemberId = staffMemberId;
+    }
+
+    public void UnassignStaff(string changedById, string changedByRole)
+    {
+        StaffMemberId = null;
+    }
+
+    public void Reschedule(DateTimeOffset newStart, DateTimeOffset newEnd, string changedById, string changedByRole)
+    {
+        if (Status == BookingStatus.Cancelled)
+            throw new InvalidStateTransitionException(Status, "reschedule");
+        Start = newStart;
+        End = newEnd;
+        // Record as a status change for audit trail (same status, captures the reschedule event)
+        _statusChanges.Add(new BookingStatusChange(Id, Status, Status, changedById, changedByRole));
     }
 
     public void SoftDelete() => IsDeleted = true;

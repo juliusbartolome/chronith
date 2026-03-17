@@ -6,7 +6,13 @@ namespace Chronith.Application.Commands.BookingTypes;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record DeleteBookingTypeCommand(string Slug) : IRequest;
+public sealed record DeleteBookingTypeCommand(string Slug) : IRequest, IAuditable
+{
+    // Slug-based delete — no Guid available pre-execution
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "BookingType";
+    public string Action => "Delete";
+}
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 

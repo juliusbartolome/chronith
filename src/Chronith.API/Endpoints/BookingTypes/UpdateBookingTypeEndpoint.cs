@@ -15,6 +15,9 @@ public sealed class UpdateBookingTypeRequest
     public int Capacity { get; set; } = 1;
     public Chronith.Domain.Enums.PaymentMode PaymentMode { get; set; }
     public string? PaymentProvider { get; set; }
+    public long PriceInCentavos { get; set; }
+    public string Currency { get; set; } = "PHP";
+    public bool RequiresStaffAssignment { get; set; }
     public int DurationMinutes { get; set; }
     public int BufferBeforeMinutes { get; set; }
     public int BufferAfterMinutes { get; set; }
@@ -30,7 +33,7 @@ public sealed class UpdateBookingTypeEndpoint(ISender sender)
     {
         Put("/booking-types/{slug}");
         Roles("TenantAdmin");
-        Options(x => x.WithTags("BookingTypes"));
+        Options(x => x.WithTags("BookingTypes").RequireRateLimiting("Authenticated"));
     }
 
     public override async Task HandleAsync(UpdateBookingTypeRequest req, CancellationToken ct)
@@ -42,6 +45,9 @@ public sealed class UpdateBookingTypeEndpoint(ISender sender)
             Capacity = req.Capacity,
             PaymentMode = req.PaymentMode,
             PaymentProvider = req.PaymentProvider,
+            PriceInCentavos = req.PriceInCentavos,
+            Currency = req.Currency,
+            RequiresStaffAssignment = req.RequiresStaffAssignment,
             DurationMinutes = req.DurationMinutes,
             BufferBeforeMinutes = req.BufferBeforeMinutes,
             BufferAfterMinutes = req.BufferAfterMinutes,

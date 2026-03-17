@@ -10,10 +10,20 @@ namespace Chronith.Application.Interfaces;
 public interface IBookingTypeRepository
 {
     Task<BookingType?> GetBySlugAsync(Guid tenantId, string slug, CancellationToken ct = default);
+
+    /// <summary>Cross-tenant lookup by slug for public/anonymous endpoints (e.g. iCal feed).</summary>
+    Task<BookingType?> GetBySlugAsync(string slug, CancellationToken ct = default);
+
     Task<BookingType?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default);
 
     /// <summary>Cross-tenant lookup for dispatcher use only. Does not apply tenant filter.</summary>
     Task<BookingType?> GetByIdAsync(Guid bookingTypeId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Cross-tenant lookup — bypasses tenant query filter.
+    /// Used by background services. Returns null if not found or soft-deleted.
+    /// </summary>
+    Task<BookingType?> GetByIdAcrossTenantsAsync(Guid bookingTypeId, CancellationToken ct = default);
 
     Task<IReadOnlyList<BookingType>> ListAsync(Guid tenantId, CancellationToken ct = default);
     Task AddAsync(BookingType bookingType, CancellationToken ct = default);
@@ -21,4 +31,7 @@ public interface IBookingTypeRepository
     Task<bool> SlugExistsAsync(Guid tenantId, string slug, CancellationToken ct = default);
 
     Task<BookingTypeMetrics> GetTypeMetricsAsync(Guid tenantId, CancellationToken ct = default);
+
+    /// <summary>COUNT of non-deleted booking types for a tenant. Used by plan enforcement.</summary>
+    Task<int> CountByTenantAsync(Guid tenantId, CancellationToken ct = default);
 }

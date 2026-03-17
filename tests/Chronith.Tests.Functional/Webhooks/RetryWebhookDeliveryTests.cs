@@ -23,13 +23,13 @@ public sealed class RetryWebhookDeliveryTests(FunctionalTestFixture fixture)
 
         var client = fixture.CreateClient("TenantAdmin");
         var response = await client.PostAsync(
-            $"/webhooks/{webhookId}/deliveries/{deliveryId}/retry", null);
+            $"/v1/webhooks/{webhookId}/deliveries/{deliveryId}/retry", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Verify it was reset to Pending
-        var getResponse = await client.GetAsync($"/webhooks/{webhookId}/deliveries");
-        var body = await getResponse.Content.ReadFromJsonAsync<PagedResultDto<WebhookDeliveryDto>>();
+        var getResponse = await client.GetAsync($"/v1/webhooks/{webhookId}/deliveries");
+        var body = await getResponse.ReadFromApiJsonAsync<PagedResultDto<WebhookDeliveryDto>>();
         body!.Items.First(e => e.Id == deliveryId).Status.Should().Be(OutboxStatus.Pending);
     }
 
@@ -45,7 +45,7 @@ public sealed class RetryWebhookDeliveryTests(FunctionalTestFixture fixture)
 
         var client = fixture.CreateClient("TenantAdmin");
         var response = await client.PostAsync(
-            $"/webhooks/{webhookId}/deliveries/{deliveryId}/retry", null);
+            $"/v1/webhooks/{webhookId}/deliveries/{deliveryId}/retry", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
@@ -61,7 +61,7 @@ public sealed class RetryWebhookDeliveryTests(FunctionalTestFixture fixture)
 
         var client = fixture.CreateClient("TenantStaff");
         var response = await client.PostAsync(
-            $"/webhooks/{webhookId}/deliveries/{deliveryId}/retry", null);
+            $"/v1/webhooks/{webhookId}/deliveries/{deliveryId}/retry", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -76,7 +76,7 @@ public sealed class RetryWebhookDeliveryTests(FunctionalTestFixture fixture)
 
         var client = fixture.CreateClient("TenantAdmin");
         var response = await client.PostAsync(
-            $"/webhooks/{webhookId}/deliveries/{Guid.NewGuid()}/retry", null);
+            $"/v1/webhooks/{webhookId}/deliveries/{Guid.NewGuid()}/retry", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

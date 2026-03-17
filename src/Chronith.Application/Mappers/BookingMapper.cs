@@ -15,7 +15,10 @@ public static class BookingMapper
             CustomerId: booking.CustomerId,
             CustomerEmail: booking.CustomerEmail,
             PaymentReference: booking.PaymentReference,
+            AmountInCentavos: booking.AmountInCentavos,
+            Currency: booking.Currency,
             CheckoutUrl: booking.CheckoutUrl,
+            StaffMemberId: booking.StaffMemberId,
             StatusChanges: booking.StatusChanges
                 .Select(sc => new BookingStatusChangeDto(
                     sc.Id,

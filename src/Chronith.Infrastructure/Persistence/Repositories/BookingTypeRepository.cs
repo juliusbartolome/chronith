@@ -17,9 +17,11 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
     public async Task<BookingType?> GetBySlugAsync(Guid tenantId, string slug, CancellationToken ct = default)
     {
         var entity = await _db.BookingTypes
+            .TagWith("GetBySlugAsync(tenantId, slug) — BookingTypeRepository")
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(bt => bt.AvailabilityWindows)
-            .FirstOrDefaultAsync(bt => bt.TenantId == tenantId && bt.Slug == slug, ct);
+            .FirstOrDefaultAsync(bt => bt.TenantId == tenantId && !bt.IsDeleted && bt.Slug == slug, ct);
 
         return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
     }
@@ -27,6 +29,7 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
     public async Task<BookingType?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default)
     {
         var entity = await _db.BookingTypes
+            .TagWith("GetByIdAsync(tenantId, id) — BookingTypeRepository")
             .AsNoTracking()
             .Include(bt => bt.AvailabilityWindows)
             .FirstOrDefaultAsync(bt => bt.TenantId == tenantId && bt.Id == id, ct);
@@ -38,6 +41,7 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
     public async Task<BookingType?> GetByIdAsync(Guid bookingTypeId, CancellationToken ct = default)
     {
         var entity = await _db.BookingTypes
+            .TagWith("GetByIdAsync(bookingTypeId) — BookingTypeRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Include(bt => bt.AvailabilityWindows)
@@ -46,12 +50,40 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
         return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
     }
 
+    /// <inheritdoc cref="IBookingTypeRepository.GetByIdAcrossTenantsAsync"/>
+    public async Task<BookingType?> GetByIdAcrossTenantsAsync(Guid bookingTypeId, CancellationToken ct = default)
+    {
+        var entity = await _db.BookingTypes
+            .TagWith("GetByIdAcrossTenantsAsync — BookingTypeRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Include(bt => bt.AvailabilityWindows)
+            .FirstOrDefaultAsync(bt => bt.Id == bookingTypeId && !bt.IsDeleted, ct);
+
+        return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
+    }
+
+    /// <inheritdoc cref="IBookingTypeRepository.GetBySlugAsync(string, CancellationToken)"/>
+    public async Task<BookingType?> GetBySlugAsync(string slug, CancellationToken ct = default)
+    {
+        var entity = await _db.BookingTypes
+            .TagWith("GetBySlugAsync(slug) — BookingTypeRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Include(bt => bt.AvailabilityWindows)
+            .FirstOrDefaultAsync(bt => bt.Slug == slug && !bt.IsDeleted, ct);
+
+        return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
+    }
+
     public async Task<IReadOnlyList<BookingType>> ListAsync(Guid tenantId, CancellationToken ct = default)
     {
         var entities = await _db.BookingTypes
+            .TagWith("ListAsync — BookingTypeRepository")
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(bt => bt.AvailabilityWindows)
-            .Where(bt => bt.TenantId == tenantId)
+            .Where(bt => bt.TenantId == tenantId && !bt.IsDeleted)
             .OrderBy(bt => bt.Name)
             .ToListAsync(ct);
 
@@ -66,12 +98,14 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
 
     public async Task<bool> SlugExistsAsync(Guid tenantId, string slug, CancellationToken ct = default)
         => await _db.BookingTypes
+            .TagWith("SlugExistsAsync — BookingTypeRepository")
             .AsNoTracking()
             .AnyAsync(bt => bt.TenantId == tenantId && bt.Slug == slug, ct);
 
     public async Task<BookingTypeMetrics> GetTypeMetricsAsync(Guid tenantId, CancellationToken ct = default)
     {
         var counts = await _db.BookingTypes
+            .TagWith("GetTypeMetricsAsync — BookingTypeRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(bt => bt.TenantId == tenantId)
@@ -117,4 +151,11 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
             await _db.AvailabilityWindows.AddRangeAsync(updated.AvailabilityWindows, ct);
         }
     }
+
+    public Task<int> CountByTenantAsync(Guid tenantId, CancellationToken ct = default) =>
+        _db.BookingTypes
+            .TagWith("CountByTenantAsync — BookingTypeRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .CountAsync(bt => bt.TenantId == tenantId && !bt.IsDeleted, ct);
 }

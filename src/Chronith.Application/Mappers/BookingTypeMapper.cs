@@ -23,6 +23,8 @@ public static class BookingTypeMapper
             Capacity: ts.Capacity,
             PaymentMode: ts.PaymentMode,
             PaymentProvider: ts.PaymentProvider,
+            PriceInCentavos: ts.PriceInCentavos,
+            Currency: ts.Currency,
             DurationMinutes: ts.DurationMinutes,
             BufferBeforeMinutes: ts.BufferBeforeMinutes,
             BufferAfterMinutes: ts.BufferAfterMinutes,
@@ -30,6 +32,9 @@ public static class BookingTypeMapper
                 .Select(w => new TimeSlotWindowDto(w.DayOfWeek, w.StartTime, w.EndTime))
                 .ToList(),
             AvailableDays: null,
+            RequiresStaffAssignment: ts.RequiresStaffAssignment,
+            CustomFieldSchema: ts.CustomFieldSchema,
+            ReminderIntervals: ts.ReminderIntervals,
             CustomerCallbackUrl: ts.CustomerCallbackUrl
         );
 
@@ -42,11 +47,16 @@ public static class BookingTypeMapper
             Capacity: cal.Capacity,
             PaymentMode: cal.PaymentMode,
             PaymentProvider: cal.PaymentProvider,
+            PriceInCentavos: cal.PriceInCentavos,
+            Currency: cal.Currency,
             DurationMinutes: null,
             BufferBeforeMinutes: null,
             BufferAfterMinutes: null,
             AvailabilityWindows: null,
             AvailableDays: cal.AvailableDays.ToList(),
+            RequiresStaffAssignment: cal.RequiresStaffAssignment,
+            CustomFieldSchema: cal.CustomFieldSchema,
+            ReminderIntervals: cal.ReminderIntervals,
             CustomerCallbackUrl: cal.CustomerCallbackUrl
         );
 }

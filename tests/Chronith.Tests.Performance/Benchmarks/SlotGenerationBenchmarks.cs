@@ -28,7 +28,7 @@ public class SlotGenerationBenchmarks
     private DateTimeOffset _monthFrom;
     private DateTimeOffset _monthTo;
 
-    private IReadOnlyList<(DateTimeOffset Start, DateTimeOffset End)> _noBookings = [];
+    private readonly IReadOnlyList<(DateTimeOffset Start, DateTimeOffset End)> _noBookings = [];
     private IReadOnlyList<(DateTimeOffset Start, DateTimeOffset End)> _500Bookings = null!;
 
     [GlobalSetup]
@@ -52,7 +52,9 @@ public class SlotGenerationBenchmarks
             durationMinutes: 30,
             bufferBeforeMinutes: 0,
             bufferAfterMinutes: 0,
-            availabilityWindows: windows);
+            availabilityWindows: windows,
+            priceInCentavos: 0,
+            currency: "PHP");
 
         _calendarBt = CalendarBookingType.Create(
             tenantId: Guid.NewGuid(),
@@ -62,7 +64,9 @@ public class SlotGenerationBenchmarks
             paymentMode: PaymentMode.Manual,
             paymentProvider: null,
             availableDays: [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
-                            DayOfWeek.Thursday, DayOfWeek.Friday]);
+                            DayOfWeek.Thursday, DayOfWeek.Friday],
+            priceInCentavos: 0,
+            currency: "PHP");
 
         // Anchor to a fixed Monday UTC to keep benchmarks deterministic
         var monday = new DateTimeOffset(2026, 3, 2, 0, 0, 0, TimeSpan.Zero); // Mon 2026-03-02

@@ -11,6 +11,11 @@ public abstract class BookingType
     public int Capacity { get; protected set; }
     public PaymentMode PaymentMode { get; protected set; }
     public string? PaymentProvider { get; protected set; }
+    public long PriceInCentavos { get; protected set; }
+    public string Currency { get; protected set; } = "PHP";
+    public bool RequiresStaffAssignment { get; protected set; }
+    public string? CustomFieldSchema { get; protected set; }
+    public string? ReminderIntervals { get; protected set; } // JSONB array e.g. [1440, 60]
     public bool IsDeleted { get; protected set; }
 
     /// <summary>HTTPS URL to POST customer-facing booking events to. Null means disabled.</summary>
@@ -61,12 +66,20 @@ public abstract class BookingType
         int bufferBeforeMinutes,
         int bufferAfterMinutes,
         IReadOnlyList<TimeSlotWindow>? availabilityWindows,
-        IReadOnlyList<DayOfWeek>? availableDays)
+        IReadOnlyList<DayOfWeek>? availableDays,
+        long priceInCentavos,
+        string currency,
+        bool requiresStaffAssignment = false,
+        string? customFieldSchema = null)
     {
         Name = name;
         Capacity = capacity;
         PaymentMode = paymentMode;
         PaymentProvider = paymentProvider;
+        PriceInCentavos = priceInCentavos;
+        Currency = currency;
+        RequiresStaffAssignment = requiresStaffAssignment;
+        CustomFieldSchema = customFieldSchema;
     }
 
     public void SoftDelete() => IsDeleted = true;

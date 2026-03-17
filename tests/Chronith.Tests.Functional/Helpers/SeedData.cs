@@ -48,7 +48,11 @@ public static class SeedData
         ChronithDbContext db,
         string slug = "test-type",
         int capacity = 5,
-        int durationMinutes = 60)
+        int durationMinutes = 60,
+        long priceInCentavos = 10_000,
+        string currency = "PHP",
+        PaymentMode paymentMode = PaymentMode.Manual,
+        string? paymentProvider = null)
     {
         // Idempotent — return existing id if slug already seeded
         var existing = db.BookingTypes.IgnoreQueryFilters()
@@ -64,11 +68,14 @@ public static class SeedData
             Name = "Test Type",
             Kind = BookingKind.TimeSlot,
             Capacity = capacity,
-            PaymentMode = PaymentMode.Manual,
+            PaymentMode = paymentMode,
+            PaymentProvider = paymentProvider,
             IsDeleted = false,
             DurationMinutes = durationMinutes,
             BufferBeforeMinutes = 0,
-            BufferAfterMinutes = 0
+            BufferAfterMinutes = 0,
+            PriceInCentavos = priceInCentavos,
+            Currency = currency
         });
 
         // Seed availability windows for all 7 days of the week (08:00–18:00)
@@ -95,7 +102,9 @@ public static class SeedData
         DateTimeOffset start,
         DateTimeOffset end,
         BookingStatus status = BookingStatus.PendingPayment,
-        string customerId = "cust-seed-1")
+        string customerId = "cust-seed-1",
+        long amountInCentavos = 0,
+        Guid? staffMemberId = null)
     {
         var id = Guid.NewGuid();
         db.Bookings.Add(new BookingEntity
@@ -108,7 +117,29 @@ public static class SeedData
             Status = status,
             CustomerId = customerId,
             CustomerEmail = $"{customerId}@example.com",
+            AmountInCentavos = amountInCentavos,
+            StaffMemberId = staffMemberId,
             IsDeleted = false
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    public static async Task<Guid> SeedStaffMemberAsync(
+        ChronithDbContext db,
+        string name = "Test Staff",
+        string email = "staff@example.com")
+    {
+        var id = Guid.NewGuid();
+        db.StaffMembers.Add(new StaffMemberEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            Name = name,
+            Email = email,
+            IsActive = true,
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow
         });
         await db.SaveChangesAsync();
         return id;
@@ -177,6 +208,170 @@ public static class SeedData
             Status = OutboxStatus.Failed,
             AttemptCount = 6,
             CreatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    public static async Task<Guid> SeedWaitlistEntryAsync(
+        ChronithDbContext db,
+        Guid bookingTypeId,
+        DateTimeOffset desiredStart,
+        DateTimeOffset desiredEnd,
+        WaitlistStatus status = WaitlistStatus.Waiting,
+        string customerId = "cust-waitlist-1",
+        DateTimeOffset? offeredAt = null,
+        DateTimeOffset? expiresAt = null)
+    {
+        var id = Guid.NewGuid();
+        db.WaitlistEntries.Add(new WaitlistEntryEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            BookingTypeId = bookingTypeId,
+            CustomerId = customerId,
+            CustomerEmail = $"{customerId}@example.com",
+            DesiredStart = desiredStart,
+            DesiredEnd = desiredEnd,
+            Status = status,
+            OfferedAt = offeredAt,
+            ExpiresAt = expiresAt,
+            CreatedAt = DateTimeOffset.UtcNow,
+            IsDeleted = false
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    public static async Task<Guid> SeedCustomerAsync(
+        ChronithDbContext db,
+        Guid? id = null,
+        string email = "seeded-customer@example.com",
+        string name = "Seeded Customer",
+        string passwordHash = "$2a$11$dummyhashforseeding00000000000000000000000000000",
+        Guid? tenantId = null)
+    {
+        var customerId = id ?? Guid.NewGuid();
+        db.Customers.Add(new CustomerEntity
+        {
+            Id = customerId,
+            TenantId = tenantId ?? TestConstants.TenantId,
+            Email = email,
+            Name = name,
+            PasswordHash = passwordHash,
+            AuthProvider = "BuiltIn",
+            IsEmailVerified = false,
+            IsActive = true,
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            LastLoginAt = null
+        });
+        await db.SaveChangesAsync();
+        return customerId;
+    }
+
+    public static async Task<Guid> SeedTenantAuthConfigAsync(
+        ChronithDbContext db,
+        bool allowBuiltIn = true,
+        bool magicLink = false,
+        string? oidcIssuer = null,
+        string? oidcClientId = null,
+        string? oidcAudience = null,
+        Guid? tenantId = null)
+    {
+        var tid = tenantId ?? TestConstants.TenantId;
+
+        // Idempotent — return existing id if already seeded for this tenant
+        var existing = db.TenantAuthConfigs.IgnoreQueryFilters()
+            .FirstOrDefault(c => c.TenantId == tid);
+        if (existing is not null) return existing.Id;
+
+        var id = Guid.NewGuid();
+        db.TenantAuthConfigs.Add(new TenantAuthConfigEntity
+        {
+            Id = id,
+            TenantId = tid,
+            AllowBuiltInAuth = allowBuiltIn,
+            OidcIssuer = oidcIssuer,
+            OidcClientId = oidcClientId,
+            OidcAudience = oidcAudience,
+            MagicLinkEnabled = magicLink,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    public static async Task<Guid> SeedRecurrenceRuleAsync(
+        ChronithDbContext db,
+        Guid bookingTypeId,
+        Guid? customerId = null,
+        Guid? staffMemberId = null,
+        string frequency = "Weekly",
+        int interval = 1,
+        int[]? daysOfWeek = null,
+        TimeOnly? startTime = null,
+        TimeSpan? duration = null,
+        DateOnly? seriesStart = null,
+        DateOnly? seriesEnd = null,
+        int? maxOccurrences = null)
+    {
+        var id = Guid.NewGuid();
+        db.RecurrenceRules.Add(new RecurrenceRuleEntity
+        {
+            Id = id,
+            TenantId = TestConstants.TenantId,
+            BookingTypeId = bookingTypeId,
+            CustomerId = customerId ?? Guid.NewGuid(),
+            StaffMemberId = staffMemberId,
+            Frequency = frequency,
+            Interval = interval,
+            DaysOfWeek = daysOfWeek,
+            StartTime = startTime ?? new TimeOnly(9, 0),
+            Duration = duration ?? TimeSpan.FromHours(1),
+            SeriesStart = seriesStart ?? DateOnly.FromDateTime(DateTime.UtcNow),
+            SeriesEnd = seriesEnd,
+            MaxOccurrences = maxOccurrences,
+            IsActive = true,
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    public static async Task<Guid> SeedNotificationTemplateAsync(
+        ChronithDbContext db,
+        string eventType = "booking.confirmed",
+        string channelType = "email",
+        string body = "Hello {{CustomerName}}, your booking is confirmed.",
+        string? subject = "Booking Confirmed",
+        bool isActive = true,
+        Guid? tenantId = null)
+    {
+        var tid = tenantId ?? TestConstants.TenantId;
+
+        // Idempotent — skip if (tenantId, eventType, channelType) already seeded
+        var existing = db.NotificationTemplates.IgnoreQueryFilters()
+            .FirstOrDefault(t => t.TenantId == tid
+                              && t.EventType == eventType
+                              && t.ChannelType == channelType);
+        if (existing is not null) return existing.Id;
+
+        var id = Guid.NewGuid();
+        db.NotificationTemplates.Add(new Chronith.Infrastructure.Persistence.Entities.NotificationTemplateEntity
+        {
+            Id = id,
+            TenantId = tid,
+            EventType = eventType,
+            ChannelType = channelType,
+            Subject = subject,
+            Body = body,
+            IsActive = isActive,
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         });
         await db.SaveChangesAsync();
         return id;

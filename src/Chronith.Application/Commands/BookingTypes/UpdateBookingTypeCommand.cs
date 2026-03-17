@@ -10,13 +10,16 @@ namespace Chronith.Application.Commands.BookingTypes;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record UpdateBookingTypeCommand : IRequest<BookingTypeDto>
+public sealed record UpdateBookingTypeCommand : IRequest<BookingTypeDto>, IAuditable
 {
     public required string Slug { get; init; }
     public required string Name { get; init; }
     public int Capacity { get; init; } = 1;
     public required Domain.Enums.PaymentMode PaymentMode { get; init; }
     public string? PaymentProvider { get; init; }
+    public long PriceInCentavos { get; init; }
+    public string Currency { get; init; } = "PHP";
+    public bool RequiresStaffAssignment { get; init; }
 
     // TimeSlot fields (ignored for Calendar)
     public int DurationMinutes { get; init; }
@@ -29,6 +32,11 @@ public sealed record UpdateBookingTypeCommand : IRequest<BookingTypeDto>
 
     /// <summary>Nullable HTTPS URL. Null removes the existing callback.</summary>
     public string? CustomerCallbackUrl { get; init; }
+
+    // IAuditable — EntityId resolved by slug; Guid.Empty since only slug is known pre-execution
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "BookingType";
+    public string Action => "Update";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -40,6 +48,8 @@ public sealed class UpdateBookingTypeValidator : AbstractValidator<UpdateBooking
         RuleFor(x => x.Slug).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Capacity).GreaterThan(0);
+        RuleFor(x => x.PriceInCentavos).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.Currency).NotEmpty().MaximumLength(3);
         When(x => x.CustomerCallbackUrl is not null, () =>
         {
             RuleFor(x => x.CustomerCallbackUrl!)
@@ -74,7 +84,10 @@ public sealed class UpdateBookingTypeHandler(
             (cmd.AvailabilityWindows ?? [])
                 .Select(w => new TimeSlotWindow(w.DayOfWeek, w.StartTime, w.EndTime))
                 .ToList(),
-            cmd.AvailableDays);
+            cmd.AvailableDays,
+            cmd.PriceInCentavos,
+            cmd.Currency,
+            cmd.RequiresStaffAssignment);
 
         // Update customer callback — always called (null clears the URL)
         bt.SetCustomerCallback(cmd.CustomerCallbackUrl);

@@ -1,24 +1,32 @@
+using Chronith.Application.Behaviors;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
-using Chronith.Application.Options;
+using Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using FluentValidation;
 using MediatR;
-using Microsoft.Extensions.Options;
 
 namespace Chronith.Application.Commands.Bookings;
 
 // ── Command ──────────────────────────────────────────────────────────────────
 
-public sealed record CreateBookingCommand : IRequest<BookingDto>
+public sealed record CreateBookingCommand : IRequest<BookingDto>, IAuditable, IPlanEnforcedCommand
 {
     public required string BookingTypeSlug { get; init; }
     public required DateTimeOffset StartTime { get; init; }
     public required string CustomerEmail { get; init; }
     public string? CustomerId { get; init; }
+
+    // IAuditable — EntityId is Guid.Empty pre-creation; AuditBehavior captures newValues post-handler
+    public Guid EntityId => Guid.Empty;
+    public string EntityType => "Booking";
+    public string Action => "Create";
+
+    // IPlanEnforcedCommand
+    public string EnforcedResourceType => "Booking";
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -27,9 +35,9 @@ public sealed class CreateBookingValidator : AbstractValidator<CreateBookingComm
 {
     public CreateBookingValidator()
     {
-        RuleFor(x => x.BookingTypeSlug).NotEmpty();
+        RuleFor(x => x.BookingTypeSlug).NotEmpty().MaximumLength(100);
         RuleFor(x => x.StartTime).NotEmpty();
-        RuleFor(x => x.CustomerEmail).NotEmpty().EmailAddress();
+        RuleFor(x => x.CustomerEmail).NotEmpty().EmailAddress().MaximumLength(320);
     }
 }
 
@@ -43,7 +51,7 @@ public sealed class CreateBookingHandler(
     IUnitOfWork unitOfWork,
     IPublisher publisher,
     IPaymentProviderFactory paymentProviderFactory,
-    IOptions<PaymentsOptions> paymentsOptions)
+    IBookingMetrics metrics)
     : IRequestHandler<CreateBookingCommand, BookingDto>
 {
     private static readonly BookingStatus[] ConflictStatuses =
@@ -55,6 +63,8 @@ public sealed class CreateBookingHandler(
 
     public async Task<BookingDto> Handle(CreateBookingCommand cmd, CancellationToken ct)
     {
+        using var activity = ChronithActivitySource.StartBookingStateTransition("Create", tenantContext.TenantId, Guid.Empty);
+
         var bookingType = await bookingTypeRepo.GetBySlugAsync(tenantContext.TenantId, cmd.BookingTypeSlug, ct)
             ?? throw new NotFoundException("BookingType", cmd.BookingTypeSlug);
 
@@ -89,19 +99,37 @@ public sealed class CreateBookingHandler(
             start,
             end,
             customerId,
-            cmd.CustomerEmail);
+            cmd.CustomerEmail,
+            amountInCentavos: bookingType.PriceInCentavos,
+            currency: bookingType.Currency);
 
         await bookingRepo.AddAsync(booking, ct);
         await tx.CommitAsync(ct);
 
-        // For Automatic payment mode, call the payment provider after saving
-        if (bookingType.PaymentMode == PaymentMode.Automatic)
+        activity?.SetTag("booking.id", booking.Id.ToString());
+
+        metrics.RecordBookingCreated(
+            tenantContext.TenantId.ToString(),
+            bookingType is TimeSlotBookingType ? "TimeSlot" : "Calendar");
+
+        // For Automatic payment mode with a non-free booking, create a checkout session
+        if (bookingType.PaymentMode == PaymentMode.Automatic && bookingType.PriceInCentavos > 0)
         {
             var providerName = bookingType.PaymentProvider ?? "Stub";
+            using var payActivity = ChronithActivitySource.StartPaymentProcess(tenantContext.TenantId, providerName);
             var provider = paymentProviderFactory.GetProvider(providerName);
-            var result = await provider.CreatePaymentIntentAsync(booking, paymentsOptions.Value.Currency, ct);
-            booking.SetPaymentReference(result.ExternalId);
-            booking.SetCheckoutUrl(result.CheckoutUrl);
+            var checkoutResult = await provider.CreateCheckoutSessionAsync(
+                new CreateCheckoutRequest(
+                    AmountInCentavos: bookingType.PriceInCentavos,
+                    Currency: bookingType.Currency,
+                    Description: $"{bookingType.Name} booking",
+                    BookingId: booking.Id,
+                    TenantId: tenantContext.TenantId),
+                ct);
+
+            booking.SetCheckoutDetails(checkoutResult.CheckoutUrl, checkoutResult.ProviderTransactionId);
+
+            metrics.RecordPaymentProcessed(tenantContext.TenantId.ToString(), providerName);
 
             // Persist the updated PaymentReference and CheckoutUrl. The booking was
             // committed inside the advisory-lock transaction above, so the tracked entity
@@ -118,7 +146,7 @@ public sealed class CreateBookingHandler(
                 BookingTypeId: booking.BookingTypeId,
                 BookingTypeSlug: cmd.BookingTypeSlug,
                 FromStatus: null,
-                ToStatus: BookingStatus.PendingPayment,
+                ToStatus: booking.Status,
                 Start: booking.Start,
                 End: booking.End,
                 CustomerId: booking.CustomerId,

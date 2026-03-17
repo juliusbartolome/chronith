@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Chronith.Application.DTOs;
 using Chronith.Tests.Functional.Fixtures;
+using Chronith.Tests.Functional.Helpers;
 using FluentAssertions;
 
 namespace Chronith.Tests.Functional.Auth;
@@ -14,7 +15,7 @@ public class RegisterTests(FunctionalTestFixture fixture)
     {
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.PostAsJsonAsync("/auth/register", new
+        var response = await client.PostAsJsonAsync("/v1/auth/register", new
         {
             tenantName = "Acme Corp",
             tenantSlug = "acme-" + Guid.NewGuid().ToString("N")[..8],
@@ -24,7 +25,7 @@ public class RegisterTests(FunctionalTestFixture fixture)
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<AuthTokenDto>();
+        var body = await response.ReadFromApiJsonAsync<AuthTokenDto>();
         body!.AccessToken.Should().NotBeNullOrWhiteSpace();
         body.RefreshToken.Should().NotBeNullOrWhiteSpace();
     }
@@ -35,13 +36,13 @@ public class RegisterTests(FunctionalTestFixture fixture)
         var slug = "dup-" + Guid.NewGuid().ToString("N")[..8];
         var client = fixture.CreateAnonymousClient();
 
-        await client.PostAsJsonAsync("/auth/register", new
+        await client.PostAsJsonAsync("/v1/auth/register", new
         {
             tenantName = "First", tenantSlug = slug, timeZoneId = "UTC",
             email = $"{Guid.NewGuid():N}@example.com", password = "Password123"
         });
 
-        var second = await client.PostAsJsonAsync("/auth/register", new
+        var second = await client.PostAsJsonAsync("/v1/auth/register", new
         {
             tenantName = "Second", tenantSlug = slug, timeZoneId = "UTC",
             email = $"{Guid.NewGuid():N}@example.com", password = "Password123"
@@ -55,7 +56,7 @@ public class RegisterTests(FunctionalTestFixture fixture)
     {
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.PostAsJsonAsync("/auth/register", new
+        var response = await client.PostAsJsonAsync("/v1/auth/register", new
         {
             tenantName = "X", tenantSlug = "x-" + Guid.NewGuid().ToString("N")[..8],
             timeZoneId = "UTC", email = "a@b.com", password = "short"

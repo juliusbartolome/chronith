@@ -28,6 +28,32 @@ public sealed class ChronithDbContext : DbContext
     public DbSet<TenantApiKeyEntity> TenantApiKeys => Set<TenantApiKeyEntity>();
     public DbSet<TenantUserEntity> TenantUsers => Set<TenantUserEntity>();
     public DbSet<TenantUserRefreshTokenEntity> TenantUserRefreshTokens => Set<TenantUserRefreshTokenEntity>();
+    public DbSet<StaffMemberEntity> StaffMembers => Set<StaffMemberEntity>();
+    public DbSet<StaffAvailabilityWindowEntity> StaffAvailabilityWindows => Set<StaffAvailabilityWindowEntity>();
+    public DbSet<BookingTypeStaffAssignmentEntity> BookingTypeStaffAssignments => Set<BookingTypeStaffAssignmentEntity>();
+    public DbSet<WaitlistEntryEntity> WaitlistEntries => Set<WaitlistEntryEntity>();
+    public DbSet<TimeBlockEntity> TimeBlocks => Set<TimeBlockEntity>();
+    // No global query filter: notification configs and reminders are accessed by
+    // background services which require cross-tenant access.
+    public DbSet<TenantNotificationConfigEntity> TenantNotificationConfigs => Set<TenantNotificationConfigEntity>();
+    public DbSet<BookingReminderEntity> BookingReminders => Set<BookingReminderEntity>();
+    public DbSet<CustomerEntity> Customers => Set<CustomerEntity>();
+    public DbSet<CustomerRefreshTokenEntity> CustomerRefreshTokens => Set<CustomerRefreshTokenEntity>();
+    public DbSet<TenantAuthConfigEntity> TenantAuthConfigs => Set<TenantAuthConfigEntity>();
+    public DbSet<RecurrenceRuleEntity> RecurrenceRules => Set<RecurrenceRuleEntity>();
+    public DbSet<NotificationTemplateEntity> NotificationTemplates => Set<NotificationTemplateEntity>();
+
+    // No global query filter: idempotency keys have no IsDeleted; cleaned up via TTL
+    public DbSet<IdempotencyKeyEntity> IdempotencyKeys => Set<IdempotencyKeyEntity>();
+
+    // No global query filter: audit entries have no IsDeleted; filtered explicitly by TenantId.
+    public DbSet<AuditEntryEntity> AuditEntries => Set<AuditEntryEntity>();
+
+    public DbSet<TenantSettingsEntity> TenantSettings => Set<TenantSettingsEntity>();
+
+    // No global tenant query filter: TenantPlan is a global resource (shared across all tenants)
+    public DbSet<TenantPlanEntity> TenantPlans => Set<TenantPlanEntity>();
+    public DbSet<TenantSubscriptionEntity> TenantSubscriptions => Set<TenantSubscriptionEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -43,5 +69,33 @@ public sealed class ChronithDbContext : DbContext
 
         modelBuilder.Entity<WebhookEntity>()
             .HasQueryFilter(w => !w.IsDeleted && w.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<StaffMemberEntity>()
+            .HasQueryFilter(s => !s.IsDeleted && s.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<WaitlistEntryEntity>()
+            .HasQueryFilter(w => !w.IsDeleted && w.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<TimeBlockEntity>()
+            .HasQueryFilter(t => !t.IsDeleted && t.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<CustomerEntity>()
+            .HasQueryFilter(c => !c.IsDeleted && c.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<RecurrenceRuleEntity>()
+            .HasQueryFilter(r => !r.IsDeleted && r.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<NotificationTemplateEntity>()
+            .HasQueryFilter(n => !n.IsDeleted && n.TenantId == _tenantContext.TenantId);
+
+        modelBuilder.Entity<TenantSettingsEntity>()
+            .HasQueryFilter(s => !s.IsDeleted && s.TenantId == _tenantContext.TenantId);
+
+        // TenantPlan has no tenant filter — it's a global resource
+        modelBuilder.Entity<TenantPlanEntity>()
+            .HasQueryFilter(p => !p.IsDeleted);
+
+        modelBuilder.Entity<TenantSubscriptionEntity>()
+            .HasQueryFilter(s => !s.IsDeleted && s.TenantId == _tenantContext.TenantId);
     }
 }

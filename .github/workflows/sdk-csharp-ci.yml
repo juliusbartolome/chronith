@@ -1,0 +1,68 @@
+name: SDK C# CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "packages/sdk-csharp/**"
+      - "src/**"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "packages/sdk-csharp/**"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: chronith_test
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.100"
+
+      - name: Restore
+        run: dotnet restore Chronith.slnx
+
+      - name: Build SDK
+        run: dotnet build packages/sdk-csharp/src/Chronith.Client/Chronith.Client.csproj --no-restore
+
+      - name: Run SDK tests
+        run: >-
+          dotnet test packages/sdk-csharp/tests/Chronith.Client.Tests
+          --no-restore
+          --logger "trx;LogFileName=sdk-results.trx"
+        env:
+          CI_SDK_CONNECTION_STRING: >-
+            Host=localhost;Database=chronith_test;Username=postgres;Password=postgres
+          ASPNETCORE_ENVIRONMENT: Test
+
+      - name: Pack NuGet
+        if: github.ref == 'refs/heads/main'
+        run: >-
+          dotnet pack packages/sdk-csharp/src/Chronith.Client/Chronith.Client.csproj
+          -c Release --no-restore
+
+      - name: Publish to GitHub Packages
+        if: github.ref == 'refs/heads/main'
+        run: >-
+          dotnet nuget push
+          "packages/sdk-csharp/src/Chronith.Client/bin/Release/*.nupkg"
+          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}"
+          --api-key ${{ secrets.GITHUB_TOKEN }}
+          --skip-duplicate

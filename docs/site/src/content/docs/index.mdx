@@ -1,0 +1,40 @@
+---
+title: Chronith Documentation
+description: Official documentation for the Chronith booking engine API.
+template: splash
+hero:
+  tagline: Multi-tenant booking engine API built for scale.
+  actions:
+    - text: Quickstart
+      link: /getting-started/quickstart
+      icon: right-arrow
+    - text: API Reference
+      link: /api-reference/overview
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Explore the docs
+
+<CardGrid stagger>
+  <Card title="Quickstart" icon="rocket">
+    Get Chronith running in under 5 minutes with [Docker Compose](/getting-started/quickstart).
+  </Card>
+  <Card title="Guides" icon="open-book">
+    Learn about [bookings](/guides/bookings), [availability](/guides/availability), [payments](/guides/payments), and more.
+  </Card>
+  <Card title="API Reference" icon="document">
+    Browse the complete [REST API reference](/api-reference/overview).
+  </Card>
+  <Card title="SDKs" icon="puzzle">
+    Official [TypeScript](/sdks/typescript) and [C#](/sdks/csharp) SDKs.
+  </Card>
+  <Card title="Architecture" icon="setting">
+    Understand the [clean architecture](/architecture/overview) and [data model](/architecture/data-model).
+  </Card>
+  <Card title="Changelog" icon="list-format">
+    See what's new in the [Changelog](/changelog).
+  </Card>
+</CardGrid>

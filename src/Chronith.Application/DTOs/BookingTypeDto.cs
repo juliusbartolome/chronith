@@ -10,6 +10,8 @@ public sealed record BookingTypeDto(
     int Capacity,
     PaymentMode PaymentMode,
     string? PaymentProvider,
+    long PriceInCentavos,
+    string Currency,
     // TimeSlot fields (null for Calendar)
     int? DurationMinutes,
     int? BufferBeforeMinutes,
@@ -17,6 +19,9 @@ public sealed record BookingTypeDto(
     IReadOnlyList<TimeSlotWindowDto>? AvailabilityWindows,
     // Calendar fields (null for TimeSlot)
     IReadOnlyList<DayOfWeek>? AvailableDays,
+    bool RequiresStaffAssignment,
+    string? CustomFieldSchema,
+    string? ReminderIntervals,
     string? CustomerCallbackUrl
 );
 

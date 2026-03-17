@@ -16,6 +16,8 @@ public sealed class BookingBuilder
     private string _customerId = "customer-1";
     private string _customerEmail = "customer@example.com";
     private string? _paymentReference = null;
+    private long _amountInCentavos = 0;
+    private string _currency = "PHP";
     private BookingStatus _targetStatus = BookingStatus.PendingPayment;
 
     public BookingBuilder WithTenantId(Guid tenantId) { _tenantId = tenantId; return this; }
@@ -25,10 +27,19 @@ public sealed class BookingBuilder
     public BookingBuilder WithCustomerId(string id) { _customerId = id; return this; }
     public BookingBuilder WithCustomerEmail(string email) { _customerEmail = email; return this; }
     public BookingBuilder WithPaymentReference(string? reference) { _paymentReference = reference; return this; }
+    public BookingBuilder WithAmountInCentavos(long amount) { _amountInCentavos = amount; return this; }
+    public BookingBuilder WithCurrency(string currency) { _currency = currency; return this; }
 
     public BookingBuilder InStatus(BookingStatus status)
     {
         _targetStatus = status;
+        // Ensure amount matches expected starting state
+        if (status == BookingStatus.PendingPayment ||
+            status == BookingStatus.PendingVerification ||
+            status == BookingStatus.Confirmed)
+        {
+            _amountInCentavos = 10000; // nonzero so booking starts in PendingPayment
+        }
         return this;
     }
 
@@ -41,6 +52,8 @@ public sealed class BookingBuilder
             _end,
             _customerId,
             _customerEmail,
+            _amountInCentavos,
+            _currency,
             _paymentReference);
 
         const string actor = "test-user";
@@ -49,7 +62,7 @@ public sealed class BookingBuilder
         switch (_targetStatus)
         {
             case BookingStatus.PendingPayment:
-                // already in this state
+                // already in this state (amount > 0 ensured by InStatus)
                 break;
             case BookingStatus.PendingVerification:
                 booking.Pay(actor, role);

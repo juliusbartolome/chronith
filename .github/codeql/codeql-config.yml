@@ -1,0 +1,8 @@
+name: "Chronith CodeQL Config"
+
+queries:
+  - uses: security-and-quality
+
+paths-ignore:
+  - "**/obj/**"
+  - "**/bin/**"

@@ -37,19 +37,19 @@ public sealed class WebhookDeliveryTests(FunctionalTestFixture fixture)
 
         // Act: confirm the booking as TenantAdmin
         var client = fixture.CreateClient("TenantAdmin");
-        var response = await client.PostAsJsonAsync($"/bookings/{bookingId}/confirm", new
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{bookingId}/confirm", new
         {
             bookingTypeSlug = WithWebhookSlug
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var confirmed = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var confirmed = await response.ReadFromApiJsonAsync<BookingDto>();
         confirmed!.Status.Should().Be(BookingStatus.Confirmed);
 
-        // Assert: a WebhookOutboxEntry row exists for this booking
+        // Assert: a WebhookOutboxEntry row exists for this booking (filter to webhook category only)
         await using var assertDb = SeedData.CreateDbContext(fixture.Factory);
         var entries = await assertDb.WebhookOutboxEntries
-            .Where(e => e.BookingId == bookingId)
+            .Where(e => e.BookingId == bookingId && e.Category == (int)OutboxCategory.TenantWebhook)
             .ToListAsync();
 
         entries.Should().HaveCount(1);
@@ -77,19 +77,19 @@ public sealed class WebhookDeliveryTests(FunctionalTestFixture fixture)
 
         // Act: confirm the booking as TenantAdmin (no webhook seeded for this booking type)
         var client = fixture.CreateClient("TenantAdmin");
-        var response = await client.PostAsJsonAsync($"/bookings/{bookingId}/confirm", new
+        var response = await client.PostAsJsonAsync($"/v1/bookings/{bookingId}/confirm", new
         {
             bookingTypeSlug = WithoutWebhookSlug
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var confirmed = await response.Content.ReadFromJsonAsync<BookingDto>();
+        var confirmed = await response.ReadFromApiJsonAsync<BookingDto>();
         confirmed!.Status.Should().Be(BookingStatus.Confirmed);
 
-        // Assert: no WebhookOutboxEntry for this booking
+        // Assert: no WebhookOutboxEntry for this booking (filter to webhook category only)
         await using var assertDb = SeedData.CreateDbContext(fixture.Factory);
         var entries = await assertDb.WebhookOutboxEntries
-            .Where(e => e.BookingId == bookingId)
+            .Where(e => e.BookingId == bookingId && e.Category == (int)OutboxCategory.TenantWebhook)
             .ToListAsync();
 
         entries.Should().BeEmpty();

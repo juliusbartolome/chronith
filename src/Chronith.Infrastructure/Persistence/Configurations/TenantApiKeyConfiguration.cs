@@ -15,6 +15,9 @@ public sealed class TenantApiKeyConfiguration : IEntityTypeConfiguration<TenantA
         builder.Property(e => e.KeyHash).HasMaxLength(64).IsRequired();
         builder.Property(e => e.Description).HasMaxLength(200).IsRequired();
         builder.Property(e => e.Role).HasMaxLength(50).IsRequired();
+        builder.Property(e => e.ExpiresAt)
+            .HasColumnName("expires_at")
+            .IsRequired(false);
 
         // Primary auth lookup — unique hash
         builder.HasIndex(e => e.KeyHash)

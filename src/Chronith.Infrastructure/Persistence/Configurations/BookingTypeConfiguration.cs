@@ -23,6 +23,15 @@ public sealed class BookingTypeConfiguration : IEntityTypeConfiguration<BookingT
         builder.Property(bt => bt.PaymentProvider)
             .HasMaxLength(100);
 
+        builder.Property(bt => bt.PriceInCentavos)
+            .IsRequired()
+            .HasDefaultValue(0L);
+
+        builder.Property(bt => bt.Currency)
+            .IsRequired()
+            .HasMaxLength(3)
+            .HasDefaultValue("PHP");
+
         builder.Property(bt => bt.Kind)
             .HasConversion<string>()
             .HasMaxLength(20);
@@ -63,6 +72,18 @@ public sealed class BookingTypeConfiguration : IEntityTypeConfiguration<BookingT
 
         builder.Property(bt => bt.CustomerCallbackSecret)
             .HasMaxLength(128)
+            .IsRequired(false);
+
+        builder.Property(bt => bt.RequiresStaffAssignment)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(bt => bt.CustomFieldSchema)
+            .HasColumnType("jsonb")
+            .IsRequired(false);
+
+        builder.Property(bt => bt.ReminderIntervals)
+            .HasColumnType("jsonb")
             .IsRequired(false);
     }
 }

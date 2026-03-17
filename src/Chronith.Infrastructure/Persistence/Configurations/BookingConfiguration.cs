@@ -23,6 +23,15 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
         builder.Property(b => b.PaymentReference)
             .HasMaxLength(200);
 
+        builder.Property(b => b.AmountInCentavos)
+            .IsRequired()
+            .HasDefaultValue(0L);
+
+        builder.Property(b => b.Currency)
+            .IsRequired()
+            .HasMaxLength(3)
+            .HasDefaultValue("PHP");
+
         builder.Property(b => b.CheckoutUrl)
             .HasColumnName("checkout_url")
             .HasMaxLength(2048);
@@ -41,9 +50,44 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
         builder.HasIndex(b => new { b.TenantId, b.IsDeleted });
         builder.HasIndex(b => b.CustomerId);
 
+        // Composite indexes for query optimization
+        builder.HasIndex(b => new { b.TenantId, b.BookingTypeId, b.Start, b.Status })
+            .HasDatabaseName("ix_bookings_availability");
+
+        builder.HasIndex(b => new { b.TenantId, b.CustomerId, b.Start })
+            .IsDescending(false, false, true)
+            .HasDatabaseName("ix_bookings_customer");
+
+        builder.HasIndex(b => new { b.TenantId, b.StaffMemberId, b.Start })
+            .HasDatabaseName("ix_bookings_staff");
+
+        builder.HasIndex(b => new { b.RecurrenceRuleId, b.Start })
+            .HasDatabaseName("ix_bookings_recurrence");
+
         builder.HasMany(b => b.StatusChanges)
             .WithOne(sc => sc.Booking)
             .HasForeignKey(sc => sc.BookingId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Property(b => b.StaffMemberId)
+            .IsRequired(false);
+
+        builder.HasIndex(b => b.StaffMemberId);
+
+        builder.Property(b => b.CustomFields)
+            .HasColumnType("jsonb")
+            .IsRequired(false);
+
+        builder.HasOne<CustomerEntity>()
+            .WithMany()
+            .HasForeignKey(b => b.CustomerAccountId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
+        builder.HasOne<RecurrenceRuleEntity>()
+            .WithMany()
+            .HasForeignKey(b => b.RecurrenceRuleId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
     }
 }

@@ -22,13 +22,15 @@ public sealed class CustomerCallbackFunctionalTests(FunctionalTestFixture fixtur
 
         // Update booking type to set a CustomerCallbackUrl via PUT
         var adminClient = fixture.CreateClient("TenantAdmin");
-        var updateResponse = await adminClient.PutAsJsonAsync($"/booking-types/{slug}", new
+        var updateResponse = await adminClient.PutAsJsonAsync($"/v1/booking-types/{slug}", new
         {
             name = "CB Func Type",
             capacity = 5,
             durationMinutes = 60,
             bufferBeforeMinutes = 0,
             bufferAfterMinutes = 0,
+            priceInCentavos = 10_000L,
+            currency = "PHP",
             customerCallbackUrl = "https://customer.example.com/callback",
             availabilityWindows = Enumerable.Range(0, 7).Select(d => new
             {
@@ -38,35 +40,35 @@ public sealed class CustomerCallbackFunctionalTests(FunctionalTestFixture fixtur
             })
         });
         updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var updatedType = await updateResponse.Content.ReadFromJsonAsync<BookingTypeDto>();
+        var updatedType = await updateResponse.ReadFromApiJsonAsync<BookingTypeDto>();
         updatedType!.CustomerCallbackUrl.Should().Be("https://customer.example.com/callback");
 
         // Create booking
         var customerClient = fixture.CreateClient("Customer");
-        var createResp = await customerClient.PostAsJsonAsync($"/booking-types/{slug}/bookings", new
+        var createResp = await customerClient.PostAsJsonAsync($"/v1/booking-types/{slug}/bookings", new
         {
             startTime = "2027-08-01T09:00:00Z",
             customerEmail = $"cb-func-{Guid.NewGuid():N}@example.com"
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
-        var booking = await createResp.Content.ReadFromJsonAsync<BookingDto>();
+        var booking = await createResp.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
 
         // Pay → PendingVerification
         var staffClient = fixture.CreateClient("TenantStaff");
-        var payResp = await staffClient.PostAsJsonAsync($"/bookings/{booking!.Id}/pay", new
+        var payResp = await staffClient.PostAsJsonAsync($"/v1/bookings/{booking!.Id}/pay", new
         {
             bookingTypeSlug = slug
         });
         payResp.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // Confirm → Confirmed (triggers outbox handler)
-        var confirmResp = await staffClient.PostAsJsonAsync($"/bookings/{booking.Id}/confirm", new
+        var confirmResp = await staffClient.PostAsJsonAsync($"/v1/bookings/{booking.Id}/confirm", new
         {
             bookingTypeSlug = slug
         });
         confirmResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var confirmed = await confirmResp.Content.ReadFromJsonAsync<BookingDto>();
+        var confirmed = await confirmResp.ReadFromApiJsonAsync<BookingDto>();
         confirmed!.Status.Should().Be(Domain.Enums.BookingStatus.Confirmed);
 
         // Assert — CustomerCallback outbox entry was created

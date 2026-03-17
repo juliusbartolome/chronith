@@ -1,8 +1,10 @@
+using System.Diagnostics.Metrics;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Services;
+using Chronith.Infrastructure.Telemetry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -18,6 +20,14 @@ public class WebhookDispatcherCustomerCallbackTests
     private readonly IHttpClientFactory _httpClientFactory = Substitute.For<IHttpClientFactory>();
     private readonly IServiceScopeFactory _scopeFactory = Substitute.For<IServiceScopeFactory>();
 
+    private static ChronithMetrics CreateMetrics()
+    {
+        var services = new ServiceCollection();
+        services.AddMetrics();
+        var sp = services.BuildServiceProvider();
+        return new ChronithMetrics(sp.GetRequiredService<IMeterFactory>());
+    }
+
     private WebhookDispatcherService CreateSut()
     {
         var scope = Substitute.For<IServiceScope>();
@@ -29,8 +39,9 @@ public class WebhookDispatcherCustomerCallbackTests
         _scopeFactory.CreateScope().Returns(scope);
 
         var opts = Options.Create(new WebhookDispatcherOptions { DispatchIntervalSeconds = 10 });
+        var healthTracker = Substitute.For<IBackgroundServiceHealthTracker>();
         return new WebhookDispatcherService(
-            _scopeFactory, _httpClientFactory, opts, NullLogger<WebhookDispatcherService>.Instance);
+            _scopeFactory, _httpClientFactory, opts, healthTracker, CreateMetrics(), NullLogger<WebhookDispatcherService>.Instance);
     }
 
     [Fact]
@@ -40,7 +51,7 @@ public class WebhookDispatcherCustomerCallbackTests
         var entryId = Guid.NewGuid();
 
         _outboxRepo.GetPendingAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns([new PendingOutboxEntry(entryId, null, bookingTypeId,
+            .Returns([new PendingOutboxEntry(entryId, Guid.NewGuid(), null, bookingTypeId,
                 "customer.booking.confirmed", "{}", 0, OutboxCategory.CustomerCallback)]);
 
         // BookingType has no callback URL

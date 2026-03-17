@@ -1,3 +1,4 @@
+using Chronith.Application.DTOs;
 using Chronith.Infrastructure.Payments;
 using Chronith.Tests.Unit.Helpers;
 using FluentAssertions;
@@ -13,6 +14,62 @@ public sealed class StubPaymentProviderTests
     {
         _provider.ProviderName.Should().Be("Stub");
     }
+
+    // ── New API ───────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task CreateCheckoutSessionAsync_ReturnsStubUrlAndTransactionId()
+    {
+        var request = new CreateCheckoutRequest(
+            AmountInCentavos: 50000,
+            Currency: "PHP",
+            Description: "Test",
+            BookingId: Guid.NewGuid(),
+            TenantId: Guid.NewGuid());
+
+        var result = await _provider.CreateCheckoutSessionAsync(request, CancellationToken.None);
+
+        result.CheckoutUrl.Should().StartWith("https://stub-checkout.local/");
+        result.ProviderTransactionId.Should().StartWith("stub_");
+    }
+
+    [Fact]
+    public async Task CreateCheckoutSessionAsync_ReturnsDifferentTransactionIds()
+    {
+        var request = new CreateCheckoutRequest(
+            AmountInCentavos: 50000,
+            Currency: "PHP",
+            Description: "Test",
+            BookingId: Guid.NewGuid(),
+            TenantId: Guid.NewGuid());
+
+        var result1 = await _provider.CreateCheckoutSessionAsync(request, CancellationToken.None);
+        var result2 = await _provider.CreateCheckoutSessionAsync(request, CancellationToken.None);
+
+        result1.ProviderTransactionId.Should().NotBe(result2.ProviderTransactionId);
+    }
+
+    [Fact]
+    public void ValidateWebhook_AlwaysReturnsTrue()
+    {
+        var context = new WebhookValidationContext(
+            Headers: new Dictionary<string, string>(),
+            RawBody: "{}",
+            SourceIpAddress: "127.0.0.1");
+
+        _provider.ValidateWebhook(context).Should().BeTrue();
+    }
+
+    [Fact]
+    public void ParseWebhookPayload_ReturnsSuccessEvent()
+    {
+        var result = _provider.ParseWebhookPayload("{\"transactionId\": \"stub_123\"}");
+
+        result.EventType.Should().Be(PaymentEventType.Success);
+        result.ProviderTransactionId.Should().NotBeNullOrEmpty();
+    }
+
+    // ── Legacy API (kept until CreateBookingCommand migration in Task 12) ────
 
     [Fact]
     public async Task CreatePaymentIntentAsync_Returns_DeterministicResult()

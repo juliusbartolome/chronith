@@ -4,7 +4,7 @@
 ## Get latest from `dotnet new gitignore`
 
 # EF Core Design tools emit bin artifacts with backslash paths on macOS
-src/*/bin\*
+**/bin\\*
 
 # Git worktrees
 .worktrees/
@@ -217,6 +217,15 @@ PublishScripts/
 **/[Pp]ackages/*
 # except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/
+# TypeScript SDK lives in packages/ — not a NuGet restore folder
+!packages/sdk-typescript
+!packages/sdk-typescript/**
+# C# SDK lives in packages/ — not a NuGet restore folder
+!packages/sdk-csharp
+!packages/sdk-csharp/**
+# but still ignore build artifacts inside it
+packages/sdk-csharp/**/bin/
+packages/sdk-csharp/**/obj/
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files
@@ -489,3 +498,18 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# TypeScript SDK — OpenAPI spec snapshot (fetched at generation time, not committed)
+packages/sdk-typescript/openapi.json
+
+# TypeScript SDK — error logs from openapi-ts generator
+packages/sdk-typescript/openapi-ts-error-*.log
+
+# TypeScript SDK — build output and node_modules
+packages/sdk-typescript/dist/
+packages/sdk-typescript/node_modules/
+
+# Starlight documentation site — build artifacts
+docs/site/dist/
+docs/site/.astro/
+docs/site/node_modules/

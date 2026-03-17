@@ -1,7 +1,9 @@
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Models;
 using Microsoft.Extensions.Options;
@@ -17,19 +19,108 @@ public sealed class PayMongoProvider(
 
     public string ProviderName => "PayMongo";
 
+    // ── New API ───────────────────────────────────────────────────────────────
+
+    public async Task<CreateCheckoutResult> CreateCheckoutSessionAsync(
+        CreateCheckoutRequest request, CancellationToken ct)
+    {
+        var client = httpClientFactory.CreateClient("PayMongo");
+        var authHeader = Convert.ToBase64String(
+            Encoding.UTF8.GetBytes($"{options.Value.SecretKey}:"));
+
+        var payload = new
+        {
+            data = new
+            {
+                attributes = new
+                {
+                    line_items = new[]
+                    {
+                        new
+                        {
+                            name = request.Description,
+                            amount = request.AmountInCentavos,
+                            currency = request.Currency,
+                            quantity = 1
+                        }
+                    },
+                    payment_method_types = new[] { "gcash", "card", "grab_pay", "paymaya" },
+                    success_url = options.Value.SuccessUrl.Replace("{bookingId}", request.BookingId.ToString()),
+                    cancel_url = options.Value.FailureUrl.Replace("{bookingId}", request.BookingId.ToString()),
+                    description = request.Description,
+                    reference_number = request.BookingId.ToString()
+                }
+            }
+        };
+
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post,
+            $"{options.Value.BaseUrl}/checkout_sessions");
+        httpRequest.Headers.Authorization = new AuthenticationHeaderValue(
+            "Basic", authHeader);
+        httpRequest.Content = JsonContent.Create(payload);
+
+        var response = await client.SendAsync(httpRequest, ct);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+        var checkoutUrl = json.GetProperty("data")
+            .GetProperty("attributes")
+            .GetProperty("checkout_url")
+            .GetString()!;
+        var checkoutId = json.GetProperty("data")
+            .GetProperty("id")
+            .GetString()!;
+
+        return new CreateCheckoutResult(checkoutUrl, checkoutId);
+    }
+
+    public bool ValidateWebhook(WebhookValidationContext context)
+    {
+        // Header key is lowercase when collected from ASP.NET Core request headers
+        if (!context.Headers.TryGetValue("paymongo-signature", out var signature))
+            return false;
+
+        return ValidateWebhookSignature(context.RawBody, signature);
+    }
+
+    public WebhookPaymentEvent ParseWebhookPayload(string rawBody)
+    {
+        var json = JsonDocument.Parse(rawBody).RootElement;
+        var eventType = json.GetProperty("data")
+            .GetProperty("attributes")
+            .GetProperty("type")
+            .GetString()!;
+        var resourceId = json.GetProperty("data")
+            .GetProperty("attributes")
+            .GetProperty("data")
+            .GetProperty("id")
+            .GetString()!;
+
+        var paymentEventType = eventType switch
+        {
+            "checkout_session.payment.paid" => PaymentEventType.Success,
+            "payment.paid" => PaymentEventType.Success,
+            "payment.failed" => PaymentEventType.Failed,
+            _ => PaymentEventType.Failed
+        };
+
+        return new WebhookPaymentEvent(resourceId, paymentEventType);
+    }
+
+    // ── Legacy API (kept until CreateBookingCommand migration in Task 12) ────
+
     public async Task<PaymentIntentResult> CreatePaymentIntentAsync(
         Booking booking, string currency, CancellationToken ct)
     {
         var httpClient = httpClientFactory.CreateClient("PayMongo");
 
-        // PayMongo uses amount in centavos (multiply by 100)
         var requestBody = new
         {
             data = new
             {
                 attributes = new
                 {
-                    amount = 10000, // TODO: booking should carry price in future
+                    amount = 10000,
                     currency,
                     description = $"Booking {booking.Id}",
                     remarks = booking.Id.ToString()
@@ -60,15 +151,19 @@ public sealed class PayMongoProvider(
 
     public bool ValidateWebhookSignature(string rawBody, string signatureHeader)
     {
-        // PayMongo signature format: t=<timestamp>,te=<hmac-sha256-hex>
-        // Signed payload: "<timestamp>.<rawBody>"
         try
         {
             var parts = signatureHeader.Split(',');
             var timestamp = parts.First(p => p.StartsWith("t=")).Substring(2);
-            var signature = parts.First(p => p.StartsWith("te=")).Substring(3);
 
-            // Replay protection: reject webhooks with timestamps outside the tolerance window
+            // Accept either te= (test) or li= (live) signature
+            var signature = parts.FirstOrDefault(p => p.StartsWith("te="))?.Substring(3)
+                ?? parts.FirstOrDefault(p => p.StartsWith("li="))?.Substring(3);
+
+            if (signature is null)
+                return false;
+
+            // Replay protection
             if (!long.TryParse(timestamp, out var unixTimestamp))
                 return false;
 

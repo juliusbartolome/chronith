@@ -15,6 +15,7 @@ public sealed class WebhookRepository : IWebhookRepository
         Guid tenantId, Guid bookingTypeId, CancellationToken ct = default)
     {
         var entities = await _db.Webhooks
+            .TagWith("ListAsync — WebhookRepository")
             .AsNoTracking()
             .Where(w => w.TenantId == tenantId && w.BookingTypeId == bookingTypeId)
             .ToListAsync(ct);
@@ -26,6 +27,7 @@ public sealed class WebhookRepository : IWebhookRepository
         Guid tenantId, Guid webhookId, CancellationToken ct = default)
     {
         var entity = await _db.Webhooks
+            .TagWith("GetByIdAsync — WebhookRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(w => w.TenantId == tenantId && w.Id == webhookId, ct);
 
@@ -39,6 +41,7 @@ public sealed class WebhookRepository : IWebhookRepository
     public async Task<Webhook?> GetByIdCrossTenantAsync(Guid webhookId, CancellationToken ct = default)
     {
         var entity = await _db.Webhooks
+            .TagWith("GetByIdCrossTenantAsync — WebhookRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(w => w.Id == webhookId, ct);

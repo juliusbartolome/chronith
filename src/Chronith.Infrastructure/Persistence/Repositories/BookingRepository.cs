@@ -16,6 +16,7 @@ public sealed class BookingRepository : IBookingRepository
     public async Task<Booking?> GetByIdAsync(Guid tenantId, Guid bookingId, CancellationToken ct = default)
     {
         var entity = await _db.Bookings
+            .TagWith("GetByIdAsync — BookingRepository")
             .AsNoTracking()
             .Include(b => b.StatusChanges)
             .FirstOrDefaultAsync(b => b.TenantId == tenantId && b.Id == bookingId, ct);
@@ -31,6 +32,7 @@ public sealed class BookingRepository : IBookingRepository
         CancellationToken ct = default)
     {
         var query = _db.Bookings
+            .TagWith("ListAsync — BookingRepository")
             .AsNoTracking()
             .Where(b => b.TenantId == tenantId && b.BookingTypeId == bookingTypeId)
             .OrderByDescending(b => b.Start);
@@ -57,6 +59,7 @@ public sealed class BookingRepository : IBookingRepository
     {
         var statuses = conflictStatuses.ToList();
         return await _db.Bookings
+            .TagWith("CountConflictsAsync — BookingRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()   // need to query across tenants to detect cross-tenant conflicts? No — but we need to bypass soft-delete filter
             .Where(b => b.BookingTypeId == bookingTypeId
@@ -79,7 +82,9 @@ public sealed class BookingRepository : IBookingRepository
     {
         var statusList = statuses.ToList();
         var results = await _db.Bookings
+            .TagWith("GetBookedSlotsAsync — BookingRepository")
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(b => b.BookingTypeId == bookingTypeId
                         && !b.IsDeleted
                         && statusList.Contains(b.Status)
@@ -91,10 +96,25 @@ public sealed class BookingRepository : IBookingRepository
         return results.Select(r => (r.Start, r.End)).ToList();
     }
 
+    public async Task<IReadOnlyList<Booking>> GetByCustomerIdAsync(
+        Guid tenantId, string customerId, CancellationToken ct = default)
+    {
+        var entities = await _db.Bookings
+            .TagWith("GetByCustomerIdAsync — BookingRepository")
+            .AsNoTracking()
+            .Include(b => b.StatusChanges)
+            .Where(b => b.TenantId == tenantId && b.CustomerId == customerId)
+            .OrderByDescending(b => b.Start)
+            .ToListAsync(ct);
+
+        return entities.Select(BookingEntityMapper.ToDomain).ToList();
+    }
+
     public async Task<BookingMetrics> GetMetricsAsync(
         Guid tenantId, DateTimeOffset monthStartUtc, CancellationToken ct = default)
     {
         var grouped = await _db.Bookings
+            .TagWith("GetMetricsAsync.grouped — BookingRepository")
             .AsNoTracking()
             .Where(b => b.TenantId == tenantId && !b.IsDeleted)
             .GroupBy(b => b.Status)
@@ -105,16 +125,89 @@ public sealed class BookingRepository : IBookingRepository
         var byStatus = grouped.ToDictionary(g => g.Status, g => g.Count);
 
         var thisMonth = await _db.Bookings
+            .TagWith("GetMetricsAsync.thisMonth — BookingRepository")
             .AsNoTracking()
             .CountAsync(b => b.TenantId == tenantId && !b.IsDeleted && b.Start >= monthStartUtc, ct);
 
         return new BookingMetrics(total, byStatus, thisMonth);
     }
 
+    public async Task<Booking?> GetByPaymentReferenceAsync(
+        Guid tenantId, string paymentReference, CancellationToken ct = default)
+    {
+        Persistence.Entities.BookingEntity? entity = await (
+            tenantId == Guid.Empty
+                // Webhook context — search across all tenants, bypass query filters
+                ? _db.Bookings
+                    .TagWith("GetByPaymentReferenceAsync.crossTenant — BookingRepository")
+                    .AsNoTracking()
+                    .IgnoreQueryFilters()
+                    .Include(b => b.StatusChanges)
+                    .Where(b => !b.IsDeleted && b.PaymentReference == paymentReference)
+                : _db.Bookings
+                    .TagWith("GetByPaymentReferenceAsync — BookingRepository")
+                    .AsNoTracking()
+                    .Include(b => b.StatusChanges)
+                    .Where(b => b.TenantId == tenantId && b.PaymentReference == paymentReference)
+        ).FirstOrDefaultAsync(ct);
+
+        return entity is null ? null : BookingEntityMapper.ToDomain(entity);
+    }
+
+    public async Task<IReadOnlyList<(Guid Id, DateTimeOffset Start, DateTimeOffset End)>> GetICalEntriesAsync(
+        Guid bookingTypeId, CancellationToken ct = default)
+    {
+        var results = await _db.Bookings
+            .TagWith("GetICalEntriesAsync — BookingRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(b => b.BookingTypeId == bookingTypeId
+                        && !b.IsDeleted
+                        && b.Status == BookingStatus.Confirmed)
+            .Select(b => new { b.Id, b.Start, b.End })
+            .ToListAsync(ct);
+
+        return results.Select(r => (r.Id, r.Start, r.End)).ToList();
+    }
+
     public async Task AddAsync(Booking booking, CancellationToken ct = default)
     {
         var entity = BookingEntityMapper.ToEntity(booking);
         await _db.Bookings.AddAsync(entity, ct);
+    }
+
+    public async Task<IReadOnlyList<BookingExportRowDto>> ListForExportAsync(
+        Guid tenantId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        string? status = null,
+        string? bookingTypeSlug = null,
+        Guid? staffMemberId = null,
+        CancellationToken ct = default)
+    {
+        return await _db.Bookings
+            .TagWith("ListForExportAsync — BookingRepository")
+            .AsNoTracking()
+            .Where(b => b.TenantId == tenantId && b.Start >= from && b.Start <= to)
+            .Where(b => status == null || b.Status.ToString() == status)
+            .Where(b => bookingTypeSlug == null || b.BookingType!.Slug == bookingTypeSlug)
+            .Where(b => staffMemberId == null || b.StaffMemberId == staffMemberId)
+            .OrderBy(b => b.Start)
+            .Take(10_000)
+            .Select(b => new BookingExportRowDto(
+                b.Id,
+                b.BookingType != null ? b.BookingType.Name : string.Empty,
+                b.BookingType != null ? b.BookingType.Slug : string.Empty,
+                b.Start,
+                b.End,
+                b.Status.ToString(),
+                b.CustomerEmail,
+                b.CustomerId,
+                b.StaffMember != null ? b.StaffMember.Name : null,
+                b.AmountInCentavos,
+                b.Currency,
+                b.PaymentReference))
+            .ToListAsync(ct);
     }
 
     public async Task UpdateAsync(Booking booking, CancellationToken ct = default)
@@ -153,4 +246,17 @@ public sealed class BookingRepository : IBookingRepository
         if (newChanges.Count > 0)
             await _db.BookingStatusChanges.AddRangeAsync(newChanges, ct);
     }
+
+    public Task<int> CountByTenantSinceAsync(
+        Guid tenantId, DateTimeOffset since, CancellationToken ct = default) =>
+        _db.Bookings
+            .TagWith("CountByTenantSinceAsync — BookingRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .CountAsync(b =>
+                b.TenantId == tenantId &&
+                !b.IsDeleted &&
+                b.Status != BookingStatus.Cancelled &&
+                b.Start >= since,
+                ct);
 }

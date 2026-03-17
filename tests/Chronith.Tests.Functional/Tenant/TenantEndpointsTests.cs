@@ -21,10 +21,10 @@ public sealed class TenantEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient("TenantAdmin");
 
-        var response = await client.GetAsync("/tenant");
+        var response = await client.GetAsync("/v1/tenant");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var tenant = await response.Content.ReadFromJsonAsync<TenantDto>();
+        var tenant = await response.ReadFromApiJsonAsync<TenantDto>();
         tenant.Should().NotBeNull();
         tenant!.Id.Should().Be(TestConstants.TenantId);
         tenant.Name.Should().NotBeNullOrEmpty();

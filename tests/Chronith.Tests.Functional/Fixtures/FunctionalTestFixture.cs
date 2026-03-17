@@ -36,7 +36,15 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
                 builder.UseSetting("Database:Provider", "PostgreSQL");
                 builder.UseSetting("Database:ConnectionString", connectionString);
                 builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
+                builder.UseSetting("Security:EncryptionKey", TestConstants.EncryptionKey);
                 builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
+                // Raise rate-limit permits very high so functional tests never exhaust
+                // the shared in-process IP bucket. Rate-limit shape tests use their own
+                // isolated WebApplicationFactory instances with tight limits.
+                builder.UseSetting("RateLimiting:Auth:PermitLimit", "10000");
+                builder.UseSetting("RateLimiting:Auth:WindowSeconds", "300");
+                builder.UseSetting("RateLimiting:Authenticated:PermitLimit", "10000");
+                builder.UseSetting("RateLimiting:Authenticated:WindowSeconds", "300");
             });
 
         // Run migrations
@@ -52,11 +60,14 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
             await _postgres.DisposeAsync();
     }
 
-    public HttpClient CreateClient(string role, string? userId = null) =>
-        CreateClientWithToken(TestJwtFactory.CreateToken(role, userId ?? RoleToUserId(role)));
+    public HttpClient CreateClient(string role, string? userId = null, Guid? tenantId = null) =>
+        CreateClientWithToken(TestJwtFactory.CreateToken(role, userId ?? RoleToUserId(role), tenantId));
 
     public HttpClient CreateAnonymousClient() =>
         Factory.CreateClient();
+
+    public HttpClient CreateClientWithCustomerToken(string customerId, Guid? tenantId = null) =>
+        CreateClientWithToken(TestJwtFactory.CreateCustomerToken(customerId, tenantId));
 
     private HttpClient CreateClientWithToken(string token)
     {

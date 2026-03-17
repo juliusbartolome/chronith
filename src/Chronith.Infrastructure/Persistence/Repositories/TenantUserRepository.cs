@@ -16,6 +16,7 @@ public sealed class TenantUserRepository(ChronithDbContext context) : ITenantUse
     public async Task<TenantUser?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var entity = await context.TenantUsers
+            .TagWith("GetByIdAsync — TenantUserRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == id, ct);
         return entity?.ToDomain();
@@ -25,6 +26,7 @@ public sealed class TenantUserRepository(ChronithDbContext context) : ITenantUse
     {
         var normalised = email.ToLowerInvariant();
         var entity = await context.TenantUsers
+            .TagWith("GetByEmailAsync — TenantUserRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.TenantId == tenantId && u.Email == normalised, ct);
         return entity?.ToDomain();
@@ -34,12 +36,28 @@ public sealed class TenantUserRepository(ChronithDbContext context) : ITenantUse
     {
         var normalised = email.ToLowerInvariant();
         return await context.TenantUsers
+            .TagWith("ExistsByEmailAsync — TenantUserRepository")
             .AnyAsync(u => u.TenantId == tenantId && u.Email == normalised, ct);
+    }
+
+    public async Task<bool> ExistsByEmailGloballyAsync(string email, CancellationToken ct = default)
+    {
+        var normalised = email.ToLowerInvariant();
+        return await context.TenantUsers
+            .TagWith("ExistsByEmailGloballyAsync — TenantUserRepository")
+            .AnyAsync(u => u.Email == normalised, ct);
     }
 
     public void Update(TenantUser user)
     {
         var entity = user.ToEntity();
         context.TenantUsers.Update(entity);
+    }
+
+    public Task UpdateAsync(TenantUser user, CancellationToken ct = default)
+    {
+        var entity = user.ToEntity();
+        context.TenantUsers.Update(entity);
+        return Task.CompletedTask;
     }
 }

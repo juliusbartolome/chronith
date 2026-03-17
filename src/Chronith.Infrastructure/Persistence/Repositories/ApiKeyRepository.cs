@@ -18,6 +18,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
     public async Task<IReadOnlyList<TenantApiKey>> ListByTenantAsync(Guid tenantId, CancellationToken ct)
     {
         var entities = await db.TenantApiKeys
+            .TagWith("ListByTenantAsync — ApiKeyRepository")
             .AsNoTracking()
             .Where(k => k.TenantId == tenantId)
             .ToListAsync(ct);
@@ -28,6 +29,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
     public async Task<TenantApiKey?> GetByHashAsync(string keyHash, CancellationToken ct)
     {
         var entity = await db.TenantApiKeys
+            .TagWith("GetByHashAsync — ApiKeyRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(k => k.KeyHash == keyHash && !k.IsRevoked, ct);
 
@@ -37,6 +39,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
     public async Task<TenantApiKey?> GetByIdAsync(Guid id, Guid tenantId, CancellationToken ct)
     {
         var entity = await db.TenantApiKeys
+            .TagWith("GetByIdAsync — ApiKeyRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(k => k.Id == id && k.TenantId == tenantId, ct);
 
@@ -70,6 +73,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
         IsRevoked = d.IsRevoked,
         CreatedAt = d.CreatedAt,
         LastUsedAt = d.LastUsedAt,
+        ExpiresAt = d.ExpiresAt,
     };
 
     private static TenantApiKey MapToDomain(TenantApiKeyEntity e)
@@ -82,6 +86,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
             Description = e.Description,
             Role = e.Role,
             CreatedAt = e.CreatedAt,
+            ExpiresAt = e.ExpiresAt,
         };
 
         if (e.IsRevoked)

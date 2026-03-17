@@ -23,7 +23,10 @@ public sealed class TimeSlotBookingType : BookingType
         int durationMinutes,
         int bufferBeforeMinutes,
         int bufferAfterMinutes,
-        IReadOnlyList<TimeSlotWindow> availabilityWindows)
+        IReadOnlyList<TimeSlotWindow> availabilityWindows,
+        long priceInCentavos,
+        string currency,
+        bool requiresStaffAssignment = false)
     {
         return new TimeSlotBookingType
         {
@@ -37,7 +40,10 @@ public sealed class TimeSlotBookingType : BookingType
             DurationMinutes = durationMinutes,
             BufferBeforeMinutes = bufferBeforeMinutes,
             BufferAfterMinutes = bufferAfterMinutes,
-            AvailabilityWindows = availabilityWindows
+            AvailabilityWindows = availabilityWindows,
+            PriceInCentavos = priceInCentavos,
+            Currency = currency,
+            RequiresStaffAssignment = requiresStaffAssignment
         };
     }
 
@@ -50,11 +56,16 @@ public sealed class TimeSlotBookingType : BookingType
         int bufferBeforeMinutes,
         int bufferAfterMinutes,
         IReadOnlyList<TimeSlotWindow>? availabilityWindows,
-        IReadOnlyList<DayOfWeek>? availableDays)
+        IReadOnlyList<DayOfWeek>? availableDays,
+        long priceInCentavos,
+        string currency,
+        bool requiresStaffAssignment = false,
+        string? customFieldSchema = null)
     {
         base.Update(name, capacity, paymentMode, paymentProvider,
             durationMinutes, bufferBeforeMinutes, bufferAfterMinutes,
-            availabilityWindows, availableDays);
+            availabilityWindows, availableDays, priceInCentavos, currency,
+            requiresStaffAssignment, customFieldSchema);
         DurationMinutes = durationMinutes;
         BufferBeforeMinutes = bufferBeforeMinutes;
         BufferAfterMinutes = bufferAfterMinutes;

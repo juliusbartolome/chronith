@@ -16,9 +16,10 @@ public sealed class RedisRateLimitStore(IOptions<RateLimitingOptions> options) :
 
     public int GetPermitLimit(string tenantId)
     {
-        if (_options.TenantOverrides.TryGetValue(tenantId, out var @override))
-            return @override.PermitLimit;
+        if (_options.TenantOverrides.TryGetValue(tenantId, out var @override)
+            && @override.PermitLimit.HasValue)
+            return @override.PermitLimit.Value;
 
-        return _options.DefaultPermitLimit;
+        return _options.Authenticated.PermitLimit;
     }
 }
