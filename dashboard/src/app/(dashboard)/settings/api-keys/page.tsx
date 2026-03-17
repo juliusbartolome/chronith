@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -66,7 +66,7 @@ export default function ApiKeysPage() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     reset,
     formState: { errors, isSubmitting },
@@ -75,7 +75,7 @@ export default function ApiKeysPage() {
     defaultValues: { role: "TenantAdmin" },
   });
 
-  const role = watch("role");
+  const role = useWatch({ control, name: "role" });
 
   const onSubmit = async (values: ApiKeyForm) => {
     setCreateError(null);
@@ -120,49 +120,62 @@ export default function ApiKeysPage() {
                     </TableCell>
                   </TableRow>
                 )}
-                {data.items?.map((k: { id: string; label: string; role: string; createdAt?: string; expiresAt?: string }) => (
-                  <TableRow key={k.id}>
-                    <TableCell className="font-medium">{k.label}</TableCell>
-                    <TableCell>{k.role}</TableCell>
-                    <TableCell>
-                      {k.createdAt ? format(new Date(k.createdAt), "PP") : "—"}
-                    </TableCell>
-                    <TableCell>
-                      {k.expiresAt
-                        ? format(new Date(k.expiresAt), "PP")
-                        : "Never"}
-                    </TableCell>
-                    <TableCell>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            Revoke
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Revoke API key?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              &quot;{k.label}&quot; will be permanently revoked.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => revokeKey.mutate(k.id)}
+                {data.items?.map(
+                  (k: {
+                    id: string;
+                    label: string;
+                    role: string;
+                    createdAt?: string;
+                    expiresAt?: string;
+                  }) => (
+                    <TableRow key={k.id}>
+                      <TableCell className="font-medium">{k.label}</TableCell>
+                      <TableCell>{k.role}</TableCell>
+                      <TableCell>
+                        {k.createdAt
+                          ? format(new Date(k.createdAt), "PP")
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {k.expiresAt
+                          ? format(new Date(k.expiresAt), "PP")
+                          : "Never"}
+                      </TableCell>
+                      <TableCell>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700"
                             >
                               Revoke
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Revoke API key?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                &quot;{k.label}&quot; will be permanently
+                                revoked.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => revokeKey.mutate(k.id)}
+                              >
+                                Revoke
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ),
+                )}
               </TableBody>
             </Table>
           )}
