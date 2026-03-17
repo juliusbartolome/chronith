@@ -30,7 +30,7 @@ const STEPS = [
     title: "Create your first booking type",
     icon: CalendarDays,
     description:
-      "Booking types define the services you offer — e.g. \"Haircut (30 min)\" or \"Consultation (1 hr)\". Create at least one to start accepting bookings.",
+      'Booking types define the services you offer — e.g. "Haircut (30 min)" or "Consultation (1 hr)". Create at least one to start accepting bookings.',
     action: {
       label: "Create booking type",
       href: "/booking-types/new",
@@ -71,8 +71,6 @@ const STEPS = [
   },
 ] as const;
 
-type StepId = (typeof STEPS)[number]["id"];
-
 // ── Step indicator ─────────────────────────────────────────────────────────────
 
 function StepList({
@@ -108,7 +106,11 @@ function StepList({
                     : "border-2 border-zinc-300 text-zinc-400",
               )}
             >
-              {done ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
+              {done ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Icon className="h-3.5 w-3.5" />
+              )}
             </div>
             {s.title}
           </li>
@@ -126,7 +128,10 @@ export default function OnboardingPage() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved) as { step: number; completed: number[] };
+        const parsed = JSON.parse(saved) as {
+          step: number;
+          completed: number[];
+        };
         return parsed.step ?? 0;
       }
     } catch {
@@ -138,7 +143,10 @@ export default function OnboardingPage() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved) as { step: number; completed: number[] };
+        const parsed = JSON.parse(saved) as {
+          step: number;
+          completed: number[];
+        };
         return new Set(parsed.completed ?? []);
       }
     } catch {
@@ -175,7 +183,7 @@ export default function OnboardingPage() {
 
   const step = STEPS[current];
   const Icon = step.icon;
-  const progressPct = Math.round(((completed.size) / STEPS.length) * 100);
+  const progressPct = Math.round((completed.size / STEPS.length) * 100);
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] gap-8 p-8">
@@ -203,8 +211,12 @@ export default function OnboardingPage() {
             <Icon className="h-7 w-7 text-zinc-700" />
           </div>
 
-          <h1 className="mb-3 text-2xl font-bold text-zinc-900">{step.title}</h1>
-          <p className="mb-8 text-sm text-zinc-500 leading-relaxed">{step.description}</p>
+          <h1 className="mb-3 text-2xl font-bold text-zinc-900">
+            {step.title}
+          </h1>
+          <p className="mb-8 text-sm text-zinc-500 leading-relaxed">
+            {step.description}
+          </p>
 
           <div className="flex gap-3">
             {"action" in step && step.action && (
