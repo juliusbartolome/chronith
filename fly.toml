@@ -1,0 +1,44 @@
+app = "chronith-api"
+primary_region = "sin"
+
+[build]
+
+[env]
+  ASPNETCORE_ENVIRONMENT = "Production"
+  Database__Provider = "PostgreSQL"
+  Payments__Provider = "Stub"
+  Payments__Currency = "PHP"
+  Redis__Enabled = "true"
+  Observability__EnableTracing = "false"
+  Observability__EnableMetrics = "false"
+  Observability__ServiceName = "chronith-api"
+  Webhooks__DispatchIntervalSeconds = "10"
+  Webhooks__HttpTimeoutSeconds = "10"
+  RateLimiting__Auth__PermitLimit = "100"
+  RateLimiting__Auth__WindowSeconds = "300"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[http_service.checks]]
+    grace_period = "40s"
+    interval = "30s"
+    method = "GET"
+    path = "/health/live"
+    port = 8080
+    timeout = "5s"
+    type = "http"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
