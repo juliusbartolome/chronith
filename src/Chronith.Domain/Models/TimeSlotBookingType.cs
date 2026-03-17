@@ -89,7 +89,12 @@ public sealed class TimeSlotBookingType : BookingType
         if (window is null)
             throw new SlotNotInWindowException(requestedStart);
 
-        return (requestedStart, requestedStart.AddMinutes(DurationMinutes));
+        // Normalize to UTC so Npgsql can write to 'timestamp with time zone' columns.
+        // requestedStart may carry a non-UTC offset (e.g. +08:00) if the client sent a
+        // local time. CalendarBookingType.ResolveSlot already does this via TenantTimeZone.ToUtc;
+        // TimeSlot must do the same.
+        var utcStart = requestedStart.ToUniversalTime();
+        return (utcStart, utcStart.AddMinutes(DurationMinutes));
     }
 
     public override (DateTimeOffset EffectiveStart, DateTimeOffset EffectiveEnd)
