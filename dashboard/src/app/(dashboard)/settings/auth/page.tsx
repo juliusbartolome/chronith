@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -30,7 +30,7 @@ export default function AuthConfigSettingsPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, watch, setValue, reset } =
+  const { register, handleSubmit, control, setValue, reset } =
     useForm<AuthConfigForm>({
       resolver: zodResolver(schema),
       defaultValues: {
@@ -43,8 +43,8 @@ export default function AuthConfigSettingsPage() {
     if (config) reset(config);
   }, [config, reset]);
 
-  const builtInAuthEnabled = watch("builtInAuthEnabled");
-  const magicLinkEnabled = watch("magicLinkEnabled");
+  const builtInAuthEnabled = useWatch({ control, name: "builtInAuthEnabled" });
+  const magicLinkEnabled = useWatch({ control, name: "magicLinkEnabled" });
 
   const onSubmit = async (values: AuthConfigForm) => {
     setError(null);
