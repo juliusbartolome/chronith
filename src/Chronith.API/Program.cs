@@ -270,7 +270,7 @@ app.UseAuthentication()
 
 app.UseRateLimiter();
 
-app.UseSwaggerGen(c => c.Path = "/openapi.json");
+app.UseSwaggerGen();
 
 app.UseMiddleware<VersionRedirectMiddleware>();
 
