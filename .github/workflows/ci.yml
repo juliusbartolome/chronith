@@ -3,8 +3,26 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - "dashboard/**"
+      - "packages/sdk-typescript/**"
+      - ".github/workflows/dashboard-ci.yml"
+      - ".github/workflows/docs-ci.yml"
+      - ".github/workflows/sdk-ci.yml"
+      - ".github/workflows/auto-approve.yml"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - "dashboard/**"
+      - "packages/sdk-typescript/**"
+      - ".github/workflows/dashboard-ci.yml"
+      - ".github/workflows/docs-ci.yml"
+      - ".github/workflows/sdk-ci.yml"
+      - ".github/workflows/auto-approve.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
