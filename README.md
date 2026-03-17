@@ -4,11 +4,11 @@ A multi-tenant booking engine built with .NET 10. Supports two booking models â€
 
 ## Deployed
 
-| Environment        | URL                                                 |
-| ------------------ | --------------------------------------------------- |
-| Production (Azure) | https://chronith-api.azurewebsites.net              |
-| OpenAPI spec       | https://chronith-api.azurewebsites.net/openapi.json |
-| Health             | https://chronith-api.azurewebsites.net/health/ready |
+| Environment        | URL                                                            |
+| ------------------ | -------------------------------------------------------------- |
+| Production (Azure) | https://chronith-api.azurewebsites.net                         |
+| OpenAPI spec       | https://chronith-api.azurewebsites.net/swagger/v1/swagger.json |
+| Health             | https://chronith-api.azurewebsites.net/health/ready            |
 
 ## Table of Contents
 
