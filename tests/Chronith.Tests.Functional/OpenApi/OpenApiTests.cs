@@ -14,7 +14,7 @@ public sealed class OpenApiTests(FunctionalTestFixture fixture)
     {
         var client = fixture.Factory.CreateClient();
 
-        var response = await client.GetAsync("/openapi.json");
+        var response = await client.GetAsync("/swagger/v1/swagger.json");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType?.MediaType.Should().Contain("json");
@@ -43,7 +43,7 @@ public sealed class OpenApiTests(FunctionalTestFixture fixture)
     {
         var client = fixture.Factory.CreateClient();
 
-        var response = await client.GetAsync("/openapi.json");
+        var response = await client.GetAsync("/swagger/v1/swagger.json");
         var content = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(content);
 
