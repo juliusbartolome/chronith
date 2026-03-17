@@ -3,8 +3,30 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - "dashboard/**"
+      - "packages/sdk-typescript/**"
+      - ".github/workflows/dashboard-ci.yml"
+      - ".github/workflows/docs-ci.yml"
+      - ".github/workflows/sdk-ci.yml"
+      - ".github/workflows/auto-approve.yml"
+      - "packages/sdk-csharp/**"
+      - ".github/workflows/sdk-csharp-ci.yml"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - "dashboard/**"
+      - "packages/sdk-typescript/**"
+      - ".github/workflows/dashboard-ci.yml"
+      - ".github/workflows/docs-ci.yml"
+      - ".github/workflows/sdk-ci.yml"
+      - ".github/workflows/auto-approve.yml"
+      - "packages/sdk-csharp/**"
+      - ".github/workflows/sdk-csharp-ci.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -14,8 +36,77 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      docker: ${{ steps.filter.outputs.docker }}
+      e2e: ${{ steps.filter.outputs.e2e }}
+      load: ${{ steps.filter.outputs.load }}
+      benchmarks: ${{ steps.filter.outputs.benchmarks }}
+      csharp: ${{ steps.filter.outputs.csharp }}
+      javascript: ${{ steps.filter.outputs.javascript }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'src/**'
+              - 'tests/Chronith.Tests.Unit/**'
+              - 'tests/Chronith.Tests.Integration/**'
+              - 'tests/Chronith.Tests.Functional/**'
+              - 'Chronith.slnx'
+              - 'global.json'
+              - 'src/Directory.Build.props'
+              - '.github/workflows/ci.yml'
+            docker:
+              - 'src/**'
+              - 'Dockerfile'
+              - 'docker-compose*.yml'
+              - '.dockerignore'
+              - 'docker/**'
+              - '.github/workflows/ci.yml'
+            e2e:
+              - 'src/**'
+              - 'dashboard/**'
+              - 'Dockerfile'
+              - 'docker-compose*.yml'
+              - 'docker/**'
+              - '.github/workflows/ci.yml'
+            load:
+              - 'src/**'
+              - 'tests/Chronith.Tests.Load/**'
+              - 'Dockerfile'
+              - 'docker-compose*.yml'
+              - 'docker/**'
+              - '.github/workflows/ci.yml'
+            benchmarks:
+              - 'src/**'
+              - 'tests/Chronith.Tests.Performance/**'
+              - 'Chronith.slnx'
+              - 'global.json'
+              - '.github/workflows/ci.yml'
+            csharp:
+              - 'src/**'
+              - 'tests/**'
+              - 'Chronith.slnx'
+              - 'global.json'
+              - '.github/workflows/ci.yml'
+            javascript:
+              - 'dashboard/**'
+              - '.github/workflows/ci.yml'
+
   dotnet-test:
     name: .NET Tests
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     permissions:
       checks: write
@@ -92,6 +183,8 @@ jobs:
 
   docker-build:
     name: Docker Build
+    needs: changes
+    if: needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -110,8 +203,9 @@ jobs:
 
   playwright-e2e:
     name: Playwright E2E
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
-    needs: docker-build
     timeout-minutes: 15
     env:
       JWT_SIGNING_KEY: change-me-in-production-at-least-32-chars
@@ -268,8 +362,9 @@ jobs:
 
   k6-load-tests:
     name: k6 Load Tests
+    needs: changes
+    if: needs.changes.outputs.load == 'true'
     runs-on: ubuntu-latest
-    needs: docker-build
     env:
       JWT_SIGNING_KEY: change-me-in-production-at-least-32-chars
       SECURITY_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
@@ -441,8 +536,12 @@ jobs:
 
   benchmarks:
     name: Benchmarks
+    needs: changes
+    if: >-
+      needs.changes.outputs.benchmarks == 'true'
+      && github.event_name == 'push'
+      && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v6
 
@@ -483,8 +582,11 @@ jobs:
 
   codeql:
     name: CodeQL (${{ matrix.language }})
+    needs: changes
+    if: >-
+      (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+      && (needs.changes.outputs.csharp == 'true' || needs.changes.outputs.javascript == 'true')
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     permissions:
       security-events: write
       actions: read
