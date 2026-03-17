@@ -2,13 +2,13 @@ name: SDK CI
 
 on:
   push:
-    branches: [main, develop, "feat/**"]
+    branches: [main, "feat/**"]
     paths:
       - "packages/sdk-typescript/**"
       - "src/**"
       - ".github/workflows/sdk-ci.yml"
   pull_request:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - "packages/sdk-typescript/**"
       - "src/**"
@@ -23,11 +23,11 @@ jobs:
     name: SDK Lint + Type Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: packages/sdk-typescript/package-lock.json
 
@@ -41,11 +41,11 @@ jobs:
     name: SDK Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: packages/sdk-typescript/package-lock.json
 

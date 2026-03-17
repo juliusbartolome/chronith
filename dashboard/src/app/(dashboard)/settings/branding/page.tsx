@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -104,7 +104,7 @@ export default function BrandingSettingsPage() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     reset,
     formState: { errors, isSubmitting },
@@ -135,10 +135,11 @@ export default function BrandingSettingsPage() {
     }
   }, [settings, reset]);
 
-  const watchedLogoUrl = watch("logoUrl");
-  const watchedPrimary = watch("primaryColor");
-  const watchedWelcome = watch("welcomeMessage");
-  const watchedEnabled = watch("bookingPageEnabled");
+  const watchedLogoUrl = useWatch({ control, name: "logoUrl" });
+  const watchedPrimary = useWatch({ control, name: "primaryColor" });
+  const watchedWelcome = useWatch({ control, name: "welcomeMessage" });
+  const watchedEnabled = useWatch({ control, name: "bookingPageEnabled" });
+  const watchedAccentColor = useWatch({ control, name: "accentColor" });
 
   const onSubmit = async (values: BrandingForm) => {
     try {
@@ -226,7 +227,7 @@ export default function BrandingSettingsPage() {
               <div className="flex gap-2 items-center">
                 <input
                   type="color"
-                  value={watch("accentColor") || "#6366F1"}
+                  value={watchedAccentColor || "#6366F1"}
                   onChange={(e) =>
                     setValue("accentColor", e.target.value, {
                       shouldValidate: true,
@@ -306,10 +307,7 @@ export default function BrandingSettingsPage() {
               </Label>
             </div>
 
-            <Button
-              type="submit"
-              disabled={isSubmitting || update.isPending}
-            >
+            <Button type="submit" disabled={isSubmitting || update.isPending}>
               {isSubmitting || update.isPending ? "Saving…" : "Save Branding"}
             </Button>
           </form>

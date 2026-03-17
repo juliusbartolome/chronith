@@ -22,14 +22,9 @@ import {
   TableCaption,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
   SelectGroup,
-  SelectItem,
   SelectLabel,
   SelectSeparator,
-  SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 
 describe("Skeleton", () => {
@@ -82,32 +77,44 @@ describe("Card components", () => {
 
   it("renders CardHeader", () => {
     const { container } = render(<CardHeader>header</CardHeader>);
-    expect(container.querySelector('[data-slot="card-header"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="card-header"]'),
+    ).toBeInTheDocument();
   });
 
   it("renders CardTitle", () => {
     const { container } = render(<CardTitle>Title</CardTitle>);
-    expect(container.querySelector('[data-slot="card-title"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="card-title"]'),
+    ).toBeInTheDocument();
   });
 
   it("renders CardDescription", () => {
     const { container } = render(<CardDescription>Desc</CardDescription>);
-    expect(container.querySelector('[data-slot="card-description"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="card-description"]'),
+    ).toBeInTheDocument();
   });
 
   it("renders CardAction", () => {
     const { container } = render(<CardAction>Action</CardAction>);
-    expect(container.querySelector('[data-slot="card-action"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="card-action"]'),
+    ).toBeInTheDocument();
   });
 
   it("renders CardContent", () => {
     const { container } = render(<CardContent>Content</CardContent>);
-    expect(container.querySelector('[data-slot="card-content"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="card-content"]'),
+    ).toBeInTheDocument();
   });
 
   it("renders CardFooter", () => {
     const { container } = render(<CardFooter>Footer</CardFooter>);
-    expect(container.querySelector('[data-slot="card-footer"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="card-footer"]'),
+    ).toBeInTheDocument();
   });
 
   it("renders a full Card with all subcomponents", () => {
@@ -140,7 +147,9 @@ describe("Table components", () => {
         </TableBody>
       </Table>,
     );
-    expect(container.querySelector('[data-slot="table-container"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="table-container"]'),
+    ).toBeInTheDocument();
     expect(container.querySelector('[data-slot="table"]')).toBeInTheDocument();
   });
 
@@ -154,8 +163,12 @@ describe("Table components", () => {
         </TableHeader>
       </table>,
     );
-    expect(container.querySelector('[data-slot="table-header"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-slot="table-head"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="table-header"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="table-head"]'),
+    ).toBeInTheDocument();
   });
 
   it("renders TableFooter", () => {
@@ -168,7 +181,9 @@ describe("Table components", () => {
         </TableFooter>
       </table>,
     );
-    expect(container.querySelector('[data-slot="table-footer"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="table-footer"]'),
+    ).toBeInTheDocument();
   });
 
   it("renders TableCaption", () => {
@@ -182,7 +197,9 @@ describe("Table components", () => {
         </TableBody>
       </table>,
     );
-    expect(container.querySelector('[data-slot="table-caption"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-slot="table-caption"]'),
+    ).toBeInTheDocument();
     expect(screen.getByText("My Table")).toBeInTheDocument();
   });
 
@@ -234,6 +251,8 @@ describe("Select components", () => {
 
   it("renders SelectSeparator with data-slot", () => {
     const { container } = render(<SelectSeparator />);
-    expect(container.querySelector('[data-slot="select-separator"]')).toBeTruthy();
+    expect(
+      container.querySelector('[data-slot="select-separator"]'),
+    ).toBeTruthy();
   });
 });

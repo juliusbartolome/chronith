@@ -255,25 +255,23 @@ refactor(infra): extract notification channel factory
 docs: update AGENTS.md
 ```
 
-### Branching Strategy
+### Branching Strategy (GitHub Flow)
 
 ```
-main
- └── develop
-      └── feat/v{X.Y}-{feature-name}          (parent feature branch)
-           ├── feat/v{X.Y}/task-{N}-{name}     (sub-branch per task)
-           ├── feat/v{X.Y}/task-{N+1}-{name}
-           └── ...
+main                    ← only long-lived branch; always deployable
+ ├── feat/<short-desc>  ← new feature, created from main
+ ├── fix/<short-desc>   ← bug fix, created from main
+ └── docs/<short-desc>  ← documentation only, created from main
 ```
 
-- **Sub-branches** are created from the parent feature branch for each task.
-- Sub-branches are merged back into the parent with `--no-ff`.
-- Parent feature branches are merged into `develop` via PR.
-- **Only `develop` may merge into `main`** — enforced by CI (`check-target-branch` job).
+- `main` is always deployable.
+- Create a branch from `main`. Open a PR targeting `main`. Merge when CI is green and review is approved.
+- No `develop` branch. No parent feature branches. No `task-N` sub-branches.
+- Keep branches short-lived — prefer small, focused PRs.
 
 ### Tags
 
-Tag releases on `develop` after merge: `v0.1.0`, `v0.2.0`, ..., `v0.5.0`.
+Tag releases on `main` after merge: `v0.1.0`, `v0.2.0`, ..., `v1.0.0`.
 
 ---
 
@@ -281,90 +279,17 @@ Tag releases on `develop` after merge: `v0.1.0`, `v0.2.0`, ..., `v0.5.0`.
 
 ### CI Pipeline (`.github/workflows/ci.yml`)
 
-6 jobs run on every push to `main`/`develop` and on PRs targeting them:
+5 jobs run on every push to `main` and on PRs targeting `main`:
 
-| Job                   | Description                                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `dotnet-test`         | Postgres 17 + Redis 8 service containers. Builds Release, runs unit/integration/functional tests separately. |
-| `docker-build`        | Multi-stage Docker build with Buildx + GHA cache.                                                            |
-| `k6-load-tests`       | Builds image, starts docker-compose stack, seeds data, runs 4 k6 scripts.                                    |
-| `benchmarks`          | BenchmarkDotNet (push to `main`/`develop` only).                                                             |
-| `check-target-branch` | Enforces only `develop` → `main` merges.                                                                     |
-| `codeql`              | CodeQL `security-and-quality` for `[csharp, javascript]`.                                                    |
+| Job             | Description                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------ |
+| `dotnet-test`   | Postgres 17 + Redis 8 service containers. Builds Release, runs unit/integration/functional tests separately. |
+| `docker-build`  | Multi-stage Docker build with Buildx + GHA cache.                                                            |
+| `k6-load-tests` | Builds image, starts docker-compose stack, seeds data, runs 4 k6 scripts.                                    |
+| `benchmarks`    | BenchmarkDotNet (push to `main` only).                                                                       |
+| `codeql`        | CodeQL `security-and-quality` for `[csharp, javascript]`.                                                    |
 
-### PR Lifecycle — MANDATORY
-
-Agents MUST follow this lifecycle for every PR. No exceptions.
-
-#### Step 1: Pre-PR Validation
-
-Before creating any PR, validate the full CI workflow locally using [act](https://github.com/nektos/act):
-
-```bash
-act pull_request --workflows .github/workflows/ci.yml
-```
-
-All jobs must pass locally: `dotnet-test`, `docker-build`, `codeql`, `k6-load-tests`.
-Do NOT create a PR until act confirms all jobs pass.
-
-#### Step 2: Create & Push PR
-
-```bash
-gh pr create --title "feat: ..." --body "$(cat <<'EOF'
-## Summary
-- ...
-EOF
-)"
-```
-
-#### Step 3: Post-PR Review Loop
-
-After pushing the PR, the agent MUST monitor for and resolve review feedback:
-
-1. **Poll for review comments** using `gh` CLI:
-
-   ```bash
-   # Check PR review comments
-   gh api repos/{owner}/{repo}/pulls/{number}/comments
-
-   # Check PR reviews
-   gh pr view {number} --json reviews
-
-   # Check PR status and checks
-   gh pr checks {number}
-   ```
-
-2. **Address each comment** — fix code, refactor, or explain the reasoning.
-
-3. **Reply on GitHub** confirming resolution:
-
-   ```bash
-   gh api repos/{owner}/{repo}/pulls/{number}/comments/{comment_id}/replies \
-     -f body="Fixed in <commit-sha>. <brief explanation>"
-   ```
-
-4. **Re-validate full CI locally using `act`** before pushing the fixes. Do NOT push without re-running act.
-
-5. **Push the fixes.**
-
-6. **Repeat steps 1–5** until:
-   - All CI checks are green
-   - All review comments are resolved
-   - No outstanding change requests
-
-#### Step 4: Merge
-
-Only merge once all checks pass and all reviews are resolved.
-
-```bash
-gh pr merge {number} --merge --delete-branch
-```
-
-After merge, clean up locally:
-
-```bash
-git checkout develop && git pull && git branch -d {branch-name}
-```
+````
 
 ---
 
@@ -441,7 +366,8 @@ act pull_request --workflows .github/workflows/ci.yml
 
 # Check PR review comments
 gh api repos/{owner}/{repo}/pulls/{number}/comments
-```
+git checkout main && git pull && git branch -d {branch-name}
+````
 
 ---
 
