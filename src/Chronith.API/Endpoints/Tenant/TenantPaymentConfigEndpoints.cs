@@ -115,7 +115,7 @@ public sealed class DeleteTenantPaymentConfigEndpoint(ISender sender)
     {
         var id = Route<Guid>("id");
         await sender.Send(new DeleteTenantPaymentConfigCommand(id), ct);
-        await Send.OkAsync(ct);
+        await Send.OkAsync();
     }
 }
 
@@ -135,7 +135,7 @@ public sealed class ActivateTenantPaymentConfigEndpoint(ISender sender)
     {
         var id = Route<Guid>("id");
         await sender.Send(new ActivateTenantPaymentConfigCommand(id), ct);
-        await Send.OkAsync(ct);
+        await Send.OkAsync();
     }
 }
 
@@ -155,6 +155,6 @@ public sealed class DeactivateTenantPaymentConfigEndpoint(ISender sender)
     {
         var id = Route<Guid>("id");
         await sender.Send(new DeactivateTenantPaymentConfigCommand(id), ct);
-        await Send.OkAsync(ct);
+        await Send.OkAsync();
     }
 }
