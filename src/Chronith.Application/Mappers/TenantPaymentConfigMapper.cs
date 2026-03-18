@@ -11,7 +11,6 @@ public static class TenantPaymentConfigMapper
         config.ProviderName,
         config.Label,
         config.IsActive,
-        config.Settings,
         config.PublicNote,
         config.QrCodeUrl,
         config.CreatedAt,

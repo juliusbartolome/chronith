@@ -5,6 +5,7 @@ using Chronith.Infrastructure.Security;
 using Chronith.Tests.Integration.Fixtures;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace Chronith.Tests.Integration.Persistence;
@@ -21,7 +22,7 @@ public sealed class TenantPaymentConfigRepositoryTests(PostgresFixture postgres)
         {
             EncryptionKey = TestKey
         }));
-        return new TenantPaymentConfigRepository(db, encryption);
+        return new TenantPaymentConfigRepository(db, encryption, NullLogger<TenantPaymentConfigRepository>.Instance);
     }
 
     [Fact]

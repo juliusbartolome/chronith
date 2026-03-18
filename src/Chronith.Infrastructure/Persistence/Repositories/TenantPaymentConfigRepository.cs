@@ -2,12 +2,14 @@ using Chronith.Application.Interfaces;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Persistence.Mappers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Chronith.Infrastructure.Persistence.Repositories;
 
 public sealed class TenantPaymentConfigRepository(
     ChronithDbContext db,
-    IEncryptionService encryptionService)
+    IEncryptionService encryptionService,
+    ILogger<TenantPaymentConfigRepository> logger)
     : ITenantPaymentConfigRepository
 {
     public async Task<TenantPaymentConfig?> GetByIdAsync(Guid id, CancellationToken ct = default)
@@ -108,6 +110,14 @@ public sealed class TenantPaymentConfigRepository(
     {
         if (settings is null) return "{}";
         try { return encryptionService.Decrypt(settings) ?? "{}"; }
-        catch (FormatException) { return settings; }
+        catch (FormatException)
+        {
+            // Legacy row: settings column contains plaintext JSON (pre-migration).
+            // Return as-is; next write will encrypt it.
+            logger.LogWarning(
+                "Payment config settings could not be decrypted — " +
+                "treating as legacy plaintext row. Next write will encrypt it.");
+            return settings;
+        }
     }
 }

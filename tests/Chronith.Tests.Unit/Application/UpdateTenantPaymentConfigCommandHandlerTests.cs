@@ -32,7 +32,6 @@ public sealed class UpdateTenantPaymentConfigCommandHandlerTests
         var result = await handler.Handle(cmd, CancellationToken.None);
 
         result.Label.Should().Be("NewLabel");
-        result.Settings.Should().Contain("sk_new");
         result.IsActive.Should().BeFalse(); // unchanged
         await _repo.Received(1).UpdateAsync(existing, Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
