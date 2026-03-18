@@ -1,0 +1,77 @@
+name: Docs Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "*.md"
+      - "AGENTS.md"
+      - "packages/sdk-typescript/**"
+      - "packages/sdk-csharp/**"
+      - ".github/workflows/dashboard-ci.yml"
+      - ".github/workflows/docs-ci.yml"
+      - ".github/workflows/sdk-ci.yml"
+      - ".github/workflows/auto-approve.yml"
+      - ".github/workflows/sdk-csharp-ci.yml"
+
+jobs:
+  docs-gate:
+    name: Docs Gate
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+      pull-requests: read
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'src/**'
+              - 'tests/Chronith.Tests.Unit/**'
+              - 'tests/Chronith.Tests.Integration/**'
+              - 'tests/Chronith.Tests.Functional/**'
+              - 'Chronith.slnx'
+              - 'global.json'
+              - 'src/Directory.Build.props'
+              - '.github/workflows/ci.yml'
+            docker:
+              - 'src/**'
+              - 'Dockerfile'
+              - 'docker-compose*.yml'
+              - '.dockerignore'
+              - 'docker/**'
+              - '.github/workflows/ci.yml'
+
+      - name: Post success for .NET Tests
+        if: steps.filter.outputs.backend == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: 'success',
+              context: '.NET Tests',
+              description: 'Skipped – no backend changes',
+            });
+
+      - name: Post success for Docker Build
+        if: steps.filter.outputs.docker == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: 'success',
+              context: 'Docker Build',
+              description: 'Skipped – no Docker changes',
+            });
