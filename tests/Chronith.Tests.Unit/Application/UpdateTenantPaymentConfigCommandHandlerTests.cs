@@ -42,7 +42,7 @@ public sealed class UpdateTenantPaymentConfigCommandHandlerTests
     public async Task Handle_WhenNotFound_ThrowsNotFoundException()
     {
         _repo.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-             .Returns((TenantPaymentConfig?)null);
+             .Returns(default(TenantPaymentConfig));
 
         var handler = new UpdateTenantPaymentConfigCommandHandler(_repo, _unitOfWork);
         var act = () => handler.Handle(

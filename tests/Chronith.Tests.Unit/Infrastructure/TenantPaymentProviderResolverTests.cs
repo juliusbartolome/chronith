@@ -46,7 +46,7 @@ public sealed class TenantPaymentProviderResolverTests
     {
         var tenantId = Guid.NewGuid();
         _repo.GetActiveByProviderNameAsync(tenantId, "PayMongo", Arg.Any<CancellationToken>())
-             .Returns((TenantPaymentConfig?)null);
+             .Returns(default(TenantPaymentConfig));
 
         var sut = CreateSut();
         var result = await sut.ResolveAsync(tenantId, "PayMongo");
@@ -77,7 +77,7 @@ public sealed class TenantPaymentProviderResolverTests
     {
         var tenantId = Guid.NewGuid();
         _repo.GetActiveByProviderNameAsync(tenantId, "Maya", Arg.Any<CancellationToken>())
-             .Returns((TenantPaymentConfig?)null);
+             .Returns(default(TenantPaymentConfig));
 
         var sut = CreateSut();
         var result = await sut.ResolveAsync(tenantId, "Maya");
@@ -90,7 +90,7 @@ public sealed class TenantPaymentProviderResolverTests
     {
         var tenantId = Guid.NewGuid();
         _repo.GetActiveByProviderNameAsync(tenantId, "Stripe", Arg.Any<CancellationToken>())
-             .Returns((TenantPaymentConfig?)null);
+             .Returns(default(TenantPaymentConfig));
 
         var sut = CreateSut();
         var result = await sut.ResolveAsync(tenantId, "Stripe");

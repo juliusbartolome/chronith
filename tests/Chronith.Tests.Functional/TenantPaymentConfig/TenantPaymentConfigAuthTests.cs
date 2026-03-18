@@ -19,8 +19,8 @@ public sealed class TenantPaymentConfigAuthTests(FunctionalTestFixture fixture)
         ProviderName = "Manual",
         Label = "Auth-Test-Config",
         Settings = "{}",
-        PublicNote = (string?)null,
-        QrCodeUrl = (string?)null
+        PublicNote = default(string),
+        QrCodeUrl = default(string)
     };
 
     // --- GET /tenant/payment-config ---

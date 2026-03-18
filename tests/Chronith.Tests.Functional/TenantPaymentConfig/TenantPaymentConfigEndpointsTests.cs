@@ -56,9 +56,10 @@ public sealed class TenantPaymentConfigEndpointsTests(FunctionalTestFixture fixt
             ProviderName = "Manual",
             Label = "BankTransfer-List-Test",
             Settings = "{}",
-            PublicNote = (string?)null,
-            QrCodeUrl = (string?)null
+            PublicNote = default(string),
+            QrCodeUrl = default(string)
         };
+
         await client.PostAsJsonAsync("/v1/tenant/payment-config", payload);
 
         var response = await client.GetAsync("/v1/tenant/payment-config");
@@ -81,8 +82,8 @@ public sealed class TenantPaymentConfigEndpointsTests(FunctionalTestFixture fixt
             ProviderName = "Manual",
             Label = "Cash-Update-Test",
             Settings = "{}",
-            PublicNote = (string?)null,
-            QrCodeUrl = (string?)null
+            PublicNote = default(string),
+            QrCodeUrl = default(string)
         };
         var createResponse = await client.PostAsJsonAsync("/v1/tenant/payment-config", createPayload);
         var created = await createResponse.ReadFromApiJsonAsync<TenantPaymentConfigDto>();
@@ -94,7 +95,7 @@ public sealed class TenantPaymentConfigEndpointsTests(FunctionalTestFixture fixt
             Label = "Cash-Updated",
             Settings = "{}",
             PublicNote = "Pay in cash",
-            QrCodeUrl = (string?)null
+            QrCodeUrl = default(string)
         };
         var updateResponse = await client.PutAsJsonAsync($"/v1/tenant/payment-config/{created!.Id}", updatePayload);
 
@@ -117,8 +118,8 @@ public sealed class TenantPaymentConfigEndpointsTests(FunctionalTestFixture fixt
             ProviderName = "PayMongo",
             Label = "PayMongo-Activate-Test",
             Settings = """{"SecretKey":"sk_test_abc","PublicKey":"pk_test_abc","WebhookSecret":"ws","SuccessUrl":"https://example.com/success","FailureUrl":"https://example.com/failure"}""",
-            PublicNote = (string?)null,
-            QrCodeUrl = (string?)null
+            PublicNote = default(string),
+            QrCodeUrl = default(string)
         };
         var createResponse = await client.PostAsJsonAsync("/v1/tenant/payment-config", createPayload);
         var created = await createResponse.ReadFromApiJsonAsync<TenantPaymentConfigDto>();
@@ -143,8 +144,8 @@ public sealed class TenantPaymentConfigEndpointsTests(FunctionalTestFixture fixt
             ProviderName = "Manual",
             Label = "Cash-Deactivate-Test",
             Settings = "{}",
-            PublicNote = (string?)null,
-            QrCodeUrl = (string?)null
+            PublicNote = default(string),
+            QrCodeUrl = default(string)
         };
         var createResponse = await client.PostAsJsonAsync("/v1/tenant/payment-config", createPayload);
         var created = await createResponse.ReadFromApiJsonAsync<TenantPaymentConfigDto>();
@@ -168,8 +169,8 @@ public sealed class TenantPaymentConfigEndpointsTests(FunctionalTestFixture fixt
             ProviderName = "Manual",
             Label = "Cash-Delete-Test",
             Settings = "{}",
-            PublicNote = (string?)null,
-            QrCodeUrl = (string?)null
+            PublicNote = default(string),
+            QrCodeUrl = default(string)
         };
         var createResponse = await client.PostAsJsonAsync("/v1/tenant/payment-config", createPayload);
         var created = await createResponse.ReadFromApiJsonAsync<TenantPaymentConfigDto>();
