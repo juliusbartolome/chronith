@@ -60,6 +60,8 @@ public static class DependencyInjection
         services.AddScoped<ITimeBlockRepository, TimeBlockRepository>();
         services.AddScoped<IWebhookOutboxRepository, WebhookOutboxRepository>();
         services.AddScoped<INotificationConfigRepository, NotificationConfigRepository>();
+        services.AddScoped<ITenantPaymentConfigRepository, TenantPaymentConfigRepository>();
+        services.AddScoped<ITenantPaymentProviderResolver, TenantPaymentProviderResolver>();
         services.AddScoped<IBookingReminderRepository, BookingReminderRepository>();
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
         services.AddScoped<IApiKeyRepository, ApiKeyRepository>();

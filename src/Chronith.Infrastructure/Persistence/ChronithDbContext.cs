@@ -36,6 +36,8 @@ public sealed class ChronithDbContext : DbContext
     // No global query filter: notification configs and reminders are accessed by
     // background services which require cross-tenant access.
     public DbSet<TenantNotificationConfigEntity> TenantNotificationConfigs => Set<TenantNotificationConfigEntity>();
+    // No global query filter: payment configs accessed via ITenantPaymentProviderResolver which filters explicitly
+    public DbSet<TenantPaymentConfigEntity> TenantPaymentConfigs => Set<TenantPaymentConfigEntity>();
     public DbSet<BookingReminderEntity> BookingReminders => Set<BookingReminderEntity>();
     public DbSet<CustomerEntity> Customers => Set<CustomerEntity>();
     public DbSet<CustomerRefreshTokenEntity> CustomerRefreshTokens => Set<CustomerRefreshTokenEntity>();

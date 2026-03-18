@@ -50,7 +50,7 @@ public sealed class CreateBookingHandler(
     ITenantRepository tenantRepo,
     IUnitOfWork unitOfWork,
     IPublisher publisher,
-    IPaymentProviderFactory paymentProviderFactory,
+    ITenantPaymentProviderResolver tenantPaymentProviderResolver,
     IBookingMetrics metrics)
     : IRequestHandler<CreateBookingCommand, BookingDto>
 {
@@ -117,26 +117,31 @@ public sealed class CreateBookingHandler(
         {
             var providerName = bookingType.PaymentProvider ?? "Stub";
             using var payActivity = ChronithActivitySource.StartPaymentProcess(tenantContext.TenantId, providerName);
-            var provider = paymentProviderFactory.GetProvider(providerName);
-            var checkoutResult = await provider.CreateCheckoutSessionAsync(
-                new CreateCheckoutRequest(
-                    AmountInCentavos: bookingType.PriceInCentavos,
-                    Currency: bookingType.Currency,
-                    Description: $"{bookingType.Name} booking",
-                    BookingId: booking.Id,
-                    TenantId: tenantContext.TenantId),
-                ct);
+            var provider = await tenantPaymentProviderResolver.ResolveAsync(tenantContext.TenantId, providerName, ct);
 
-            booking.SetCheckoutDetails(checkoutResult.CheckoutUrl, checkoutResult.ProviderTransactionId);
+            if (provider is not null)
+            {
+                var checkoutResult = await provider.CreateCheckoutSessionAsync(
+                    new CreateCheckoutRequest(
+                        AmountInCentavos: bookingType.PriceInCentavos,
+                        Currency: bookingType.Currency,
+                        Description: $"{bookingType.Name} booking",
+                        BookingId: booking.Id,
+                        TenantId: tenantContext.TenantId),
+                    ct);
 
-            metrics.RecordPaymentProcessed(tenantContext.TenantId.ToString(), providerName);
+                booking.SetCheckoutDetails(checkoutResult.CheckoutUrl, checkoutResult.ProviderTransactionId);
 
-            // Persist the updated PaymentReference and CheckoutUrl. The booking was
-            // committed inside the advisory-lock transaction above, so the tracked entity
-            // in the DbContext does not reflect these in-memory changes. Using UpdateAsync
-            // (which issues an ExecuteUpdateAsync SQL statement directly) ensures both
-            // fields are written to the database in a second round-trip.
-            await bookingRepo.UpdateAsync(booking, ct);
+                metrics.RecordPaymentProcessed(tenantContext.TenantId.ToString(), providerName);
+
+                // Persist the updated PaymentReference and CheckoutUrl. The booking was
+                // committed inside the advisory-lock transaction above, so the tracked entity
+                // in the DbContext does not reflect these in-memory changes. Using UpdateAsync
+                // (which issues an ExecuteUpdateAsync SQL statement directly) ensures both
+                // fields are written to the database in a second round-trip.
+                await bookingRepo.UpdateAsync(booking, ct);
+            }
+            // provider is null → no active config for this provider; booking stays PendingPayment
         }
 
         await publisher.Publish(
