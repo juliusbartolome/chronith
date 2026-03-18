@@ -943,12 +943,12 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                     b.HasIndex("TenantId", "ProviderName")
                         .IsUnique()
                         .HasDatabaseName("IX_tenant_payment_configs_TenantId_ProviderName_active")
-                        .HasFilter("is_active = true AND is_deleted = false AND provider_name != 'Manual'");
+                        .HasFilter("\"IsActive\" = true AND \"IsDeleted\" = false AND \"ProviderName\" != 'Manual'");
 
                     b.HasIndex("TenantId", "ProviderName", "Label")
                         .IsUnique()
                         .HasDatabaseName("IX_tenant_payment_configs_TenantId_ProviderName_Label")
-                        .HasFilter("is_deleted = false");
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("tenant_payment_configs", "chronith");
                 });

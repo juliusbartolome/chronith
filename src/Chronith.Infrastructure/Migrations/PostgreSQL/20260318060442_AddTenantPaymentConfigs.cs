@@ -45,7 +45,7 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                 table: "tenant_payment_configs",
                 columns: new[] { "TenantId", "ProviderName" },
                 unique: true,
-                filter: "is_active = true AND is_deleted = false AND provider_name != 'Manual'");
+                filter: "\"IsActive\" = true AND \"IsDeleted\" = false AND \"ProviderName\" != 'Manual'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_tenant_payment_configs_TenantId_ProviderName_Label",
@@ -53,7 +53,7 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                 table: "tenant_payment_configs",
                 columns: new[] { "TenantId", "ProviderName", "Label" },
                 unique: true,
-                filter: "is_deleted = false");
+                filter: "\"IsDeleted\" = false");
         }
 
         /// <inheritdoc />

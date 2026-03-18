@@ -20,13 +20,13 @@ public sealed class TenantPaymentConfigConfiguration
         // Unique label per tenant+provider (excluding deleted)
         builder.HasIndex(c => new { c.TenantId, c.ProviderName, c.Label })
             .IsUnique()
-            .HasFilter("is_deleted = false")
+            .HasFilter("\"IsDeleted\" = false")
             .HasDatabaseName("IX_tenant_payment_configs_TenantId_ProviderName_Label");
 
         // Only one active API config per tenant+provider (Manual allows multiple)
         builder.HasIndex(c => new { c.TenantId, c.ProviderName })
             .IsUnique()
-            .HasFilter("is_active = true AND is_deleted = false AND provider_name != 'Manual'")
+            .HasFilter("\"IsActive\" = true AND \"IsDeleted\" = false AND \"ProviderName\" != 'Manual'")
             .HasDatabaseName("IX_tenant_payment_configs_TenantId_ProviderName_active");
 
         builder.HasIndex(c => c.TenantId)
