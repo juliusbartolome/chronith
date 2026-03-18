@@ -30,4 +30,8 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+LABEL org.opencontainers.image.source="https://github.com/juliusbartolome/chronith"
+LABEL org.opencontainers.image.description="Chronith booking engine dashboard"
+LABEL org.opencontainers.image.licenses="MIT"
+
 CMD ["node", "server.js"]

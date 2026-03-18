@@ -57,4 +57,8 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD curl -f http://localhost:8080/health/live || exit 1
 
+LABEL org.opencontainers.image.source="https://github.com/juliusbartolome/chronith"
+LABEL org.opencontainers.image.description="Chronith booking engine API"
+LABEL org.opencontainers.image.licenses="MIT"
+
 ENTRYPOINT ["dotnet", "Chronith.API.dll"]
