@@ -649,4 +649,6 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trigger Azure CD webhook
-        run: curl -fsS -X POST "${{ secrets.CHRONITH_API_CD_WEBHOOK_URL }}"
+        env:
+          WEBHOOK_URL: ${{ secrets.CHRONITH_API_CD_WEBHOOK_URL }}
+        run: curl -fsS -X POST "$WEBHOOK_URL"
