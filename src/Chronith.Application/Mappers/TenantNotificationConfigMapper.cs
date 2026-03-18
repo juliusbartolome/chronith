@@ -10,7 +10,6 @@ public static class TenantNotificationConfigMapper
             Id: config.Id,
             ChannelType: config.ChannelType,
             IsEnabled: config.IsEnabled,
-            Settings: config.Settings,
             CreatedAt: config.CreatedAt,
             UpdatedAt: config.UpdatedAt);
 }

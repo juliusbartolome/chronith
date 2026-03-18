@@ -34,7 +34,6 @@ public sealed class NotificationConfigEndpointsTests(FunctionalTestFixture fixtu
         config.Should().NotBeNull();
         config!.ChannelType.Should().Be("email");
         config.IsEnabled.Should().BeTrue();
-        config.Settings.Should().Contain("smtp.example.com");
     }
 
     [Fact]
@@ -63,7 +62,6 @@ public sealed class NotificationConfigEndpointsTests(FunctionalTestFixture fixtu
         updated!.Id.Should().Be(created!.Id);
         updated.ChannelType.Should().Be("sms");
         updated.IsEnabled.Should().BeTrue();
-        updated.Settings.Should().Contain("AC111");
     }
 
     [Fact]

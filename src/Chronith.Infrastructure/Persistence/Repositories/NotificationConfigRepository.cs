@@ -2,12 +2,14 @@ using Chronith.Application.Interfaces;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Persistence.Mappers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Chronith.Infrastructure.Persistence.Repositories;
 
 public sealed class NotificationConfigRepository(
     ChronithDbContext db,
-    IEncryptionService encryptionService)
+    IEncryptionService encryptionService,
+    ILogger<NotificationConfigRepository> logger)
     : INotificationConfigRepository
 {
     public async Task<TenantNotificationConfig?> GetByChannelTypeAsync(
@@ -71,6 +73,9 @@ public sealed class NotificationConfigRepository(
         {
             // Legacy row: settings column contains plaintext JSON (pre-migration).
             // Return as-is; next write will encrypt it.
+            logger.LogWarning(
+                "Notification config settings for tenant could not be decrypted — " +
+                "treating as legacy plaintext row. Next write will encrypt it.");
             return settings;
         }
     }

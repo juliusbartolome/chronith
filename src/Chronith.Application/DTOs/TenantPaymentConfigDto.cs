@@ -6,7 +6,6 @@ public sealed record TenantPaymentConfigDto(
     string ProviderName,
     string Label,
     bool IsActive,
-    string Settings,
     string? PublicNote,
     string? QrCodeUrl,
     DateTimeOffset CreatedAt,
