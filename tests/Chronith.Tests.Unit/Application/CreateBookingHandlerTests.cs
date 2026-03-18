@@ -58,7 +58,7 @@ public sealed class CreateBookingHandlerTests
         IBookingRepository BookingRepo,
         IPaymentProvider Provider,
         IBookingMetrics Metrics)
-        Build(BookingType bookingType)
+        Build(BookingType bookingType, bool resolverReturnsNull = false)
     {
         var tenantCtx = Substitute.For<ITenantContext>();
         tenantCtx.TenantId.Returns(TenantId);
@@ -96,8 +96,10 @@ public sealed class CreateBookingHandlerTests
             .CreateCheckoutSessionAsync(Arg.Any<CreateCheckoutRequest>(), Arg.Any<CancellationToken>())
             .Returns(new CreateCheckoutResult("https://pay.example.com/checkout/123", "ext-id-123"));
 
-        var providerFactory = Substitute.For<IPaymentProviderFactory>();
-        providerFactory.GetProvider(Arg.Any<string>()).Returns(provider);
+        var resolver = Substitute.For<ITenantPaymentProviderResolver>();
+        resolver
+            .ResolveAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(resolverReturnsNull ? (IPaymentProvider?)null : provider);
 
         var metrics = Substitute.For<IBookingMetrics>();
 
@@ -108,7 +110,7 @@ public sealed class CreateBookingHandlerTests
             tenantRepo,
             unitOfWork,
             publisher,
-            providerFactory,
+            resolver,
             metrics);
 
         return (handler, unitOfWork, bookingRepo, provider, metrics);
@@ -267,5 +269,23 @@ public sealed class CreateBookingHandlerTests
         await handler.Handle(MakeCommand(), CancellationToken.None);
 
         metrics.Received(1).RecordPaymentProcessed(Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task Handle_WhenResolverReturnsNull_SkipsCheckoutAndStaysAtPendingPayment()
+    {
+        // Arrange — Automatic mode but resolver returns null (no active config)
+        var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "PayMongo");
+        var (handler, _, bookingRepo, provider, _) = Build(bookingType, resolverReturnsNull: true);
+
+        // Act
+        var result = await handler.Handle(MakeCommand(), CancellationToken.None);
+
+        // Assert — checkout never called, booking stays PendingPayment
+        await provider.DidNotReceive()
+            .CreateCheckoutSessionAsync(Arg.Any<CreateCheckoutRequest>(), Arg.Any<CancellationToken>());
+        await bookingRepo.DidNotReceive().UpdateAsync(Arg.Any<Booking>(), Arg.Any<CancellationToken>());
+        result.Status.Should().Be(BookingStatus.PendingPayment);
+        result.CheckoutUrl.Should().BeNull();
     }
 }
