@@ -14,14 +14,15 @@ namespace Chronith.Tests.Integration.Persistence;
 [Collection("Integration")]
 public sealed class WebhookRepositoryTests(PostgresFixture postgres)
 {
-    private static readonly string TestKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    private static readonly string TestKey = "Ck8i7bTWYJ0yKqjIlhdC/oqyailyufR8GTLjSksgEO0=";
 
     private static WebhookRepository CreateRepo(
         Chronith.Infrastructure.Persistence.ChronithDbContext db)
     {
         var encryption = new EncryptionService(Options.Create(new EncryptionOptions
         {
-            EncryptionKey = TestKey
+            KeyVersions = new Dictionary<string, string> { ["v1"] = TestKey },
+            EncryptionKeyVersion = "v1"
         }));
         return new WebhookRepository(db, encryption, NullLogger<WebhookRepository>.Instance);
     }
