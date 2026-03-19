@@ -16,10 +16,14 @@ defaults:
   run:
     working-directory: dashboard
 
+permissions: {}
+
 jobs:
   lint-typecheck:
     name: Lint + Type Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
 
@@ -41,6 +45,8 @@ jobs:
   unit-tests:
     name: Unit Tests (Vitest)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
 
@@ -59,6 +65,8 @@ jobs:
   build:
     name: Next.js Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
 
@@ -79,6 +87,8 @@ jobs:
   docker-build:
     name: Docker Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
 
@@ -97,9 +107,14 @@ jobs:
 
   deploy-dashboard:
     name: Deploy Dashboard
-    needs: [docker-build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [lint-typecheck, unit-tests, build, docker-build]
+    if: >-
+      github.event_name == 'push'
+      && github.ref == 'refs/heads/main'
+      && !failure()
+      && !cancelled()
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
       packages: write
@@ -122,7 +137,9 @@ jobs:
           context: ./dashboard
           file: ./dashboard/Dockerfile
           push: true
-          tags: ghcr.io/juliusbartolome/chronith-dashboard:latest
+          tags: |
+            ghcr.io/juliusbartolome/chronith-dashboard:latest
+            ghcr.io/juliusbartolome/chronith-dashboard:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -130,3 +147,18 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.CHRONITH_DASHBOARD_CD_WEBHOOK_URL }}
         run: curl -fsS -X POST "$WEBHOOK_URL"
+
+      - name: Wait for production health
+        run: |
+          echo "Polling https://chronith-dashboard.azurewebsites.net ..."
+          for i in $(seq 1 24); do
+            status=$(curl -o /dev/null -s -w "%{http_code}" https://chronith-dashboard.azurewebsites.net || true)
+            if [ "$status" = "200" ]; then
+              echo "Dashboard healthy after ~$((i * 5))s"
+              exit 0
+            fi
+            echo "  attempt $i: HTTP $status — retrying in 5s..."
+            sleep 5
+          done
+          echo "Dashboard health check timed out after ~120s"
+          exit 1

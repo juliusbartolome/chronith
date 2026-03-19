@@ -6,3 +6,25 @@ docs/
 *.md
 *.user
 .vs/
+
+# Credential and environment files — never include in Docker build context
+.env
+.env.*
+*.env
+
+# Azure deployment artifacts
+azure-publish/
+chronith-deploy.zip
+
+# Dashboard and packages (not needed for API image)
+dashboard/
+packages/
+
+# Docker configs (not needed inside image)
+docker/
+
+# CI/CD configs
+.github/
+
+# Debug symbols
+*.pdb

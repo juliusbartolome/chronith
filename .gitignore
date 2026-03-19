@@ -514,3 +514,7 @@ packages/sdk-typescript/node_modules/
 docs/site/dist/
 docs/site/.astro/
 docs/site/node_modules/
+
+# Azure App Service deployment artifacts — build output and zip (never commit)
+azure-publish/
+chronith-deploy.zip

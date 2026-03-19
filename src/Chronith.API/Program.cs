@@ -250,6 +250,25 @@ builder.Host.UseSerilog((ctx, sp, cfg) => cfg
 
 var app = builder.Build();
 
+// Guard: reject placeholder secrets in any environment except Development.
+// This catches misconfigured deployments before they can start serving traffic.
+if (!app.Environment.IsDevelopment())
+{
+    const string jwtPlaceholder = "REPLACE_WITH_SECRET__run_openssl_rand_-hex_32";
+    const string encPlaceholder = "REPLACE_WITH_SECRET__run_openssl_rand_-base64_32";
+
+    var jwtKey = app.Configuration["Jwt:SigningKey"];
+    var encKey = app.Configuration["Security:EncryptionKey"];
+
+    if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey == jwtPlaceholder)
+        throw new InvalidOperationException(
+            "Jwt:SigningKey is not configured. Generate a key with: openssl rand -hex 32");
+
+    if (string.IsNullOrWhiteSpace(encKey) || encKey == encPlaceholder)
+        throw new InvalidOperationException(
+            "Security:EncryptionKey is not configured. Generate a key with: openssl rand -base64 32");
+}
+
 // Run EF Core migrations on startup so the schema is always up to date
 using (var scope = app.Services.CreateScope())
 {
