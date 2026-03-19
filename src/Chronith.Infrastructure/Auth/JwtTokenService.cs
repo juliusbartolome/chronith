@@ -27,6 +27,21 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
         return configuration["Jwt:SigningKey"]!;
     }
 
+    /// <summary>
+    /// Returns all configured signing keys for token validation.
+    /// Supports key rotation: tokens signed with any configured key are accepted.
+    /// If <c>Jwt:SigningKeys</c> is configured, returns all entries; otherwise returns
+    /// the single <c>Jwt:SigningKey</c> value for backward compatibility.
+    /// </summary>
+    private IEnumerable<SecurityKey> GetAllSigningKeys()
+    {
+        var keys = configuration.GetSection("Jwt:SigningKeys").Get<string[]>();
+        if (keys is { Length: > 0 })
+            return keys.Select(k => new SymmetricSecurityKey(Encoding.UTF8.GetBytes(k)));
+
+        return [new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:SigningKey"]!))];
+    }
+
     public string CreateAccessToken(TenantUser user)
     {
         var signingKey = GetPrimarySigningKey();
@@ -107,13 +122,10 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
     {
         try
         {
-            var signingKey = GetPrimarySigningKey();
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
-
             var validationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = key,
+                IssuerSigningKeys = GetAllSigningKeys(),
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ValidateLifetime = true,
@@ -177,13 +189,10 @@ public sealed class JwtTokenService(IConfiguration configuration) : ITokenServic
     {
         try
         {
-            var signingKey = GetPrimarySigningKey();
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
-
             var validationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = key,
+                IssuerSigningKeys = GetAllSigningKeys(),
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ValidateLifetime = true,
