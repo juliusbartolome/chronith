@@ -1,4 +1,5 @@
 name: CI
+# Trigger CI for dashboard-only PRs so required status checks are satisfied
 
 on:
   push:
