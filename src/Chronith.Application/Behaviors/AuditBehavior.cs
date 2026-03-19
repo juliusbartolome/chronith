@@ -1,4 +1,5 @@
 using Chronith.Application.Interfaces;
+using Chronith.Application.Services;
 using Chronith.Domain.Models;
 using MediatR;
 
@@ -8,6 +9,7 @@ public sealed class AuditBehavior<TRequest, TResponse>(
     IEnumerable<IAuditSnapshotResolver> resolvers,
     IAuditEntryRepository auditRepository,
     ITenantContext tenantContext,
+    IAuditPiiRedactor piiRedactor,
     IUnitOfWork unitOfWork
 ) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
@@ -31,6 +33,9 @@ public sealed class AuditBehavior<TRequest, TResponse>(
             ? await resolver.ResolveSnapshotAsync(auditable.EntityId, ct)
             : null;
 
+        var redactedOld = piiRedactor.Redact(oldValues);
+        var redactedNew = piiRedactor.Redact(newValues);
+
         var entry = AuditEntry.Create(
             tenantContext.TenantId,
             tenantContext.UserId,
@@ -38,8 +43,8 @@ public sealed class AuditBehavior<TRequest, TResponse>(
             auditable.EntityType,
             auditable.EntityId,
             auditable.Action,
-            oldValues,
-            newValues,
+            redactedOld,
+            redactedNew,
             null);
 
         await auditRepository.AddAsync(entry, ct);

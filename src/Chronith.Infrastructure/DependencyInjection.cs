@@ -146,6 +146,7 @@ public static class DependencyInjection
         services.Configure<BlindIndexOptions>(configuration.GetSection(BlindIndexOptions.SectionName));
         services.AddSingleton<IBlindIndexService, HmacBlindIndexService>();
         services.AddSingleton<IPasswordHasher, Argon2idPasswordHasher>();
+        services.AddScoped<IAuditPiiRedactor, AuditPiiRedactor>();
 
         // Rate limiting
         services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
