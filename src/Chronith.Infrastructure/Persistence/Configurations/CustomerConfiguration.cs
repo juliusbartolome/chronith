@@ -16,8 +16,7 @@ public sealed class CustomerConfiguration : IEntityTypeConfiguration<CustomerEnt
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(c => c.PasswordHash)
-            .HasMaxLength(200);
+        builder.Property(c => c.PasswordHash);
 
         builder.Property(c => c.Name)
             .IsRequired()
