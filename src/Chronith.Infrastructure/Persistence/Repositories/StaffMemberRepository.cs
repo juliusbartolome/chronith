@@ -3,31 +3,46 @@ using Chronith.Domain.Models;
 using Chronith.Infrastructure.Persistence.Entities;
 using Chronith.Infrastructure.Persistence.Mappers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Chronith.Infrastructure.Persistence.Repositories;
 
-public sealed class StaffMemberRepository : IStaffMemberRepository
+public sealed class StaffMemberRepository(
+    ChronithDbContext db,
+    IEncryptionService encryptionService,
+    ILogger<StaffMemberRepository> logger)
+    : IStaffMemberRepository
 {
-    private readonly ChronithDbContext _db;
-
-    public StaffMemberRepository(ChronithDbContext db) => _db = db;
+    private string DecryptEmail(string? value)
+    {
+        if (value is null) return string.Empty;
+        try { return encryptionService.Decrypt(value) ?? string.Empty; }
+        catch (Exception ex) when (ex is FormatException or InvalidOperationException)
+        {
+            logger.LogWarning("StaffMember.Email could not be decrypted — " +
+                "treating as legacy plaintext row.");
+            return value;
+        }
+    }
 
     public async Task<StaffMember?> GetByIdAsync(
         Guid tenantId, Guid staffId, CancellationToken ct = default)
     {
-        var entity = await _db.StaffMembers
+        var entity = await db.StaffMembers
             .TagWith("GetByIdAsync — StaffMemberRepository")
             .AsNoTracking()
             .Include(s => s.AvailabilityWindows)
             .FirstOrDefaultAsync(s => s.TenantId == tenantId && s.Id == staffId, ct);
 
-        return entity is null ? null : StaffMemberEntityMapper.ToDomain(entity);
+        if (entity is null) return null;
+        entity.Email = DecryptEmail(entity.Email);
+        return StaffMemberEntityMapper.ToDomain(entity);
     }
 
     public async Task<IReadOnlyList<StaffMember>> ListAsync(
         Guid tenantId, CancellationToken ct = default)
     {
-        var entities = await _db.StaffMembers
+        var entities = await db.StaffMembers
             .TagWith("ListAsync — StaffMemberRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
@@ -36,18 +51,22 @@ public sealed class StaffMemberRepository : IStaffMemberRepository
             .OrderBy(s => s.Name)
             .ToListAsync(ct);
 
-        return entities.Select(StaffMemberEntityMapper.ToDomain).ToList();
+        return entities.Select(e =>
+        {
+            e.Email = DecryptEmail(e.Email);
+            return StaffMemberEntityMapper.ToDomain(e);
+        }).ToList();
     }
 
     public async Task<IReadOnlyList<StaffMember>> ListByBookingTypeAsync(
         Guid tenantId, Guid bookingTypeId, CancellationToken ct = default)
     {
-        var entities = await _db.BookingTypeStaffAssignments
+        var entities = await db.BookingTypeStaffAssignments
             .TagWith("ListByBookingTypeAsync — StaffMemberRepository")
             .AsNoTracking()
             .Where(a => a.BookingTypeId == bookingTypeId)
             .Join(
-                _db.StaffMembers
+                db.StaffMembers
                     .AsNoTracking()
                     .IgnoreQueryFilters()
                     .Include(s => s.AvailabilityWindows)
@@ -58,29 +77,34 @@ public sealed class StaffMemberRepository : IStaffMemberRepository
             .OrderBy(s => s.Name)
             .ToListAsync(ct);
 
-        return entities.Select(StaffMemberEntityMapper.ToDomain).ToList();
+        return entities.Select(e =>
+        {
+            e.Email = DecryptEmail(e.Email);
+            return StaffMemberEntityMapper.ToDomain(e);
+        }).ToList();
     }
 
     public async Task AddAsync(StaffMember staff, CancellationToken ct = default)
     {
         var entity = StaffMemberEntityMapper.ToEntity(staff);
-        await _db.StaffMembers.AddAsync(entity, ct);
+        entity.Email = encryptionService.Encrypt(entity.Email) ?? string.Empty;
+        await db.StaffMembers.AddAsync(entity, ct);
     }
 
     public async Task UpdateAsync(StaffMember staff, CancellationToken ct = default)
     {
-        var entity = await _db.StaffMembers
+        var entity = await db.StaffMembers
             .FirstOrDefaultAsync(s => s.Id == staff.Id, ct);
 
         if (entity is null) return;
 
         entity.Name = staff.Name;
-        entity.Email = staff.Email;
+        entity.Email = encryptionService.Encrypt(staff.Email) ?? string.Empty;
         entity.IsActive = staff.IsActive;
         entity.IsDeleted = staff.IsDeleted;
 
         // Replace availability windows: delete existing, add new
-        await _db.StaffAvailabilityWindows
+        await db.StaffAvailabilityWindows
             .Where(w => w.StaffMemberId == staff.Id)
             .ExecuteDeleteAsync(ct);
 
@@ -96,19 +120,19 @@ public sealed class StaffMemberRepository : IStaffMemberRepository
 
         if (newWindows.Count > 0)
         {
-            await _db.StaffAvailabilityWindows.AddRangeAsync(newWindows, ct);
+            await db.StaffAvailabilityWindows.AddRangeAsync(newWindows, ct);
         }
     }
 
     public async Task AssignToBookingTypeAsync(
         Guid bookingTypeId, Guid staffMemberId, CancellationToken ct = default)
     {
-        var exists = await _db.BookingTypeStaffAssignments
+        var exists = await db.BookingTypeStaffAssignments
             .AnyAsync(a => a.BookingTypeId == bookingTypeId && a.StaffMemberId == staffMemberId, ct);
 
         if (!exists)
         {
-            await _db.BookingTypeStaffAssignments.AddAsync(new BookingTypeStaffAssignmentEntity
+            await db.BookingTypeStaffAssignments.AddAsync(new BookingTypeStaffAssignmentEntity
             {
                 BookingTypeId = bookingTypeId,
                 StaffMemberId = staffMemberId
@@ -119,13 +143,13 @@ public sealed class StaffMemberRepository : IStaffMemberRepository
     public async Task RemoveFromBookingTypeAsync(
         Guid bookingTypeId, Guid staffMemberId, CancellationToken ct = default)
     {
-        await _db.BookingTypeStaffAssignments
+        await db.BookingTypeStaffAssignments
             .Where(a => a.BookingTypeId == bookingTypeId && a.StaffMemberId == staffMemberId)
             .ExecuteDeleteAsync(ct);
     }
 
     public Task<int> CountByTenantAsync(Guid tenantId, CancellationToken ct = default) =>
-        _db.StaffMembers
+        db.StaffMembers
             .TagWith("CountByTenantAsync — StaffMemberRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()

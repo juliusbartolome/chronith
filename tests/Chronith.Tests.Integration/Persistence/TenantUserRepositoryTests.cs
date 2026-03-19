@@ -1,15 +1,32 @@
+using Chronith.Application.Options;
 using Chronith.Domain.Enums;
+using Chronith.Infrastructure.Persistence;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Persistence.Entities;
 using Chronith.Infrastructure.Persistence.Repositories;
+using Chronith.Infrastructure.Security;
 using Chronith.Tests.Integration.Fixtures;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Chronith.Tests.Integration.Persistence;
 
 [Collection("Integration")]
 public class TenantUserRepositoryTests(PostgresFixture postgres)
 {
+    private static TenantUserRepository CreateRepo(ChronithDbContext db)
+    {
+        var encryption = new EncryptionService(Options.Create(new EncryptionOptions
+        {
+            KeyVersions = new Dictionary<string, string> { ["v1"] = "Ck8i7bTWYJ0yKqjIlhdC/oqyailyufR8GTLjSksgEO0=" },
+            EncryptionKeyVersion = "v1"
+        }));
+        var hmacKey = Convert.ToBase64String(new byte[32].Select((_, i) => (byte)77).ToArray());
+        var blindIndex = new HmacBlindIndexService(Options.Create(new BlindIndexOptions { HmacKey = hmacKey }));
+        return new TenantUserRepository(db, encryption, blindIndex, NullLogger<TenantUserRepository>.Instance);
+    }
+
     [Fact]
     public async Task AddAsync_ThenGetByEmailAsync_ReturnsSameUser()
     {
@@ -25,7 +42,7 @@ public class TenantUserRepositoryTests(PostgresFixture postgres)
         });
         await db.SaveChangesAsync();
 
-        var repo = new TenantUserRepository(db);
+        var repo = CreateRepo(db);
         var user = TenantUser.Create(tenantId, "test@example.com", "hash", TenantUserRole.Owner);
         await repo.AddAsync(user);
         await db.SaveChangesAsync();
@@ -50,7 +67,7 @@ public class TenantUserRepositoryTests(PostgresFixture postgres)
         });
         await db.SaveChangesAsync();
 
-        var repo = new TenantUserRepository(db);
+        var repo = CreateRepo(db);
         var user = TenantUser.Create(tenantId, "user@example.com", "hash", TenantUserRole.Owner);
         await repo.AddAsync(user);
         await db.SaveChangesAsync();
@@ -73,7 +90,7 @@ public class TenantUserRepositoryTests(PostgresFixture postgres)
         });
         await db.SaveChangesAsync();
 
-        var repo = new TenantUserRepository(db);
+        var repo = CreateRepo(db);
         var user = TenantUser.Create(tenantId, "exists@example.com", "hash", TenantUserRole.Owner);
         await repo.AddAsync(user);
         await db.SaveChangesAsync();

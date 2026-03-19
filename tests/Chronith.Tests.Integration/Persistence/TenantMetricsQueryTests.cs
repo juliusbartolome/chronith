@@ -29,7 +29,12 @@ public sealed class TenantMetricsQueryTests(PostgresFixture postgres)
         await SeedBookingAsync(db, tenantId, bookingTypeId, BookingStatus.Cancelled);
 
         var monthStartUtc = new DateTimeOffset(DateTimeOffset.UtcNow.Year, DateTimeOffset.UtcNow.Month, 1, 0, 0, 0, TimeSpan.Zero);
-        var repo = new BookingRepository(db);
+        var encryption = new EncryptionService(Options.Create(new EncryptionOptions
+        {
+            KeyVersions = new Dictionary<string, string> { ["v1"] = "Ck8i7bTWYJ0yKqjIlhdC/oqyailyufR8GTLjSksgEO0=" },
+            EncryptionKeyVersion = "v1"
+        }));
+        var repo = new BookingRepository(db, encryption, NullLogger<BookingRepository>.Instance);
         var metrics = await repo.GetMetricsAsync(tenantId, monthStartUtc);
 
         metrics.Total.Should().Be(4);

@@ -17,8 +17,7 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
             .HasMaxLength(200);
 
         builder.Property(b => b.CustomerEmail)
-            .IsRequired()
-            .HasMaxLength(200);
+            .IsRequired();
 
         builder.Property(b => b.PaymentReference)
             .HasMaxLength(200);
