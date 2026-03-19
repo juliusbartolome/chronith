@@ -11,6 +11,8 @@ public sealed class TenantUserConfiguration : IEntityTypeConfiguration<TenantUse
         builder.ToTable("TenantUsers");
         builder.HasKey(u => u.Id);
         builder.Property(u => u.Email).IsRequired().HasMaxLength(256);
+        builder.Property(u => u.EmailEncrypted);
+        builder.Property(u => u.EmailToken).HasMaxLength(64);
         builder.Property(u => u.PasswordHash).IsRequired();
         builder.Property(u => u.Role).IsRequired()
             .HasConversion<string>(); // store as string e.g. "Owner"
@@ -19,5 +21,9 @@ public sealed class TenantUserConfiguration : IEntityTypeConfiguration<TenantUse
         builder.Property(u => u.IsEmailVerified).IsRequired();
         // Unique email per tenant
         builder.HasIndex(u => new { u.TenantId, u.Email }).IsUnique();
+        // Blind index for encrypted email lookup
+        builder.HasIndex(u => new { u.TenantId, u.EmailToken })
+            .HasFilter("\"EmailToken\" IS NOT NULL")
+            .HasDatabaseName("ix_tenantusers_email_token");
     }
 }
