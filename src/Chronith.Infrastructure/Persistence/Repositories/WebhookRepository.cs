@@ -90,9 +90,10 @@ public sealed class WebhookRepository(
     {
         if (secret is null) return string.Empty;
         try { return encryptionService.Decrypt(secret) ?? string.Empty; }
-        catch (FormatException)
+        catch (Exception ex) when (ex is FormatException or InvalidOperationException)
         {
-            // Legacy row: secret column contains plaintext (pre-migration).
+            // Legacy row: secret column contains plaintext (pre-encryption migration)
+            // or was seeded without the version prefix.
             // Return as-is; next write will encrypt it.
             logger.LogWarning(
                 "Webhook secret could not be decrypted — " +

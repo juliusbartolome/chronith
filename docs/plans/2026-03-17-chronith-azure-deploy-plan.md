@@ -23,8 +23,8 @@
 
 - [x] Azure CLI installed and authenticated (`az account show` works)
 - [x] `.NET 10` supported: `az webapp list-runtimes --os linux | grep DOTNETCORE:10.0`
-- [x] Neon connection string: `Host=ep-dark-glade-a17i5s2a-pooler.ap-southeast-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_prky16vfICmV;Ssl Mode=Require;Trust Server Certificate=true`
-- [x] Upstash connection string: `sacred-mastodon-74341.upstash.io:6379,password=gQAAAAAAASJlAAIncDE5Y2QxNDI0YjNhN2Q0YWNhYWNlNTM5MjhhNDBjYzI4MXAxNzQzNDE,ssl=True,abortConnect=False`
+- [x] Neon connection string: `Host=ep-dark-glade-a17i5s2a-pooler.ap-southeast-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=<REDACTED_ROTATE_IMMEDIATELY>;Ssl Mode=Require;Trust Server Certificate=true`
+- [x] Upstash connection string: `sacred-mastodon-74341.upstash.io:6379,password=<REDACTED_ROTATE_IMMEDIATELY>,ssl=True,abortConnect=False`
 - [x] Secrets already generated: `Jwt__SigningKey`, `Security__EncryptionKey` (see `.env.fly`)
 
 ---
@@ -104,10 +104,10 @@ az webapp config appsettings set \
   --name chronith-api \
   --resource-group rg-chronith \
   --settings \
-    Jwt__SigningKey="b58ed59ec0abc8858c736c5d733f645ddc12f07a57de193beae43779795483e0" \
-    "Security__EncryptionKey=33Y0KPsAEP3h51GM2OWJY/HEPPLYaP9A6MM9WLPKIdQ=" \
-    "Database__ConnectionString=Host=ep-dark-glade-a17i5s2a-pooler.ap-southeast-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_prky16vfICmV;Ssl Mode=Require;Trust Server Certificate=true" \
-    "Redis__ConnectionString=sacred-mastodon-74341.upstash.io:6379,password=gQAAAAAAASJlAAIncDE5Y2QxNDI0YjNhN2Q0YWNhYWNlNTM5MjhhNDBjYzI4MXAxNzQzNDE,ssl=True,abortConnect=False"
+    Jwt__SigningKey="<REDACTED_ROTATE_IMMEDIATELY>" \
+    "Security__EncryptionKey=<REDACTED_ROTATE_IMMEDIATELY>" \
+    "Database__ConnectionString=Host=ep-dark-glade-a17i5s2a-pooler.ap-southeast-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=<REDACTED_ROTATE_IMMEDIATELY>;Ssl Mode=Require;Trust Server Certificate=true" \
+    "Redis__ConnectionString=sacred-mastodon-74341.upstash.io:6379,password=<REDACTED_ROTATE_IMMEDIATELY>,ssl=True,abortConnect=False"
 ```
 
 Expected: JSON listing all settings (secret values are shown in plain text here — Azure encrypts them at rest).

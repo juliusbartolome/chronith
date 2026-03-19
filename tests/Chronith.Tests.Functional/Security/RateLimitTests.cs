@@ -45,7 +45,8 @@ public sealed class RateLimitTests : IAsyncLifetime
                 b.UseSetting("Database:Provider", "PostgreSQL");
                 b.UseSetting("Database:ConnectionString", connStr);
                 b.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
-                b.UseSetting("Security:EncryptionKey", TestConstants.EncryptionKey);
+                b.UseSetting("Security:EncryptionKeyVersion", "v1");
+                b.UseSetting("Security:KeyVersions:v1", TestConstants.EncryptionKey);
                 // Auth policy: 1 request per 300-second window
                 b.UseSetting("RateLimiting:Auth:PermitLimit", "1");
                 b.UseSetting("RateLimiting:Auth:WindowSeconds", "300");

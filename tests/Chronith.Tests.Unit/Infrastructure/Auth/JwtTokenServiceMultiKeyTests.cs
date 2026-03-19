@@ -152,4 +152,69 @@ public class JwtTokenServiceMultiKeyTests
         // Signed with primary key (first in SigningKeys array)
         ValidateToken(token, PrimaryKey).Should().NotBeNull();
     }
+
+    /// <summary>
+    /// Creates a JWT signed with the given key, with the specified claims and expiry.
+    /// </summary>
+    private static string CreateSignedToken(string signingKey, IEnumerable<Claim> claims, TimeSpan expiry)
+    {
+        var keyBytes = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+        var creds = new SigningCredentials(keyBytes, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.Add(expiry),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    [Fact]
+    public void ValidateMagicLinkToken_SignedWithSecondaryKey_SucceedsWhenBothKeysConfigured()
+    {
+        // Arrange: service configured with both PrimaryKey and SecondaryKey
+        var sut = CreateSut(PrimaryKey, SecondaryKey);
+        var customerId = Guid.NewGuid();
+        var tenantSlug = "test-tenant";
+
+        // Sign a magic link token manually using SecondaryKey (key index 1)
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, customerId.ToString()),
+            new Claim("email", "user@example.com"),
+            new Claim("tenantSlug", tenantSlug),
+            new Claim("purpose", "magic-link-verify"),
+        };
+        var token = CreateSignedToken(SecondaryKey, claims, TimeSpan.FromHours(24));
+
+        // Act
+        var result = sut.ValidateMagicLinkToken(token, tenantSlug);
+
+        // Assert: validation must succeed and return the correct customer ID
+        result.Should().Be(customerId,
+            "ValidateMagicLinkToken must accept tokens signed with any configured key, not just the primary");
+    }
+
+    [Fact]
+    public void ValidateEmailVerificationToken_SignedWithSecondaryKey_SucceedsWhenBothKeysConfigured()
+    {
+        // Arrange: service configured with both PrimaryKey and SecondaryKey
+        var sut = CreateSut(PrimaryKey, SecondaryKey);
+        var userId = Guid.NewGuid();
+
+        // Sign an email verification token manually using SecondaryKey (key index 1)
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new Claim("purpose", "email-verify"),
+        };
+        var token = CreateSignedToken(SecondaryKey, claims, TimeSpan.FromHours(24));
+
+        // Act
+        var result = sut.ValidateEmailVerificationToken(token);
+
+        // Assert: validation must succeed and return the correct user ID
+        result.Should().Be(userId,
+            "ValidateEmailVerificationToken must accept tokens signed with any configured key, not just the primary");
+    }
 }

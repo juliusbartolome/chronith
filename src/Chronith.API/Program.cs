@@ -250,6 +250,30 @@ builder.Host.UseSerilog((ctx, sp, cfg) => cfg
 
 var app = builder.Build();
 
+// Guard: reject placeholder secrets in any environment except Development.
+// This catches misconfigured deployments before they can start serving traffic.
+if (!app.Environment.IsDevelopment())
+{
+    const string jwtPlaceholder = "REPLACE_WITH_SECRET__run_openssl_rand_-hex_32";
+
+    var jwtKey = app.Configuration["Jwt:SigningKey"];
+
+    if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey == jwtPlaceholder)
+        throw new InvalidOperationException(
+            "Jwt:SigningKey is not configured. Generate a key with: openssl rand -hex 32");
+
+    var encryptionVersion = app.Configuration["Security:EncryptionKeyVersion"];
+    var encryptionKey = app.Configuration[$"Security:KeyVersions:{encryptionVersion}"];
+    if (string.IsNullOrEmpty(encryptionVersion) ||
+        encryptionVersion.StartsWith("SET_VIA_") ||
+        string.IsNullOrEmpty(encryptionKey) ||
+        encryptionKey.StartsWith("SET_VIA_") ||
+        encryptionKey == "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+        throw new InvalidOperationException(
+            $"Security:KeyVersions is not configured. Set Security:EncryptionKeyVersion and " +
+            $"Security:KeyVersions:{encryptionVersion ?? "<version>"} via Azure App Service settings or Key Vault references.");
+}
+
 // Run EF Core migrations on startup so the schema is always up to date
 using (var scope = app.Services.CreateScope())
 {

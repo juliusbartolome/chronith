@@ -36,7 +36,8 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
                 builder.UseSetting("Database:Provider", "PostgreSQL");
                 builder.UseSetting("Database:ConnectionString", connectionString);
                 builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
-                builder.UseSetting("Security:EncryptionKey", TestConstants.EncryptionKey);
+                builder.UseSetting("Security:EncryptionKeyVersion", "v1");
+                builder.UseSetting("Security:KeyVersions:v1", TestConstants.EncryptionKey);
                 builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
                 // Raise rate-limit permits very high so functional tests never exhaust
                 // the shared in-process IP bucket. Rate-limit shape tests use their own
