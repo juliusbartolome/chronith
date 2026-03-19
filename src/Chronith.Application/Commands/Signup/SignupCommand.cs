@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Services;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
@@ -46,6 +47,7 @@ public sealed class SignupCommandHandler(
     ITenantUserRepository userRepository,
     ITenantSubscriptionRepository subscriptionRepository,
     IDefaultTemplateSeeder templateSeeder,
+    IPasswordHasher passwordHasher,
     IUnitOfWork unitOfWork,
     ILogger<SignupCommandHandler> logger
 ) : IRequestHandler<SignupCommand, SignupResultDto>
@@ -70,7 +72,7 @@ public sealed class SignupCommandHandler(
         await tenantRepository.AddAsync(tenant, cancellationToken);
 
         // Hash password and create owner user
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(command.Password, workFactor: 12);
+        var passwordHash = passwordHasher.Hash(command.Password);
         var user = TenantUser.Create(tenant.Id, command.Email, passwordHash, TenantUserRole.Owner);
         await userRepository.AddAsync(user, cancellationToken);
 
