@@ -98,6 +98,9 @@ public static class DependencyInjection
         services.AddHostedService<AuditRetentionService>();
         services.AddHostedService<ApiKeyAgingService>();
         services.AddHostedService<EncryptionKeyRotationService>();
+        services.Configure<WebhookOutboxCleanupOptions>(
+            configuration.GetSection(WebhookOutboxCleanupOptions.SectionName));
+        services.AddHostedService<WebhookOutboxCleanupService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
         {

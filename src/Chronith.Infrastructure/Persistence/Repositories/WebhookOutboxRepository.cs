@@ -200,5 +200,16 @@ public sealed class WebhookOutboxRepository(ChronithDbContext db) : IWebhookOutb
         CreatedAt = d.CreatedAt,
         Category = (int)d.Category,
     };
+
+    public async Task<int> DeleteOlderThanAsync(DateTimeOffset cutoff, CancellationToken ct = default)
+    {
+        return await db.WebhookOutboxEntries
+            .IgnoreQueryFilters()
+            .Where(e => e.CreatedAt < cutoff
+                && (e.Status == OutboxStatus.Delivered
+                    || e.Status == OutboxStatus.Failed
+                    || e.Status == OutboxStatus.Abandoned))
+            .ExecuteDeleteAsync(ct);
+    }
 }
 
