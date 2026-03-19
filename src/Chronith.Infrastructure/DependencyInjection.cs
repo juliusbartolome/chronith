@@ -87,6 +87,8 @@ public static class DependencyInjection
         services.AddScoped<IAuditSnapshotResolver, TenantSnapshotResolver>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IOidcTokenValidator, OidcTokenValidator>();
+        // Must be first hosted service — runs blocking migration before other services start
+        services.AddHostedService<PiiEncryptionMigrationService>();
         services.AddHostedService<WebhookDispatcherService>();
         services.AddHostedService<WaitlistPromotionService>();
         services.AddHostedService<NotificationDispatcherService>();
