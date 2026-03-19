@@ -115,7 +115,7 @@ public sealed class EncryptionKeyRotationService(
                 row.Settings = encryption.Encrypt(plain) ?? "{}";
                 total++;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogError(ex,
                     "EncryptionKeyRotationService: failed to re-encrypt TenantNotificationConfig row {Id}. Skipping.",
@@ -139,7 +139,7 @@ public sealed class EncryptionKeyRotationService(
                 row.Secret = encryption.Encrypt(plain) ?? string.Empty;
                 total++;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogError(ex,
                     "EncryptionKeyRotationService: failed to re-encrypt Webhook row {Id}. Skipping.",
@@ -163,7 +163,7 @@ public sealed class EncryptionKeyRotationService(
                 row.Settings = encryption.Encrypt(plain) ?? "{}";
                 total++;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogError(ex,
                     "EncryptionKeyRotationService: failed to re-encrypt TenantPaymentConfig row {Id}. Skipping.",
