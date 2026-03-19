@@ -141,6 +141,7 @@ public static class DependencyInjection
         // Encryption
         services.Configure<EncryptionOptions>(configuration.GetSection(EncryptionOptions.SectionName));
         services.AddSingleton<IEncryptionService, EncryptionService>();
+        services.AddSingleton<IPasswordHasher, Argon2idPasswordHasher>();
 
         // Rate limiting
         services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
