@@ -1,0 +1,9 @@
+title = "Chronith Gitleaks Configuration"
+
+[allowlist]
+description = "Allow known non-secret test fixture constants in integration tests"
+commits = [
+  # TestKey constants in integration test files are fake 32-byte AES keys used
+  # exclusively as test fixture values. They are not production secrets.
+  "a293ed7b8487a31850d2bbc55228b5ceeb266809",
+]
