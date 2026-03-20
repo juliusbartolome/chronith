@@ -20,10 +20,9 @@ public sealed class AuditPiiRedactor : IAuditPiiRedactor
             var node = JsonNode.Parse(json);
             if (node is not JsonObject obj) return json;
 
-            foreach (var key in PiiKeys)
+            foreach (var key in PiiKeys.Where(obj.ContainsKey))
             {
-                if (obj.ContainsKey(key))
-                    obj[key] = "[REDACTED]";
+                obj[key] = "[REDACTED]";
             }
 
             return obj.ToJsonString();
