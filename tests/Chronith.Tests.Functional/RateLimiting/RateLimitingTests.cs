@@ -50,6 +50,8 @@ public class RateLimitingTests : IAsyncLifetime
                 b.UseSetting("Database:Provider", "PostgreSQL");
                 b.UseSetting("Database:ConnectionString", connStr);
                 b.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
+                b.UseSetting("Security:EncryptionKeyVersion", "v1");
+                b.UseSetting("Security:KeyVersions:v1", TestConstants.EncryptionKey);
             });
 
         _tightLimitFactory = new TightLimitWebApplicationFactory(connStr); // codeql[cs/local-not-disposed]
@@ -209,6 +211,8 @@ public class RateLimitingTests : IAsyncLifetime
             builder.UseSetting("Database:Provider", "PostgreSQL");
             builder.UseSetting("Database:ConnectionString", connStr);
             builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
+            builder.UseSetting("Security:EncryptionKeyVersion", "v1");
+            builder.UseSetting("Security:KeyVersions:v1", TestConstants.EncryptionKey);
             // Authenticated policy capped at 1 req/window
             builder.UseSetting("RateLimiting:Authenticated:PermitLimit", "1");
             builder.UseSetting("RateLimiting:Authenticated:WindowSeconds", "60");
@@ -222,6 +226,8 @@ public class RateLimitingTests : IAsyncLifetime
             builder.UseSetting("Database:Provider", "PostgreSQL");
             builder.UseSetting("Database:ConnectionString", connStr);
             builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
+            builder.UseSetting("Security:EncryptionKeyVersion", "v1");
+            builder.UseSetting("Security:KeyVersions:v1", TestConstants.EncryptionKey);
             // Auth policy (login/register) capped at 1 req/window
             builder.UseSetting("RateLimiting:Auth:PermitLimit", "1");
             builder.UseSetting("RateLimiting:Auth:WindowSeconds", "60");
