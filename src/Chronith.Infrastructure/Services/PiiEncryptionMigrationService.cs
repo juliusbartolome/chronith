@@ -48,10 +48,10 @@ public sealed class PiiEncryptionMigrationService(
 
             if (totalMigrated > 0)
                 logger.LogInformation(
-                    "PiiEncryptionMigrationService: migrated {Count} rows total. Migration complete.",
-                    totalMigrated);
+                    "PiiEncryptionMigrationService: PII encryption migration completed; plaintext rows were migrated.");
             else
                 logger.LogDebug("PiiEncryptionMigrationService: no plaintext rows found. Nothing to migrate.");
+        
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
