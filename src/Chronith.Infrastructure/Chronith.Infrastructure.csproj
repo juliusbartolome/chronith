@@ -6,8 +6,8 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageReference Include="FirebaseAdmin" Version="3.4.0" />
+    <PackageReference Include="Isopoh.Cryptography.Argon2" Version="2.0.0" />
     <PackageReference Include="MailKit" Version="4.15.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">

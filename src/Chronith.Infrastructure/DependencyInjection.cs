@@ -87,6 +87,8 @@ public static class DependencyInjection
         services.AddScoped<IAuditSnapshotResolver, TenantSnapshotResolver>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IOidcTokenValidator, OidcTokenValidator>();
+        // Must be first hosted service — runs blocking migration before other services start
+        services.AddHostedService<PiiEncryptionMigrationService>();
         services.AddHostedService<WebhookDispatcherService>();
         services.AddHostedService<WaitlistPromotionService>();
         services.AddHostedService<NotificationDispatcherService>();
@@ -96,6 +98,9 @@ public static class DependencyInjection
         services.AddHostedService<AuditRetentionService>();
         services.AddHostedService<ApiKeyAgingService>();
         services.AddHostedService<EncryptionKeyRotationService>();
+        services.Configure<WebhookOutboxCleanupOptions>(
+            configuration.GetSection(WebhookOutboxCleanupOptions.SectionName));
+        services.AddHostedService<WebhookOutboxCleanupService>();
         var httpTimeoutSeconds = configuration.GetValue("Webhooks:HttpTimeoutSeconds", 10);
         services.AddHttpClient("WebhookDispatcher", client =>
         {
@@ -141,6 +146,10 @@ public static class DependencyInjection
         // Encryption
         services.Configure<EncryptionOptions>(configuration.GetSection(EncryptionOptions.SectionName));
         services.AddSingleton<IEncryptionService, EncryptionService>();
+        services.Configure<BlindIndexOptions>(configuration.GetSection(BlindIndexOptions.SectionName));
+        services.AddSingleton<IBlindIndexService, HmacBlindIndexService>();
+        services.AddSingleton<IPasswordHasher, Argon2idPasswordHasher>();
+        services.AddScoped<IAuditPiiRedactor, AuditPiiRedactor>();
 
         // Rate limiting
         services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));

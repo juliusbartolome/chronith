@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.CustomerAuth.Login;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Services;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using FluentAssertions;
@@ -18,6 +19,7 @@ public sealed class CustomerLoginCommandHandlerTests
         ICustomerRepository CustomerRepo,
         ICustomerRefreshTokenRepository RefreshTokenRepo,
         ITokenService TokenService,
+        IPasswordHasher PasswordHasher,
         IUnitOfWork UnitOfWork)
         Build()
     {
@@ -25,28 +27,30 @@ public sealed class CustomerLoginCommandHandlerTests
         var customerRepo = Substitute.For<ICustomerRepository>();
         var refreshTokenRepo = Substitute.For<ICustomerRefreshTokenRepository>();
         var tokenService = Substitute.For<ITokenService>();
+        var passwordHasher = Substitute.For<IPasswordHasher>();
         var unitOfWork = Substitute.For<IUnitOfWork>();
 
         tokenService.CreateRefreshToken().Returns(("raw-token", "hashed-token"));
         tokenService.CreateCustomerAccessToken(Arg.Any<Customer>()).Returns("access-token");
 
-        var handler = new CustomerLoginCommandHandler(
-            tenantRepo, customerRepo, refreshTokenRepo, tokenService, unitOfWork);
+        passwordHasher.Verify("Password1", "hashed-password").Returns(true);
 
-        return (handler, tenantRepo, customerRepo, refreshTokenRepo, tokenService, unitOfWork);
+        var handler = new CustomerLoginCommandHandler(
+            tenantRepo, customerRepo, refreshTokenRepo, tokenService, passwordHasher, unitOfWork);
+
+        return (handler, tenantRepo, customerRepo, refreshTokenRepo, tokenService, passwordHasher, unitOfWork);
     }
 
     private static Customer CreateActiveCustomer(string email = "customer@example.com", string password = "Password1")
     {
-        var hash = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 4); // Low work factor for tests
-        return Customer.Create(TenantId, email, hash, "Jane Doe", null, "builtin");
+        return Customer.Create(TenantId, email, "hashed-password", "Jane Doe", null, "builtin");
     }
 
     [Fact]
     public async Task Handle_HappyPath_ReturnsTokensAndCustomer()
     {
         // Arrange
-        var (handler, tenantRepo, customerRepo, _, _, unitOfWork) = Build();
+        var (handler, tenantRepo, customerRepo, _, _, _, unitOfWork) = Build();
         var customer = CreateActiveCustomer();
         var command = new CustomerLoginCommand("test-tenant", "customer@example.com", "Password1");
 
@@ -71,7 +75,7 @@ public sealed class CustomerLoginCommandHandlerTests
     public async Task Handle_WrongPassword_ThrowsUnauthorizedException()
     {
         // Arrange
-        var (handler, tenantRepo, customerRepo, _, _, _) = Build();
+        var (handler, tenantRepo, customerRepo, _, _, _, _) = Build();
         var customer = CreateActiveCustomer(password: "CorrectPassword1");
         var command = new CustomerLoginCommand("test-tenant", "customer@example.com", "WrongPassword1");
 
@@ -90,7 +94,7 @@ public sealed class CustomerLoginCommandHandlerTests
     public async Task Handle_InactiveCustomer_ThrowsUnauthorizedException()
     {
         // Arrange
-        var (handler, tenantRepo, customerRepo, _, _, _) = Build();
+        var (handler, tenantRepo, customerRepo, _, _, _, _) = Build();
         var customer = CreateActiveCustomer();
         customer.Deactivate();
         var command = new CustomerLoginCommand("test-tenant", "customer@example.com", "Password1");
@@ -110,7 +114,7 @@ public sealed class CustomerLoginCommandHandlerTests
     public async Task Handle_CustomerNotFound_ThrowsUnauthorizedException()
     {
         // Arrange
-        var (handler, tenantRepo, customerRepo, _, _, _) = Build();
+        var (handler, tenantRepo, customerRepo, _, _, _, _) = Build();
         var command = new CustomerLoginCommand("test-tenant", "unknown@example.com", "Password1");
 
         tenantRepo.GetBySlugAsync("test-tenant", Arg.Any<CancellationToken>())
@@ -128,7 +132,7 @@ public sealed class CustomerLoginCommandHandlerTests
     public async Task Handle_TenantNotFound_ThrowsUnauthorizedException()
     {
         // Arrange
-        var (handler, tenantRepo, _, _, _, _) = Build();
+        var (handler, tenantRepo, _, _, _, _, _) = Build();
         var command = new CustomerLoginCommand("nonexistent", "customer@example.com", "Password1");
 
         tenantRepo.GetBySlugAsync("nonexistent", Arg.Any<CancellationToken>())
@@ -144,7 +148,7 @@ public sealed class CustomerLoginCommandHandlerTests
     public async Task Handle_OidcCustomerNoPasswordHash_ThrowsUnauthorizedException()
     {
         // Arrange: OIDC customers have null PasswordHash
-        var (handler, tenantRepo, customerRepo, _, _, _) = Build();
+        var (handler, tenantRepo, customerRepo, _, _, _, _) = Build();
         var customer = Customer.CreateOidc(TenantId, "oidc@example.com", "OIDC User", "ext-123", "https://issuer.example.com");
         var command = new CustomerLoginCommand("test-tenant", "oidc@example.com", "Password1");
 

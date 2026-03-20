@@ -1,6 +1,6 @@
-using BCrypt.Net;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Services;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using MediatR;
@@ -9,6 +9,7 @@ namespace Chronith.Application.Commands.Auth.UpdateMe;
 
 public sealed class UpdateMeCommandHandler(
     ITenantUserRepository userRepository,
+    IPasswordHasher passwordHasher,
     IUnitOfWork unitOfWork)
     : IRequestHandler<UpdateMeCommand, UserProfileDto>
 {
@@ -22,7 +23,7 @@ public sealed class UpdateMeCommandHandler(
 
         if (request.NewPassword is not null)
         {
-            var hash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword, workFactor: 12);
+            var hash = passwordHasher.Hash(request.NewPassword);
             user.UpdatePasswordHash(hash);
         }
 

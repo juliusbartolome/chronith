@@ -4,14 +4,27 @@ using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Persistence.Mappers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Chronith.Infrastructure.Persistence.Repositories;
 
-public sealed class BookingRepository : IBookingRepository
+public sealed class BookingRepository(
+    ChronithDbContext _db,
+    IEncryptionService encryptionService,
+    ILogger<BookingRepository> logger)
+    : IBookingRepository
 {
-    private readonly ChronithDbContext _db;
-
-    public BookingRepository(ChronithDbContext db) => _db = db;
+    private string DecryptCustomerEmail(string? value)
+    {
+        if (value is null) return string.Empty;
+        try { return encryptionService.Decrypt(value) ?? string.Empty; }
+        catch (Exception ex) when (ex is FormatException or InvalidOperationException)
+        {
+            logger.LogWarning("Booking.CustomerEmail could not be decrypted — " +
+                "treating as legacy plaintext row. Next write will encrypt it.");
+            return value;
+        }
+    }
 
     public async Task<Booking?> GetByIdAsync(Guid tenantId, Guid bookingId, CancellationToken ct = default)
     {
@@ -21,7 +34,9 @@ public sealed class BookingRepository : IBookingRepository
             .Include(b => b.StatusChanges)
             .FirstOrDefaultAsync(b => b.TenantId == tenantId && b.Id == bookingId, ct);
 
-        return entity is null ? null : BookingEntityMapper.ToDomain(entity);
+        if (entity is null) return null;
+        entity.CustomerEmail = DecryptCustomerEmail(entity.CustomerEmail);
+        return BookingEntityMapper.ToDomain(entity);
     }
 
     public async Task<(IReadOnlyList<Booking> Items, int TotalCount)> ListAsync(
@@ -43,7 +58,11 @@ public sealed class BookingRepository : IBookingRepository
             .Take(pageSize)
             .ToListAsync(ct);
 
-        return (items.Select(BookingEntityMapper.ToDomain).ToList(), total);
+        return (items.Select(e =>
+        {
+            e.CustomerEmail = DecryptCustomerEmail(e.CustomerEmail);
+            return BookingEntityMapper.ToDomain(e);
+        }).ToList(), total);
     }
 
     /// <summary>
@@ -107,7 +126,11 @@ public sealed class BookingRepository : IBookingRepository
             .OrderByDescending(b => b.Start)
             .ToListAsync(ct);
 
-        return entities.Select(BookingEntityMapper.ToDomain).ToList();
+        return entities.Select(e =>
+        {
+            e.CustomerEmail = DecryptCustomerEmail(e.CustomerEmail);
+            return BookingEntityMapper.ToDomain(e);
+        }).ToList();
     }
 
     public async Task<BookingMetrics> GetMetricsAsync(
@@ -151,7 +174,9 @@ public sealed class BookingRepository : IBookingRepository
                     .Where(b => b.TenantId == tenantId && b.PaymentReference == paymentReference)
         ).FirstOrDefaultAsync(ct);
 
-        return entity is null ? null : BookingEntityMapper.ToDomain(entity);
+        if (entity is null) return null;
+        entity.CustomerEmail = DecryptCustomerEmail(entity.CustomerEmail);
+        return BookingEntityMapper.ToDomain(entity);
     }
 
     public async Task<IReadOnlyList<(Guid Id, DateTimeOffset Start, DateTimeOffset End)>> GetICalEntriesAsync(
@@ -173,6 +198,7 @@ public sealed class BookingRepository : IBookingRepository
     public async Task AddAsync(Booking booking, CancellationToken ct = default)
     {
         var entity = BookingEntityMapper.ToEntity(booking);
+        entity.CustomerEmail = encryptionService.Encrypt(entity.CustomerEmail) ?? string.Empty;
         await _db.Bookings.AddAsync(entity, ct);
     }
 
@@ -185,7 +211,7 @@ public sealed class BookingRepository : IBookingRepository
         Guid? staffMemberId = null,
         CancellationToken ct = default)
     {
-        return await _db.Bookings
+        var rawItems = await _db.Bookings
             .TagWith("ListForExportAsync — BookingRepository")
             .AsNoTracking()
             .Where(b => b.TenantId == tenantId && b.Start >= from && b.Start <= to)
@@ -194,20 +220,23 @@ public sealed class BookingRepository : IBookingRepository
             .Where(b => staffMemberId == null || b.StaffMemberId == staffMemberId)
             .OrderBy(b => b.Start)
             .Take(10_000)
-            .Select(b => new BookingExportRowDto(
-                b.Id,
-                b.BookingType != null ? b.BookingType.Name : string.Empty,
-                b.BookingType != null ? b.BookingType.Slug : string.Empty,
-                b.Start,
-                b.End,
-                b.Status.ToString(),
-                b.CustomerEmail,
-                b.CustomerId,
-                b.StaffMember != null ? b.StaffMember.Name : null,
-                b.AmountInCentavos,
-                b.Currency,
-                b.PaymentReference))
+            .Include(b => b.BookingType)
+            .Include(b => b.StaffMember)
             .ToListAsync(ct);
+
+        return rawItems.Select(b => new BookingExportRowDto(
+            b.Id,
+            b.BookingType != null ? b.BookingType.Name : string.Empty,
+            b.BookingType != null ? b.BookingType.Slug : string.Empty,
+            b.Start,
+            b.End,
+            b.Status.ToString(),
+            DecryptCustomerEmail(b.CustomerEmail),
+            b.CustomerId,
+            b.StaffMember != null ? b.StaffMember.Name : null,
+            b.AmountInCentavos,
+            b.Currency,
+            b.PaymentReference)).ToList();
     }
 
     public async Task UpdateAsync(Booking booking, CancellationToken ct = default)

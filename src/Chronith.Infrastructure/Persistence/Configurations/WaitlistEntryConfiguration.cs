@@ -17,8 +17,7 @@ public sealed class WaitlistEntryConfiguration : IEntityTypeConfiguration<Waitli
             .HasMaxLength(200);
 
         builder.Property(w => w.CustomerEmail)
-            .IsRequired()
-            .HasMaxLength(320);
+            .IsRequired();
 
         builder.Property(w => w.Status)
             .HasConversion<string>()

@@ -172,6 +172,31 @@ public sealed class EncryptionKeyRotationService(
             }
         }
 
+        // booking type callback secrets
+        var bookingTypeRows = await db.BookingTypes
+            .IgnoreQueryFilters()
+            .Where(e => !e.IsDeleted && e.CustomerCallbackSecret != null
+                        && e.CustomerCallbackSecret.StartsWith(sourcePrefix))
+            .Take(BatchSize)
+            .ToListAsync(ct);
+
+        foreach (var row in bookingTypeRows)
+        {
+            try
+            {
+                var plain = encryption.Decrypt(row.CustomerCallbackSecret!);
+                row.CustomerCallbackSecret = encryption.Encrypt(plain) ?? string.Empty;
+                total++;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogError(ex,
+                    "EncryptionKeyRotationService: failed to re-encrypt BookingType row {Id}. Skipping.",
+                    row.Id);
+                db.Entry(row).State = EntityState.Unchanged;
+            }
+        }
+
         if (total > 0)
             await db.SaveChangesAsync(ct);
 

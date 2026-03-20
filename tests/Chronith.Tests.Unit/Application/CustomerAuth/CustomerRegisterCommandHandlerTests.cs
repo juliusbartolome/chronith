@@ -1,6 +1,7 @@
 using Chronith.Application.Commands.CustomerAuth.Register;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Services;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using FluentAssertions;
@@ -28,14 +29,16 @@ public sealed class CustomerRegisterCommandHandlerTests
         var customerRepo = Substitute.For<ICustomerRepository>();
         var refreshTokenRepo = Substitute.For<ICustomerRefreshTokenRepository>();
         var tokenService = Substitute.For<ITokenService>();
+        var passwordHasher = Substitute.For<IPasswordHasher>();
         var unitOfWork = Substitute.For<IUnitOfWork>();
 
         tokenService.CreateRefreshToken().Returns(("raw-token", "token-hash"));
         tokenService.CreateCustomerAccessToken(Arg.Any<Customer>()).Returns("access-token");
+        passwordHasher.Hash(Arg.Any<string>()).Returns("hashed-password");
 
         var handler = new CustomerRegisterCommandHandler(
             tenantRepo, authConfigRepo, customerRepo,
-            refreshTokenRepo, tokenService, unitOfWork);
+            refreshTokenRepo, tokenService, passwordHasher, unitOfWork);
 
         return (handler, tenantRepo, authConfigRepo, customerRepo,
             refreshTokenRepo, tokenService, unitOfWork);

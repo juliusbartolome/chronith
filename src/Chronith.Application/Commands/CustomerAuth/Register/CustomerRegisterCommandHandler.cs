@@ -15,6 +15,7 @@ public sealed class CustomerRegisterCommandHandler(
     ICustomerRepository customerRepository,
     ICustomerRefreshTokenRepository refreshTokenRepository,
     ITokenService tokenService,
+    IPasswordHasher passwordHasher,
     IUnitOfWork unitOfWork)
     : IRequestHandler<CustomerRegisterCommand, CustomerAuthTokenDto>
 {
@@ -37,7 +38,7 @@ public sealed class CustomerRegisterCommandHandler(
         if (existing is not null)
             throw new ConflictException($"A customer with email '{request.Email}' already exists.");
 
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
+        var passwordHash = passwordHasher.Hash(request.Password);
         var customer = Customer.Create(tenant.Id, request.Email, passwordHash, request.Name,
             request.Phone, "builtin");
 

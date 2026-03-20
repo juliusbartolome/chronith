@@ -5,80 +5,104 @@ using Chronith.Domain.Models;
 using Chronith.Infrastructure.Persistence.Entities;
 using Chronith.Infrastructure.Persistence.Mappers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Chronith.Infrastructure.Persistence.Repositories;
 
-public sealed class BookingTypeRepository : IBookingTypeRepository
+public sealed class BookingTypeRepository(
+    ChronithDbContext db,
+    IEncryptionService encryptionService,
+    ILogger<BookingTypeRepository> logger)
+    : IBookingTypeRepository
 {
-    private readonly ChronithDbContext _db;
-
-    public BookingTypeRepository(ChronithDbContext db) => _db = db;
+    private string DecryptCallbackSecret(string? secret)
+    {
+        if (secret is null) return string.Empty;
+        try { return encryptionService.Decrypt(secret) ?? string.Empty; }
+        catch (Exception ex) when (ex is FormatException or InvalidOperationException)
+        {
+            logger.LogWarning(
+                "BookingType CustomerCallbackSecret could not be decrypted — " +
+                "treating as legacy plaintext row. Next write will encrypt it.");
+            return secret;
+        }
+    }
 
     public async Task<BookingType?> GetBySlugAsync(Guid tenantId, string slug, CancellationToken ct = default)
     {
-        var entity = await _db.BookingTypes
+        var entity = await db.BookingTypes
             .TagWith("GetBySlugAsync(tenantId, slug) — BookingTypeRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Include(bt => bt.AvailabilityWindows)
             .FirstOrDefaultAsync(bt => bt.TenantId == tenantId && !bt.IsDeleted && bt.Slug == slug, ct);
 
-        return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
+        if (entity is null) return null;
+        entity.CustomerCallbackSecret = DecryptCallbackSecret(entity.CustomerCallbackSecret);
+        return BookingTypeEntityMapper.ToDomain(entity);
     }
 
     public async Task<BookingType?> GetByIdAsync(Guid tenantId, Guid id, CancellationToken ct = default)
     {
-        var entity = await _db.BookingTypes
+        var entity = await db.BookingTypes
             .TagWith("GetByIdAsync(tenantId, id) — BookingTypeRepository")
             .AsNoTracking()
             .Include(bt => bt.AvailabilityWindows)
             .FirstOrDefaultAsync(bt => bt.TenantId == tenantId && bt.Id == id, ct);
 
-        return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
+        if (entity is null) return null;
+        entity.CustomerCallbackSecret = DecryptCallbackSecret(entity.CustomerCallbackSecret);
+        return BookingTypeEntityMapper.ToDomain(entity);
     }
 
     /// <inheritdoc cref="IBookingTypeRepository.GetByIdAsync(Guid, CancellationToken)"/>
     public async Task<BookingType?> GetByIdAsync(Guid bookingTypeId, CancellationToken ct = default)
     {
-        var entity = await _db.BookingTypes
+        var entity = await db.BookingTypes
             .TagWith("GetByIdAsync(bookingTypeId) — BookingTypeRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Include(bt => bt.AvailabilityWindows)
             .FirstOrDefaultAsync(bt => bt.Id == bookingTypeId, ct);
 
-        return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
+        if (entity is null) return null;
+        entity.CustomerCallbackSecret = DecryptCallbackSecret(entity.CustomerCallbackSecret);
+        return BookingTypeEntityMapper.ToDomain(entity);
     }
 
     /// <inheritdoc cref="IBookingTypeRepository.GetByIdAcrossTenantsAsync"/>
     public async Task<BookingType?> GetByIdAcrossTenantsAsync(Guid bookingTypeId, CancellationToken ct = default)
     {
-        var entity = await _db.BookingTypes
+        var entity = await db.BookingTypes
             .TagWith("GetByIdAcrossTenantsAsync — BookingTypeRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Include(bt => bt.AvailabilityWindows)
             .FirstOrDefaultAsync(bt => bt.Id == bookingTypeId && !bt.IsDeleted, ct);
 
-        return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
+        if (entity is null) return null;
+        entity.CustomerCallbackSecret = DecryptCallbackSecret(entity.CustomerCallbackSecret);
+        return BookingTypeEntityMapper.ToDomain(entity);
     }
 
     /// <inheritdoc cref="IBookingTypeRepository.GetBySlugAsync(string, CancellationToken)"/>
     public async Task<BookingType?> GetBySlugAsync(string slug, CancellationToken ct = default)
     {
-        var entity = await _db.BookingTypes
+        var entity = await db.BookingTypes
             .TagWith("GetBySlugAsync(slug) — BookingTypeRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Include(bt => bt.AvailabilityWindows)
             .FirstOrDefaultAsync(bt => bt.Slug == slug && !bt.IsDeleted, ct);
 
-        return entity is null ? null : BookingTypeEntityMapper.ToDomain(entity);
+        if (entity is null) return null;
+        entity.CustomerCallbackSecret = DecryptCallbackSecret(entity.CustomerCallbackSecret);
+        return BookingTypeEntityMapper.ToDomain(entity);
     }
 
     public async Task<IReadOnlyList<BookingType>> ListAsync(Guid tenantId, CancellationToken ct = default)
     {
-        var entities = await _db.BookingTypes
+        var entities = await db.BookingTypes
             .TagWith("ListAsync — BookingTypeRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
@@ -87,24 +111,29 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
             .OrderBy(bt => bt.Name)
             .ToListAsync(ct);
 
-        return entities.Select(BookingTypeEntityMapper.ToDomain).ToList();
+        return entities.Select(e =>
+        {
+            e.CustomerCallbackSecret = DecryptCallbackSecret(e.CustomerCallbackSecret);
+            return BookingTypeEntityMapper.ToDomain(e);
+        }).ToList();
     }
 
     public async Task AddAsync(BookingType bookingType, CancellationToken ct = default)
     {
         var entity = BookingTypeEntityMapper.ToEntity(bookingType);
-        await _db.BookingTypes.AddAsync(entity, ct);
+        entity.CustomerCallbackSecret = encryptionService.Encrypt(entity.CustomerCallbackSecret) ?? string.Empty;
+        await db.BookingTypes.AddAsync(entity, ct);
     }
 
     public async Task<bool> SlugExistsAsync(Guid tenantId, string slug, CancellationToken ct = default)
-        => await _db.BookingTypes
+        => await db.BookingTypes
             .TagWith("SlugExistsAsync — BookingTypeRepository")
             .AsNoTracking()
             .AnyAsync(bt => bt.TenantId == tenantId && bt.Slug == slug, ct);
 
     public async Task<BookingTypeMetrics> GetTypeMetricsAsync(Guid tenantId, CancellationToken ct = default)
     {
-        var counts = await _db.BookingTypes
+        var counts = await db.BookingTypes
             .TagWith("GetTypeMetricsAsync — BookingTypeRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
@@ -123,7 +152,7 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
     {
         // Load without Include so the change tracker only tracks the parent row,
         // avoiding xmin concurrency conflicts caused by navigation collection mutations.
-        var entity = await _db.BookingTypes
+        var entity = await db.BookingTypes
             .FirstOrDefaultAsync(bt => bt.Id == bookingType.Id, ct);
 
         if (entity is null) return;
@@ -139,21 +168,21 @@ public sealed class BookingTypeRepository : IBookingTypeRepository
         entity.BufferAfterMinutes = updated.BufferAfterMinutes;
         entity.AvailableDays = updated.AvailableDays;
         entity.CustomerCallbackUrl = updated.CustomerCallbackUrl;
-        entity.CustomerCallbackSecret = updated.CustomerCallbackSecret;
+        entity.CustomerCallbackSecret = encryptionService.Encrypt(updated.CustomerCallbackSecret) ?? string.Empty;
 
         // Replace windows: delete all existing, queue new ones for insert via SaveChanges.
-        await _db.AvailabilityWindows
+        await db.AvailabilityWindows
             .Where(w => w.BookingTypeId == bookingType.Id)
             .ExecuteDeleteAsync(ct);
 
         if (updated.AvailabilityWindows.Count > 0)
         {
-            await _db.AvailabilityWindows.AddRangeAsync(updated.AvailabilityWindows, ct);
+            await db.AvailabilityWindows.AddRangeAsync(updated.AvailabilityWindows, ct);
         }
     }
 
     public Task<int> CountByTenantAsync(Guid tenantId, CancellationToken ct = default) =>
-        _db.BookingTypes
+        db.BookingTypes
             .TagWith("CountByTenantAsync — BookingTypeRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()

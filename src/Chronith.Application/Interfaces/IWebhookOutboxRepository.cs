@@ -28,4 +28,10 @@ public interface IWebhookOutboxRepository
     /// removed after the entry was written.
     /// </summary>
     Task MarkAbandonedAsync(Guid entryId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Hard-deletes outbox entries with a terminal status (Delivered, Failed, Abandoned)
+    /// that were created before <paramref name="cutoff"/>.
+    /// </summary>
+    Task<int> DeleteOlderThanAsync(DateTimeOffset cutoff, CancellationToken ct = default);
 }

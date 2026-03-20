@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Services;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using MediatR;
@@ -11,6 +12,7 @@ public sealed class LoginCommandHandler(
     ITenantUserRepository userRepository,
     IRefreshTokenRepository refreshTokenRepository,
     ITokenService tokenService,
+    IPasswordHasher passwordHasher,
     IUnitOfWork unitOfWork)
     : IRequestHandler<LoginCommand, AuthTokenDto>
 {
@@ -30,7 +32,7 @@ public sealed class LoginCommandHandler(
         if (!user.IsActive)
             throw new UnauthorizedException(invalidCredentials);
 
-        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        if (!passwordHasher.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedException(invalidCredentials);
 
         var (rawToken, tokenHash) = tokenService.CreateRefreshToken();

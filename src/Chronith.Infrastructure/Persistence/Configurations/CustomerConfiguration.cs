@@ -16,8 +16,14 @@ public sealed class CustomerConfiguration : IEntityTypeConfiguration<CustomerEnt
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(c => c.PasswordHash)
-            .HasMaxLength(200);
+        builder.Property(c => c.EmailEncrypted);
+
+        builder.Property(c => c.EmailToken)
+            .HasMaxLength(64);
+
+        builder.Property(c => c.PhoneEncrypted);
+
+        builder.Property(c => c.PasswordHash);
 
         builder.Property(c => c.Name)
             .IsRequired()
@@ -45,6 +51,11 @@ public sealed class CustomerConfiguration : IEntityTypeConfiguration<CustomerEnt
             .IsUnique()
             .HasFilter("\"IsDeleted\" = false")
             .HasDatabaseName("ix_customers_email");
+
+        // Blind index for encrypted email lookup
+        builder.HasIndex(c => new { c.TenantId, c.EmailToken })
+            .HasFilter("\"EmailToken\" IS NOT NULL AND \"IsDeleted\" = false")
+            .HasDatabaseName("ix_customers_email_token");
 
         // External ID lookup
         builder.HasIndex(c => new { c.TenantId, c.ExternalId })

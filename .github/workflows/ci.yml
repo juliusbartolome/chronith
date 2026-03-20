@@ -259,13 +259,13 @@ jobs:
             VALUES ('00000000-0000-0000-0000-000000000001','Test Tenant','test-tenant','UTC',false,NOW())
             ON CONFLICT ("Id") DO NOTHING;
 
-            -- Admin user (password: Password1!)
+            -- Admin user (password: Password1!, hashed with Argon2id m=65536,t=3,p=4)
             INSERT INTO "TenantUsers" ("Id", "TenantId", "Email", "PasswordHash", "Role", "IsActive", "IsEmailVerified", "CreatedAt")
             VALUES (
               '00000000-0000-0000-0000-000000000099',
               '00000000-0000-0000-0000-000000000001',
               'admin@test.com',
-              '$2b$12$Qj5PqpaFuFx64GY2FVgjSuoz/MGmZdR6qwLqhFSkIX4092S/m0Eh2',
+              '$argon2id$v=19$m=65536,t=3,p=4$KQb6x7cAZ4r3sYuT6WoxUA$N4Yq/3GA5D3Z025bmXzC5SWiP2nfEWnwVjqpDCZJfFg',
               'Owner',
               true,
               true,

@@ -17,8 +17,7 @@ public sealed class StaffMemberConfiguration : IEntityTypeConfiguration<StaffMem
             .HasMaxLength(200);
 
         builder.Property(s => s.Email)
-            .IsRequired()
-            .HasMaxLength(320);
+            .IsRequired();
 
         builder.HasIndex(s => new { s.TenantId, s.IsDeleted });
 

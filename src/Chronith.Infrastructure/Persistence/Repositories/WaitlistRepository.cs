@@ -3,24 +3,39 @@ using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Persistence.Mappers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Chronith.Infrastructure.Persistence.Repositories;
 
-public sealed class WaitlistRepository : IWaitlistRepository
+public sealed class WaitlistRepository(
+    ChronithDbContext db,
+    IEncryptionService encryptionService,
+    ILogger<WaitlistRepository> logger)
+    : IWaitlistRepository
 {
-    private readonly ChronithDbContext _db;
-
-    public WaitlistRepository(ChronithDbContext db) => _db = db;
+    private string DecryptCustomerEmail(string? value)
+    {
+        if (value is null) return string.Empty;
+        try { return encryptionService.Decrypt(value) ?? string.Empty; }
+        catch (Exception ex) when (ex is FormatException or InvalidOperationException)
+        {
+            logger.LogWarning("WaitlistEntry.CustomerEmail could not be decrypted — " +
+                "treating as legacy plaintext row.");
+            return value;
+        }
+    }
 
     public async Task<WaitlistEntry?> GetByIdAsync(
         Guid tenantId, Guid id, CancellationToken ct = default)
     {
-        var entity = await _db.WaitlistEntries
+        var entity = await db.WaitlistEntries
             .TagWith("GetByIdAsync — WaitlistRepository")
             .AsNoTracking()
             .FirstOrDefaultAsync(w => w.TenantId == tenantId && w.Id == id, ct);
 
-        return entity is null ? null : WaitlistEntryEntityMapper.ToDomain(entity);
+        if (entity is null) return null;
+        entity.CustomerEmail = DecryptCustomerEmail(entity.CustomerEmail);
+        return WaitlistEntryEntityMapper.ToDomain(entity);
     }
 
     public async Task<IReadOnlyList<WaitlistEntry>> ListBySlotAsync(
@@ -28,7 +43,7 @@ public sealed class WaitlistRepository : IWaitlistRepository
         DateTimeOffset start, DateTimeOffset end,
         CancellationToken ct = default)
     {
-        var entities = await _db.WaitlistEntries
+        var entities = await db.WaitlistEntries
             .TagWith("ListBySlotAsync — WaitlistRepository")
             .AsNoTracking()
             .Where(w => w.TenantId == tenantId
@@ -38,7 +53,11 @@ public sealed class WaitlistRepository : IWaitlistRepository
             .OrderBy(w => w.CreatedAt)
             .ToListAsync(ct);
 
-        return entities.Select(WaitlistEntryEntityMapper.ToDomain).ToList();
+        return entities.Select(e =>
+        {
+            e.CustomerEmail = DecryptCustomerEmail(e.CustomerEmail);
+            return WaitlistEntryEntityMapper.ToDomain(e);
+        }).ToList();
     }
 
     public async Task<WaitlistEntry?> GetNextWaitingAsync(
@@ -46,7 +65,7 @@ public sealed class WaitlistRepository : IWaitlistRepository
         DateTimeOffset start, DateTimeOffset end,
         CancellationToken ct = default)
     {
-        var entity = await _db.WaitlistEntries
+        var entity = await db.WaitlistEntries
             .TagWith("GetNextWaitingAsync — WaitlistRepository")
             .AsNoTracking()
             .Where(w => w.TenantId == tenantId
@@ -57,30 +76,37 @@ public sealed class WaitlistRepository : IWaitlistRepository
             .OrderBy(w => w.CreatedAt)
             .FirstOrDefaultAsync(ct);
 
-        return entity is null ? null : WaitlistEntryEntityMapper.ToDomain(entity);
+        if (entity is null) return null;
+        entity.CustomerEmail = DecryptCustomerEmail(entity.CustomerEmail);
+        return WaitlistEntryEntityMapper.ToDomain(entity);
     }
 
     public async Task<IReadOnlyList<WaitlistEntry>> GetExpiredOffersAsync(
         DateTimeOffset now, CancellationToken ct = default)
     {
-        var entities = await _db.WaitlistEntries
+        var entities = await db.WaitlistEntries
             .TagWith("GetExpiredOffersAsync — WaitlistRepository")
             .AsNoTracking()
             .Where(w => w.Status == WaitlistStatus.Offered && w.ExpiresAt <= now)
             .ToListAsync(ct);
 
-        return entities.Select(WaitlistEntryEntityMapper.ToDomain).ToList();
+        return entities.Select(e =>
+        {
+            e.CustomerEmail = DecryptCustomerEmail(e.CustomerEmail);
+            return WaitlistEntryEntityMapper.ToDomain(e);
+        }).ToList();
     }
 
     public async Task AddAsync(WaitlistEntry entry, CancellationToken ct = default)
     {
         var entity = WaitlistEntryEntityMapper.ToEntity(entry);
-        await _db.WaitlistEntries.AddAsync(entity, ct);
+        entity.CustomerEmail = encryptionService.Encrypt(entity.CustomerEmail) ?? string.Empty;
+        await db.WaitlistEntries.AddAsync(entity, ct);
     }
 
     public async Task UpdateAsync(WaitlistEntry entry, CancellationToken ct = default)
     {
-        await _db.WaitlistEntries
+        await db.WaitlistEntries
             .Where(w => w.Id == entry.Id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(w => w.Status, entry.Status)

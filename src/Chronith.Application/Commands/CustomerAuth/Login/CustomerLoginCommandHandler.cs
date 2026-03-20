@@ -2,6 +2,7 @@ using Chronith.Application.Constants;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
+using Chronith.Application.Services;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using MediatR;
@@ -13,6 +14,7 @@ public sealed class CustomerLoginCommandHandler(
     ICustomerRepository customerRepository,
     ICustomerRefreshTokenRepository refreshTokenRepository,
     ITokenService tokenService,
+    IPasswordHasher passwordHasher,
     IUnitOfWork unitOfWork)
     : IRequestHandler<CustomerLoginCommand, CustomerAuthTokenDto>
 {
@@ -32,7 +34,7 @@ public sealed class CustomerLoginCommandHandler(
             throw new UnauthorizedException(invalidCredentials);
 
         if (customer.PasswordHash is null ||
-            !BCrypt.Net.BCrypt.Verify(request.Password, customer.PasswordHash))
+            !passwordHasher.Verify(request.Password, customer.PasswordHash))
             throw new UnauthorizedException(invalidCredentials);
 
         customer.RecordLogin();

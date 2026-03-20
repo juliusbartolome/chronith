@@ -139,8 +139,7 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
                     b.Property<string>("CustomerEmail")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("text");
 
                     b.Property<string>("CustomerId")
                         .IsRequired()
@@ -409,6 +408,13 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("EmailEncrypted")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmailToken")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("ExternalId")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -431,12 +437,14 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .HasColumnType("character varying(200)");
 
                     b.Property<string>("PasswordHash")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PhoneEncrypted")
+                        .HasColumnType("text");
 
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
@@ -453,6 +461,10 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .IsUnique()
                         .HasDatabaseName("ix_customers_email")
                         .HasFilter("\"IsDeleted\" = false");
+
+                    b.HasIndex("TenantId", "EmailToken")
+                        .HasDatabaseName("ix_customers_email_token")
+                        .HasFilter("\"EmailToken\" IS NOT NULL AND \"IsDeleted\" = false");
 
                     b.HasIndex("TenantId", "ExternalId")
                         .HasFilter("\"ExternalId\" IS NOT NULL AND \"IsDeleted\" = false");
@@ -703,8 +715,7 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -1166,6 +1177,13 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("EmailEncrypted")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmailToken")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -1187,6 +1205,10 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
                     b.HasIndex("TenantId", "Email")
                         .IsUnique();
+
+                    b.HasIndex("TenantId", "EmailToken")
+                        .HasDatabaseName("ix_tenantusers_email_token")
+                        .HasFilter("\"EmailToken\" IS NOT NULL");
 
                     b.ToTable("TenantUsers", "chronith");
                 });
@@ -1277,8 +1299,7 @@ namespace Chronith.Infrastructure.Migrations.PostgreSQL
 
                     b.Property<string>("CustomerEmail")
                         .IsRequired()
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)");
+                        .HasColumnType("text");
 
                     b.Property<string>("CustomerId")
                         .IsRequired()

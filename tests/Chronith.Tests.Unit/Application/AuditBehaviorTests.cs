@@ -1,5 +1,6 @@
 using Chronith.Application.Behaviors;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Services;
 using Chronith.Domain.Models;
 using FluentAssertions;
 using MediatR;
@@ -12,12 +13,15 @@ public sealed class AuditBehaviorTests
     private readonly IAuditEntryRepository _auditRepo = Substitute.For<IAuditEntryRepository>();
     private readonly ITenantContext _tenantContext = Substitute.For<ITenantContext>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly IAuditPiiRedactor _piiRedactor = Substitute.For<IAuditPiiRedactor>();
 
     public AuditBehaviorTests()
     {
         _tenantContext.TenantId.Returns(Guid.NewGuid());
         _tenantContext.UserId.Returns("user-123");
         _tenantContext.Role.Returns("Admin");
+        // By default, pass values through unchanged
+        _piiRedactor.Redact(Arg.Any<string?>()).Returns(x => x.Arg<string?>());
     }
 
     // ── Test helpers ──────────────────────────────────────────────────────────
@@ -46,7 +50,7 @@ public sealed class AuditBehaviorTests
             .Returns("""{"status":"PendingPayment"}""", """{"status":"Confirmed"}""");
 
         var behavior = new AuditBehavior<AuditableRequest, string>(
-            [resolver], _auditRepo, _tenantContext, _unitOfWork);
+            [resolver], _auditRepo, _tenantContext, _piiRedactor, _unitOfWork);
 
         RequestHandlerDelegate<string> next = _ => Task.FromResult("ok");
 
@@ -78,7 +82,7 @@ public sealed class AuditBehaviorTests
         // Arrange
         var resolver = Substitute.For<IAuditSnapshotResolver>();
         var behavior = new AuditBehavior<NonAuditableRequest, string>(
-            [resolver], _auditRepo, _tenantContext, _unitOfWork);
+            [resolver], _auditRepo, _tenantContext, _piiRedactor, _unitOfWork);
 
         RequestHandlerDelegate<string> next = _ => Task.FromResult("ok");
 
@@ -105,7 +109,7 @@ public sealed class AuditBehaviorTests
 
         // No resolvers matching "UnknownType"
         var behavior = new AuditBehavior<AuditableRequest, string>(
-            [], _auditRepo, _tenantContext, _unitOfWork);
+            [], _auditRepo, _tenantContext, _piiRedactor, _unitOfWork);
 
         RequestHandlerDelegate<string> next = _ => Task.FromResult("deleted");
 

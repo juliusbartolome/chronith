@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Services;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
@@ -13,6 +14,7 @@ public sealed class RegisterTenantCommandHandler(
     IRefreshTokenRepository refreshTokenRepository,
     ITokenService tokenService,
     IDefaultTemplateSeeder templateSeeder,
+    IPasswordHasher passwordHasher,
     IUnitOfWork unitOfWork)
     : IRequestHandler<RegisterTenantCommand, AuthTokenDto>
 {
@@ -31,7 +33,7 @@ public sealed class RegisterTenantCommandHandler(
         await tenantRepository.AddAsync(tenant, cancellationToken);
 
         // Hash password and create owner user
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
+        var passwordHash = passwordHasher.Hash(request.Password);
         var user = TenantUser.Create(tenant.Id, request.Email, passwordHash, TenantUserRole.Owner);
         await userRepository.AddAsync(user, cancellationToken);
 
