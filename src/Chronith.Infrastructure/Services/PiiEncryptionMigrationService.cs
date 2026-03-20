@@ -145,7 +145,8 @@ public sealed class PiiEncryptionMigrationService(
             if (rows.Count == 0) break;
 
             foreach (var row in rows)
-                row.CustomerEmail = encryption.Encrypt(row.CustomerEmail) ?? row.CustomerEmail;
+                row.CustomerEmail = encryption.Encrypt(row.CustomerEmail)
+                    ?? throw new InvalidOperationException("Encryption returned null for a non-null booking customer email.");
 
             await db.SaveChangesAsync(ct);
             total += rows.Count;
@@ -171,7 +172,8 @@ public sealed class PiiEncryptionMigrationService(
             if (rows.Count == 0) break;
 
             foreach (var row in rows)
-                row.CustomerEmail = encryption.Encrypt(row.CustomerEmail) ?? row.CustomerEmail;
+                row.CustomerEmail = encryption.Encrypt(row.CustomerEmail)
+                    ?? throw new InvalidOperationException("Encryption returned null for a non-null waitlist customer email.");
 
             await db.SaveChangesAsync(ct);
             total += rows.Count;
@@ -197,7 +199,8 @@ public sealed class PiiEncryptionMigrationService(
             if (rows.Count == 0) break;
 
             foreach (var row in rows)
-                row.Email = encryption.Encrypt(row.Email) ?? row.Email;
+                row.Email = encryption.Encrypt(row.Email)
+                    ?? throw new InvalidOperationException("Encryption returned null for a non-null staff member email.");
 
             await db.SaveChangesAsync(ct);
             total += rows.Count;
