@@ -89,7 +89,7 @@ public sealed class ApiKeyAgingServiceTests
             TenantId = tenant.Id,
             KeyHash = "abc123",
             Description = "Old key",
-            Role = "Admin",
+            Scopes = [ApiKeyScope.TenantWrite],
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-(thresholdDays + 1))
         };
 
@@ -119,7 +119,7 @@ public sealed class ApiKeyAgingServiceTests
             TenantId = tenant.Id,
             KeyHash = "abc123",
             Description = "Recent key",
-            Role = "Admin",
+            Scopes = [ApiKeyScope.TenantWrite],
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-10)
         };
 
@@ -149,7 +149,7 @@ public sealed class ApiKeyAgingServiceTests
             TenantId = tenant.Id,
             KeyHash = "abc123",
             Description = "Revoked key",
-            Role = "Admin",
+            Scopes = [ApiKeyScope.TenantWrite],
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-200)
         };
         revokedKey.Revoke();

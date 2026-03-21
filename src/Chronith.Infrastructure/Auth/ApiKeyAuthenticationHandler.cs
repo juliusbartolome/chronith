@@ -40,13 +40,18 @@ public sealed class ApiKeyAuthenticationHandler(
         // scoped IApiKeyRepository is not captured after the request scope disposes.
         _ = UpdateLastUsedAtSafeAsync(scopeFactory, key.Id, Logger);
 
-        var claims = new[]
+        // Emit one scope claim per granted scope
+        var claims = new List<Claim>
         {
-            new Claim("tenant_id", key.TenantId.ToString()),
-            new Claim(ClaimTypes.Role, key.Role),
-            new Claim(ClaimTypes.NameIdentifier, key.Id.ToString()),
-            new Claim("sub", key.Id.ToString()),
+            new("tenant_id", key.TenantId.ToString()),
+            new(ClaimTypes.NameIdentifier, key.Id.ToString()),
+            new("sub", key.Id.ToString()),
+            // Synthetic role so AllowRoles("ApiKey") can gate API-key-capable endpoints
+            new(ClaimTypes.Role, "ApiKey"),
         };
+
+        foreach (var scope in key.Scopes)
+            claims.Add(new Claim("scope", scope));
 
         var identity = new ClaimsIdentity(claims, Scheme.Name);
         var principal = new ClaimsPrincipal(identity);

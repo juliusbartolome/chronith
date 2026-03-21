@@ -81,7 +81,7 @@ public sealed class ApiKeyAuthenticationHandlerTests
             TenantId = tenantId,
             KeyHash = hash,
             Description = "test",
-            Role = "Admin",
+            Scopes = [ApiKeyScope.BookingsRead],
         };
 
         var repo = Substitute.For<IApiKeyRepository>();
@@ -101,11 +101,85 @@ public sealed class ApiKeyAuthenticationHandlerTests
 
         var claims = result.Principal!.Claims.ToList();
         claims.Should().Contain(c => c.Type == "tenant_id" && c.Value == tenantId.ToString());
-        claims.Should().Contain(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+        claims.Should().Contain(c => c.Type == "scope" && c.Value == ApiKeyScope.BookingsRead);
+        claims.Should().Contain(c => c.Type == ClaimTypes.Role && c.Value == "ApiKey");
         claims.Should().Contain(c => c.Type == ClaimTypes.NameIdentifier && c.Value == keyId.ToString());
         claims.Should().Contain(c => c.Type == "sub" && c.Value == keyId.ToString());
 
         await repo.Received(1).UpdateLastUsedAtAsync(keyId, Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task HandleAuthenticateAsync_ValidKey_EmitsScopeClaimsAndSyntheticRole()
+    {
+        // Arrange
+        var (rawKey, hash) = TenantApiKey.GenerateKey();
+        var tenantId = Guid.NewGuid();
+        var keyId = Guid.NewGuid();
+        var apiKey = new TenantApiKey
+        {
+            Id = keyId,
+            TenantId = tenantId,
+            KeyHash = hash,
+            Description = "test",
+            Scopes = [ApiKeyScope.BookingsRead, ApiKeyScope.StaffRead],
+        };
+
+        var repo = Substitute.For<IApiKeyRepository>();
+        repo.GetByHashAsync(hash, Arg.Any<CancellationToken>()).Returns(apiKey);
+        repo.UpdateLastUsedAtAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        var handler = await BuildHandlerAsync(repo, headerValue: rawKey);
+
+        // Act
+        var result = await handler.AuthenticateAsync();
+        await Task.Delay(50); // allow fire-and-forget to complete
+
+        // Assert
+        result.Succeeded.Should().BeTrue();
+        var claims = result.Principal!.Claims.ToList();
+
+        // Scope claims — one per scope
+        claims.Should().Contain(c => c.Type == "scope" && c.Value == ApiKeyScope.BookingsRead);
+        claims.Should().Contain(c => c.Type == "scope" && c.Value == ApiKeyScope.StaffRead);
+
+        // Synthetic "ApiKey" role claim
+        claims.Should().Contain(c => c.Type == ClaimTypes.Role && c.Value == "ApiKey");
+
+        // No old free-form role
+        claims.Should().NotContain(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+
+        // Tenant and identity claims still present
+        claims.Should().Contain(c => c.Type == "tenant_id" && c.Value == tenantId.ToString());
+        claims.Should().Contain(c => c.Type == ClaimTypes.NameIdentifier && c.Value == keyId.ToString());
+    }
+
+    [Fact]
+    public async Task HandleAuthenticateAsync_KeyWithNoScopes_EmitsSyntheticRoleOnly()
+    {
+        var (rawKey, hash) = TenantApiKey.GenerateKey();
+        var apiKey = new TenantApiKey
+        {
+            Id = Guid.NewGuid(),
+            TenantId = Guid.NewGuid(),
+            KeyHash = hash,
+            Description = "empty scopes",
+            Scopes = [],
+        };
+
+        var repo = Substitute.For<IApiKeyRepository>();
+        repo.GetByHashAsync(hash, Arg.Any<CancellationToken>()).Returns(apiKey);
+        repo.UpdateLastUsedAtAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        var handler = await BuildHandlerAsync(repo, headerValue: rawKey);
+        var result = await handler.AuthenticateAsync();
+
+        result.Succeeded.Should().BeTrue();
+        var claims = result.Principal!.Claims.ToList();
+        claims.Should().NotContain(c => c.Type == "scope");
+        claims.Should().Contain(c => c.Type == ClaimTypes.Role && c.Value == "ApiKey");
     }
 
     [Fact]

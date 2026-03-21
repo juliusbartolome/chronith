@@ -6,17 +6,11 @@ using NSubstitute;
 
 namespace Chronith.Tests.Unit.Application;
 
-/// <summary>
-/// Unit tests for <see cref="CreateApiKeyHandler"/>.
-/// </summary>
 public sealed class CreateApiKeyHandlerTests
 {
     private static readonly Guid TenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
-    private static (
-        CreateApiKeyHandler Handler,
-        IApiKeyRepository ApiKeyRepo,
-        IUnitOfWork UnitOfWork)
+    private static (CreateApiKeyHandler Handler, IApiKeyRepository ApiKeyRepo, IUnitOfWork UnitOfWork)
         Build()
     {
         var tenantCtx = Substitute.For<ITenantContext>();
@@ -26,16 +20,19 @@ public sealed class CreateApiKeyHandlerTests
         var unitOfWork = Substitute.For<IUnitOfWork>();
 
         var handler = new CreateApiKeyHandler(tenantCtx, apiKeyRepo, unitOfWork);
-
         return (handler, apiKeyRepo, unitOfWork);
     }
 
     [Fact]
-    public async Task Handle_CreatesKeyWithCorrectTenantId()
+    public async Task Handle_CreatesKeyWithCorrectTenantIdAndScopes()
     {
         // Arrange
         var (handler, apiKeyRepo, _) = Build();
-        var cmd = new CreateApiKeyCommand { Description = "Test Key", Role = "Admin" };
+        var cmd = new CreateApiKeyCommand
+        {
+            Description = "Test Key",
+            Scopes = [ApiKeyScope.BookingsRead, ApiKeyScope.StaffRead],
+        };
 
         TenantApiKey? captured = null;
         await apiKeyRepo.AddAsync(
@@ -49,21 +46,23 @@ public sealed class CreateApiKeyHandlerTests
         captured.Should().NotBeNull();
         captured!.TenantId.Should().Be(TenantId);
         captured.Description.Should().Be("Test Key");
-        captured.Role.Should().Be("Admin");
+        captured.Scopes.Should().BeEquivalentTo([ApiKeyScope.BookingsRead, ApiKeyScope.StaffRead]);
         result.RawKey.Should().StartWith("cth_");
+        result.Scopes.Should().BeEquivalentTo([ApiKeyScope.BookingsRead, ApiKeyScope.StaffRead]);
     }
 
     [Fact]
     public async Task Handle_CallsSaveChanges()
     {
-        // Arrange
         var (handler, _, unitOfWork) = Build();
-        var cmd = new CreateApiKeyCommand { Description = "Key", Role = "ReadOnly" };
+        var cmd = new CreateApiKeyCommand
+        {
+            Description = "Key",
+            Scopes = [ApiKeyScope.BookingsRead],
+        };
 
-        // Act
         await handler.Handle(cmd, CancellationToken.None);
 
-        // Assert
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

@@ -1,5 +1,6 @@
 using System.Text;
 using Chronith.Application.Interfaces;
+using Chronith.API.Authorization;
 using Chronith.API.HealthChecks;
 using Chronith.API.Middleware;
 using Chronith.API.Processors;
@@ -10,6 +11,7 @@ using Chronith.Infrastructure.Auth;
 using Chronith.Infrastructure.Persistence;
 using Chronith.Application.Telemetry;
 using Chronith.Infrastructure.Telemetry;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using FastEndpoints;
 using FastEndpoints.Security;
@@ -67,11 +69,20 @@ var healthChecksBuilder = builder.Services
         var configuredKeys = builder.Configuration.GetSection("Jwt:SigningKeys").Get<string[]>();
         s.SigningKey = configuredKeys is { Length: > 0 } ? configuredKeys[0] : primaryKey;
     })
-    .AddAuthorization()
     .AddFastEndpoints()
     .AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database")
     .AddCheck<BackgroundServiceHealthCheck>("background-services");
+
+builder.Services.AddAuthorization(options =>
+{
+    // Register one named policy per scope for use with Policies("scope:xxx") on endpoints
+    foreach (var scope in Chronith.Domain.Models.ApiKeyScope.All)
+        options.AddPolicy($"scope:{scope}",
+            p => p.AddRequirements(new ApiKeyScopeRequirement(scope)));
+});
+
+builder.Services.AddSingleton<IAuthorizationHandler, ApiKeyScopeHandler>();
 
 // Wire multi-key JWT validation: all keys in Jwt:SigningKeys are accepted for signature verification
 // This supports zero-downtime key rotation — tokens signed with old keys remain valid.

@@ -1,3 +1,4 @@
+// src/Chronith.Application/Commands/ApiKeys/CreateApiKeyCommand.cs
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Models;
@@ -11,7 +12,7 @@ namespace Chronith.Application.Commands.ApiKeys;
 public sealed record CreateApiKeyCommand : IRequest<CreateApiKeyResult>, IAuditable
 {
     public required string Description { get; init; }
-    public required string Role { get; init; }
+    public required IReadOnlyList<string> Scopes { get; init; }
 
     // IAuditable — EntityId is Guid.Empty pre-creation
     public Guid EntityId => Guid.Empty;
@@ -26,7 +27,12 @@ public sealed class CreateApiKeyValidator : AbstractValidator<CreateApiKeyComman
     public CreateApiKeyValidator()
     {
         RuleFor(x => x.Description).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.Role).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.Scopes)
+            .NotEmpty()
+            .WithMessage("At least one scope is required.");
+        RuleForEach(x => x.Scopes)
+            .Must(s => ApiKeyScope.All.Contains(s))
+            .WithMessage((_, s) => $"'{s}' is not a valid API key scope.");
     }
 }
 
@@ -47,7 +53,7 @@ public sealed class CreateApiKeyHandler(
             TenantId = tenantContext.TenantId,
             KeyHash = keyHash,
             Description = cmd.Description,
-            Role = cmd.Role,
+            Scopes = cmd.Scopes,
         };
 
         await apiKeyRepo.AddAsync(key, ct);
@@ -57,7 +63,7 @@ public sealed class CreateApiKeyHandler(
             Id: key.Id,
             RawKey: rawKey,
             Description: key.Description,
-            Role: key.Role,
+            Scopes: key.Scopes,
             CreatedAt: key.CreatedAt);
     }
 }
