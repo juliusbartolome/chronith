@@ -6,7 +6,7 @@ public sealed class TenantApiKey
     public Guid TenantId { get; init; }
     public string KeyHash { get; init; } = string.Empty;   // SHA-256 hex of raw key
     public string Description { get; init; } = string.Empty;
-    public string Role { get; init; } = string.Empty;
+    public IReadOnlyList<string> Scopes { get; init; } = [];
     public bool IsRevoked { get; private set; }
     public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? LastUsedAt { get; private set; }

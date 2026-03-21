@@ -45,7 +45,7 @@ public sealed class RevokeApiKeyHandlerTests
             TenantId = TenantId,
             KeyHash = "abc123",
             Description = "Test",
-            Role = "Admin",
+            Scopes = [ApiKeyScope.BookingsRead],
         };
 
         apiKeyRepo

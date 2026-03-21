@@ -71,4 +71,19 @@ public sealed class TenantApiKeyTests
         key.UpdateLastUsed(older);
         key.LastUsedAt.Should().Be(now); // not rewound
     }
+
+    [Fact]
+    public void Scopes_DefaultsToEmpty()
+    {
+        var key = new TenantApiKey();
+        key.Scopes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Scopes_AreSameAsPassedIntoConstructor()
+    {
+        var scopes = new[] { ApiKeyScope.BookingsRead, ApiKeyScope.StaffRead };
+        var key = new TenantApiKey { Scopes = scopes };
+        key.Scopes.Should().BeEquivalentTo(scopes);
+    }
 }

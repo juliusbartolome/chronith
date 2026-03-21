@@ -43,7 +43,7 @@ public sealed class ApiKeyAuthenticationHandler(
         var claims = new[]
         {
             new Claim("tenant_id", key.TenantId.ToString()),
-            new Claim(ClaimTypes.Role, key.Role),
+            new Claim(ClaimTypes.Role, string.Join(",", key.Scopes)),
             new Claim(ClaimTypes.NameIdentifier, key.Id.ToString()),
             new Claim("sub", key.Id.ToString()),
         };

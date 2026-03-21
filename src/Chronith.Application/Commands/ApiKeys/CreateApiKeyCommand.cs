@@ -47,7 +47,7 @@ public sealed class CreateApiKeyHandler(
             TenantId = tenantContext.TenantId,
             KeyHash = keyHash,
             Description = cmd.Description,
-            Role = cmd.Role,
+            Scopes = [],
         };
 
         await apiKeyRepo.AddAsync(key, ct);
@@ -57,7 +57,7 @@ public sealed class CreateApiKeyHandler(
             Id: key.Id,
             RawKey: rawKey,
             Description: key.Description,
-            Role: key.Role,
+            Role: string.Empty,
             CreatedAt: key.CreatedAt);
     }
 }

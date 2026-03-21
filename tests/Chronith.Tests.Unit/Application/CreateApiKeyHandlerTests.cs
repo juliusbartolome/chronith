@@ -49,7 +49,7 @@ public sealed class CreateApiKeyHandlerTests
         captured.Should().NotBeNull();
         captured!.TenantId.Should().Be(TenantId);
         captured.Description.Should().Be("Test Key");
-        captured.Role.Should().Be("Admin");
+        captured.Scopes.Should().BeEmpty();
         result.RawKey.Should().StartWith("cth_");
     }
 

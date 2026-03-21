@@ -24,7 +24,7 @@ public sealed class ListApiKeysHandler(
             .Select(k => new ApiKeyDto(
                 Id: k.Id,
                 Description: k.Description,
-                Role: k.Role,
+                Role: string.Empty,
                 IsRevoked: k.IsRevoked,
                 CreatedAt: k.CreatedAt,
                 LastUsedAt: k.LastUsedAt))
