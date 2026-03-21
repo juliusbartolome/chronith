@@ -1,4 +1,5 @@
 using Chronith.Application.Queries.Recurring;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using FluentValidation;
 using MediatR;
@@ -35,7 +36,9 @@ public sealed class GetRecurrenceOccurrencesEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/recurring/{id}/occurrences");
-        Roles("TenantAdmin", "TenantStaff", "Customer");
+        Roles("TenantAdmin", "TenantStaff", "Customer", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsRead}");
         Options(x => x.WithTags("Recurring").RequireRateLimiting("Authenticated"));
     }
 

@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.Recurring;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -11,7 +12,9 @@ public sealed class ListRecurrenceRulesEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/recurring");
-        Roles("TenantAdmin", "TenantStaff");
+        Roles("TenantAdmin", "TenantStaff", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsRead}");
         Options(x => x.WithTags("Recurring").RequireRateLimiting("Authenticated"));
     }
 

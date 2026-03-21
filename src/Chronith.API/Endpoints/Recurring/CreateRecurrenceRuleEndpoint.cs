@@ -1,6 +1,7 @@
 using Chronith.Application.Commands.Recurring.CreateRecurrenceRule;
 using Chronith.Application.DTOs;
 using Chronith.Domain.Enums;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -30,7 +31,9 @@ public sealed class CreateRecurrenceRuleEndpoint(ISender sender)
     public override void Configure()
     {
         Post("/booking-types/{slug}/recurring");
-        Roles("TenantAdmin", "TenantStaff", "Customer");
+        Roles("TenantAdmin", "TenantStaff", "Customer", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsWrite}");
         Options(x => x.WithTags("Recurring").RequireRateLimiting("Authenticated"));
     }
 
