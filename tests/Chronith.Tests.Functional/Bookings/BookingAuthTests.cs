@@ -146,4 +146,24 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
         var response = await client.PostAsJsonAsync($"/v1/bookings/{Guid.NewGuid()}/pay", new { });
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    // DELETE /bookings/{id} — TenantAdmin → 204; Staff, Customer, PaymentSvc → 403; anon → 401
+    [Theory]
+    [InlineData("TenantStaff", HttpStatusCode.Forbidden)]
+    [InlineData("Customer", HttpStatusCode.Forbidden)]
+    [InlineData("TenantPaymentService", HttpStatusCode.Forbidden)]
+    public async Task DeleteBooking_NonAdmin_ReturnsForbidden(string role, HttpStatusCode expected)
+    {
+        var client = fixture.CreateClient(role);
+        var response = await client.DeleteAsync($"/v1/bookings/{Guid.NewGuid()}");
+        response.StatusCode.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task DeleteBooking_Anonymous_Returns401()
+    {
+        var client = fixture.CreateAnonymousClient();
+        var response = await client.DeleteAsync($"/v1/bookings/{Guid.NewGuid()}");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }
