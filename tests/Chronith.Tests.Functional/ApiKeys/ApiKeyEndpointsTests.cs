@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using Chronith.Tests.Functional.Fixtures;
 using Chronith.Tests.Functional.Helpers;
 
@@ -27,7 +28,7 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
         var response = await client.PostAsJsonAsync(ApiKeysUrl, new
         {
             description = "My integration key",
-            role = "TenantAdmin"
+            scopes = new[] { ApiKeyScope.BookingsRead }
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -35,6 +36,7 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
         result.Should().NotBeNull();
         result!.Id.Should().NotBeEmpty();
         result.RawKey.Should().StartWith("cth_");
+        result.Scopes.Should().NotBeEmpty();
     }
 
     [Fact]
@@ -46,7 +48,7 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
         var response = await client.PostAsJsonAsync(ApiKeysUrl, new
         {
             description = "Staff key attempt",
-            role = "TenantStaff"
+            scopes = new[] { ApiKeyScope.BookingsRead }
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -62,7 +64,7 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
         var createResp = await client.PostAsJsonAsync(ApiKeysUrl, new
         {
             description = $"List test key {Guid.NewGuid():N}",
-            role = "TenantAdmin"
+            scopes = new[] { ApiKeyScope.BookingsRead, ApiKeyScope.StaffRead }
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
@@ -73,6 +75,8 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
         var keys = await listResp.ReadFromApiJsonAsync<List<ApiKeyDto>>();
         keys.Should().NotBeNull();
         keys!.Should().Contain(k => k.Id == created!.Id);
+        var found = keys.First(k => k.Id == created!.Id);
+        found.Scopes.Should().Contain(ApiKeyScope.BookingsRead);
     }
 
     [Fact]
@@ -85,7 +89,7 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
         var createResp = await client.PostAsJsonAsync(ApiKeysUrl, new
         {
             description = $"Revoke test key {Guid.NewGuid():N}",
-            role = "TenantAdmin"
+            scopes = new[] { ApiKeyScope.BookingsRead }
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
@@ -101,11 +105,11 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var adminClient = fixture.CreateClient("TenantAdmin");
 
-        // Create a key
+        // Create a key with tenant:read scope (required by ListApiKeysEndpoint)
         var createResp = await adminClient.PostAsJsonAsync(ApiKeysUrl, new
         {
             description = $"Auth test key {Guid.NewGuid():N}",
-            role = "TenantAdmin"
+            scopes = new[] { ApiKeyScope.TenantRead }
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
@@ -129,7 +133,7 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
         var createResp = await adminClient.PostAsJsonAsync(ApiKeysUrl, new
         {
             description = $"Revoked auth test key {Guid.NewGuid():N}",
-            role = "TenantAdmin"
+            scopes = new[] { ApiKeyScope.TenantRead }
         });
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
@@ -158,5 +162,81 @@ public sealed class ApiKeyEndpointsTests(FunctionalTestFixture fixture)
         var response = await client.DeleteAsync($"/v1/tenant/api-keys/{nonExistentId}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task CreateApiKey_WithUnknownScope_Returns400()
+    {
+        await EnsureSeedAsync();
+        var client = fixture.CreateClient("TenantAdmin");
+
+        var response = await client.PostAsJsonAsync(ApiKeysUrl, new
+        {
+            description = "Bad scope key",
+            scopes = new[] { "totally:invalid" }
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task CreateApiKey_WithEmptyScopes_Returns400()
+    {
+        await EnsureSeedAsync();
+        var client = fixture.CreateClient("TenantAdmin");
+
+        var response = await client.PostAsJsonAsync(ApiKeysUrl, new
+        {
+            description = "No scopes key",
+            scopes = Array.Empty<string>()
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task ApiKeyWithoutRequiredScope_Returns403()
+    {
+        await EnsureSeedAsync();
+        var adminClient = fixture.CreateClient("TenantAdmin");
+
+        // Create a key with bookings:read only (NOT tenant:read)
+        var createResp = await adminClient.PostAsJsonAsync(ApiKeysUrl, new
+        {
+            description = $"Narrow scope key {Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.BookingsRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        // Try to list API keys — requires tenant:read scope
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var listResp = await apiKeyClient.GetAsync(ApiKeysUrl);
+        listResp.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task ApiKeyWithMatchingScope_Returns200()
+    {
+        await EnsureSeedAsync();
+        var adminClient = fixture.CreateClient("TenantAdmin");
+
+        // Create a key with tenant:read
+        var createResp = await adminClient.PostAsJsonAsync(ApiKeysUrl, new
+        {
+            description = $"Tenant read key {Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.TenantRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        // List API keys — requires tenant:read scope → should succeed
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var listResp = await apiKeyClient.GetAsync(ApiKeysUrl);
+        listResp.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }
