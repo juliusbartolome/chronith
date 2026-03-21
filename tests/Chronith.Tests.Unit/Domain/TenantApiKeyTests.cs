@@ -86,4 +86,12 @@ public sealed class TenantApiKeyTests
         var key = new TenantApiKey { Scopes = scopes };
         key.Scopes.Should().BeEquivalentTo(scopes);
     }
+
+    [Fact]
+    public void Scopes_IsReadOnly_CannotBeMutated()
+    {
+        var key = new TenantApiKey { Scopes = [ApiKeyScope.BookingsRead] };
+        var act = () => ((System.Collections.Generic.IList<string>)key.Scopes).Add("injected");
+        act.Should().Throw<NotSupportedException>();
+    }
 }
