@@ -518,3 +518,6 @@ docs/site/node_modules/
 # Azure App Service deployment artifacts — build output and zip (never commit)
 azure-publish/
 chronith-deploy.zip
+
+# Demo seed script — runs against production, never commit (credentials inside)
+scripts/seed-demo.sh
