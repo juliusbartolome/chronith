@@ -5,5 +5,5 @@ public sealed record CreateApiKeyResult(
     Guid Id,
     string RawKey,
     string Description,
-    string Role,
+    IReadOnlyList<string> Scopes,
     DateTimeOffset CreatedAt);

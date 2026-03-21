@@ -57,7 +57,7 @@ public sealed class CreateApiKeyHandler(
             Id: key.Id,
             RawKey: rawKey,
             Description: key.Description,
-            Role: string.Empty,
+            Scopes: [],
             CreatedAt: key.CreatedAt);
     }
 }
