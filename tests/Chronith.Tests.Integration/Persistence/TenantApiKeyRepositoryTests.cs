@@ -44,6 +44,68 @@ public sealed class TenantApiKeyRepositoryTests(PostgresFixture postgres)
     }
 
     [Fact]
+    public async Task Insert_AndQuery_ByKeyHash_WithScopes()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var db = await DbContextFactory.CreateAsync(
+            postgres.ConnectionString, tenantId, applyMigrations: true);
+
+        var (_, keyHash) = Chronith.Domain.Models.TenantApiKey.GenerateKey();
+
+        var entity = new TenantApiKeyEntity
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            KeyHash = keyHash,
+            Description = "Test API key",
+            Scopes = ["bookings:read", "staff:read"],
+            IsRevoked = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        db.TenantApiKeys.Add(entity);
+        await db.SaveChangesAsync();
+
+        var found = await db.TenantApiKeys
+            .AsNoTracking()
+            .FirstOrDefaultAsync(k => k.KeyHash == keyHash);
+
+        found.Should().NotBeNull();
+        found!.Scopes.Should().BeEquivalentTo(["bookings:read", "staff:read"]);
+    }
+
+    [Fact]
+    public async Task Insert_EmptyScopes_RoundTrips()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var db = await DbContextFactory.CreateAsync(
+            postgres.ConnectionString, tenantId, applyMigrations: true);
+
+        var (_, keyHash) = Chronith.Domain.Models.TenantApiKey.GenerateKey();
+
+        var entity = new TenantApiKeyEntity
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            KeyHash = keyHash,
+            Description = "Empty scope key",
+            Scopes = [],
+            IsRevoked = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        db.TenantApiKeys.Add(entity);
+        await db.SaveChangesAsync();
+
+        var found = await db.TenantApiKeys
+            .AsNoTracking()
+            .FirstOrDefaultAsync(k => k.KeyHash == keyHash);
+
+        found.Should().NotBeNull();
+        found!.Scopes.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Revoke_SetsIsRevoked_True()
     {
         var tenantId = Guid.NewGuid();
