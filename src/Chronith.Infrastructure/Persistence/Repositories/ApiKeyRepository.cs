@@ -69,7 +69,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
         TenantId = d.TenantId,
         KeyHash = d.KeyHash,
         Description = d.Description,
-        Role = string.Join(",", d.Scopes),
+        Scopes = [.. d.Scopes],
         IsRevoked = d.IsRevoked,
         CreatedAt = d.CreatedAt,
         LastUsedAt = d.LastUsedAt,
@@ -84,7 +84,7 @@ public sealed class ApiKeyRepository(ChronithDbContext db) : IApiKeyRepository
             TenantId = e.TenantId,
             KeyHash = e.KeyHash,
             Description = e.Description,
-            Scopes = e.Role?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [],
+            Scopes = e.Scopes.AsReadOnly(),
             CreatedAt = e.CreatedAt,
             ExpiresAt = e.ExpiresAt,
         };

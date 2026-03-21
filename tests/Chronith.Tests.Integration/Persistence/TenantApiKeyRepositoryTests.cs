@@ -23,7 +23,7 @@ public sealed class TenantApiKeyRepositoryTests(PostgresFixture postgres)
             TenantId = tenantId,
             KeyHash = keyHash,
             Description = "Test API key",
-            Role = "ReadOnly",
+            Scopes = ["bookings:read"],
             IsRevoked = false,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -39,7 +39,7 @@ public sealed class TenantApiKeyRepositoryTests(PostgresFixture postgres)
         found.TenantId.Should().Be(tenantId);
         found.KeyHash.Should().Be(keyHash);
         found.Description.Should().Be("Test API key");
-        found.Role.Should().Be("ReadOnly");
+        found.Scopes.Should().BeEquivalentTo(["bookings:read"]);
         found.IsRevoked.Should().BeFalse();
     }
 
@@ -58,7 +58,7 @@ public sealed class TenantApiKeyRepositoryTests(PostgresFixture postgres)
             TenantId = tenantId,
             KeyHash = keyHash,
             Description = "Revocable key",
-            Role = "Admin",
+            Scopes = ["bookings:write"],
             IsRevoked = false,
             CreatedAt = DateTimeOffset.UtcNow
         };
