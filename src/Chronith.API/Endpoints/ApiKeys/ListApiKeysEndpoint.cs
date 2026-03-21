@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.ApiKeys;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -11,8 +12,9 @@ public sealed class ListApiKeysEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/tenant/api-keys");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
         AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TenantRead}");
         Options(x => x.WithTags("ApiKeys").RequireRateLimiting("Authenticated"));
     }
 
