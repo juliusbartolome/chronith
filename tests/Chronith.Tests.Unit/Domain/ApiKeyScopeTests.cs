@@ -19,10 +19,16 @@ public sealed class ApiKeyScopeTests
     }
 
     [Fact]
-    public void All_ContainsNoDuplicates()
+    public void ConstantValues_AreAllUnique()
     {
-        var distinct = ApiKeyScope.All.Distinct().ToList();
-        distinct.Should().HaveCount(ApiKeyScope.All.Count);
+        var constantValues = typeof(ApiKeyScope)
+            .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            .Where(f => f.IsLiteral && !f.IsInitOnly && f.FieldType == typeof(string))
+            .Select(f => (string)f.GetRawConstantValue()!)
+            .ToList();
+
+        constantValues.Should().OnlyHaveUniqueItems(
+            "no two ApiKeyScope constants should have the same string value");
     }
 
     [Theory]
