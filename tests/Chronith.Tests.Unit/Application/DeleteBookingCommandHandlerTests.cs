@@ -101,8 +101,8 @@ public sealed class DeleteBookingCommandHandlerTests
         var unitOfWork = Substitute.For<IUnitOfWork>();
         var handler = new DeleteBookingHandler(tenantCtx, repo, unitOfWork);
 
-        try { await handler.Handle(new DeleteBookingCommand(Guid.NewGuid()), CancellationToken.None); }
-        catch (NotFoundException) { }
+        var act = () => handler.Handle(new DeleteBookingCommand(Guid.NewGuid()), CancellationToken.None);
+        await act.Should().ThrowAsync<NotFoundException>();
 
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
