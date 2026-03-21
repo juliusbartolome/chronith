@@ -8,7 +8,7 @@ namespace Chronith.API.Endpoints.ApiKeys;
 public sealed class CreateApiKeyRequest
 {
     public string Description { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
+    public List<string> Scopes { get; set; } = [];
 }
 
 public sealed class CreateApiKeyEndpoint(ISender sender)
@@ -27,7 +27,7 @@ public sealed class CreateApiKeyEndpoint(ISender sender)
         var result = await sender.Send(new CreateApiKeyCommand
         {
             Description = req.Description,
-            Role = req.Role
+            Scopes = req.Scopes
         }, ct);
 
         await Send.ResponseAsync(result, 201, ct);
