@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.Bookings;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -23,7 +24,9 @@ public sealed class ListBookingsEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/booking-types/{slug}/bookings");
-        Roles("TenantAdmin", "TenantStaff");
+        Roles("TenantAdmin", "TenantStaff", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsRead}");
         Options(x => x.WithTags("Bookings").RequireRateLimiting("Authenticated"));
     }
 

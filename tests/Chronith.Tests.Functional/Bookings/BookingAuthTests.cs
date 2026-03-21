@@ -216,4 +216,66 @@ public sealed class BookingAuthTests(FunctionalTestFixture fixture)
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task GetBooking_WithApiKey_WithReadScope_Returns200()
+    {
+        var btId = await EnsureSeedAsync();
+        await using var db = SeedData.CreateDbContext(fixture.Factory);
+        var bookingId = await SeedData.SeedBookingAsync(db, btId,
+            DateTimeOffset.UtcNow.AddDays(1), DateTimeOffset.UtcNow.AddDays(1).AddHours(1));
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"read-scope-key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.BookingsRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync($"/v1/bookings/{bookingId}");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ListBookings_WithApiKey_WithReadScope_Returns200()
+    {
+        await EnsureSeedAsync();
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"read-scope-key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.BookingsRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync($"/v1/booking-types/{BookingTypeSlug}/bookings");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetBooking_WithApiKey_WithoutReadScope_Returns403()
+    {
+        await EnsureSeedAsync();
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"wrong-scope-key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.BookingsWrite }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync($"/v1/bookings/{Guid.NewGuid()}");
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
 }

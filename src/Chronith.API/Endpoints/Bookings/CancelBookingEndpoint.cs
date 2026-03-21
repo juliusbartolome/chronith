@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.Bookings;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -17,7 +18,9 @@ public sealed class CancelBookingEndpoint(ISender sender)
     public override void Configure()
     {
         Post("/bookings/{bookingId}/cancel");
-        Roles("TenantAdmin", "TenantStaff", "Customer");
+        Roles("TenantAdmin", "TenantStaff", "Customer", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsCancel}");
         Options(x => x.WithTags("Bookings").RequireRateLimiting("Authenticated"));
     }
 

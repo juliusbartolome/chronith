@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.Bookings;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -18,7 +19,9 @@ public sealed class RescheduleBookingEndpoint(ISender sender)
     public override void Configure()
     {
         Post("/bookings/{bookingId}/reschedule");
-        Roles("TenantAdmin", "TenantStaff", "Customer");
+        Roles("TenantAdmin", "TenantStaff", "Customer", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsWrite}");
         Options(x => x.WithTags("Bookings").RequireRateLimiting("Authenticated"));
     }
 

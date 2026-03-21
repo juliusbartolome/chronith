@@ -1,4 +1,5 @@
 using Chronith.Application.Queries.Bookings;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -19,7 +20,9 @@ public sealed class ExportBookingsEndpoint(ISender sender) : Endpoint<ExportBook
     public override void Configure()
     {
         Get("/bookings/export");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsRead}");
         Options(x => x.WithTags("Bookings").RequireRateLimiting("Authenticated"));
     }
 

@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.Bookings;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -16,7 +17,9 @@ public sealed class PayBookingEndpoint(ISender sender)
     public override void Configure()
     {
         Post("/bookings/{bookingId}/pay");
-        Roles("TenantAdmin", "TenantStaff", "TenantPaymentService");
+        Roles("TenantAdmin", "TenantStaff", "TenantPaymentService", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsPay}");
         Options(x => x.WithTags("Bookings").RequireRateLimiting("Authenticated"));
     }
 
