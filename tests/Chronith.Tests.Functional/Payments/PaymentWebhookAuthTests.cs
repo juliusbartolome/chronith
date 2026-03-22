@@ -6,7 +6,7 @@ using Chronith.Tests.Functional.Helpers;
 namespace Chronith.Tests.Functional.Payments;
 
 /// <summary>
-/// Verifies that the payment webhook endpoint at POST /webhooks/payments/{provider}
+/// Verifies that the payment webhook endpoint at POST /webhooks/payments/{tenantId}/{provider}
 /// is AllowAnonymous — external payment providers send webhooks without JWT tokens.
 /// </summary>
 [Collection("Functional")]
@@ -30,9 +30,9 @@ public sealed class PaymentWebhookAuthTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.PostAsync("/v1/webhooks/payments/Stub", WebhookBody());
+        var response = await client.PostAsync(
+            $"/v1/webhooks/payments/{TestConstants.TenantId}/Stub", WebhookBody());
 
-        // AllowAnonymous means no 401
         ((int)response.StatusCode).Should().NotBe(401,
             "the webhook endpoint is AllowAnonymous and should not require authentication");
     }
@@ -43,7 +43,8 @@ public sealed class PaymentWebhookAuthTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.PostAsync("/v1/webhooks/payments/Stub", WebhookBody());
+        var response = await client.PostAsync(
+            $"/v1/webhooks/payments/{TestConstants.TenantId}/Stub", WebhookBody());
 
         ((int)response.StatusCode).Should().NotBe(403,
             "the webhook endpoint is AllowAnonymous and should not check roles");
@@ -59,7 +60,8 @@ public sealed class PaymentWebhookAuthTests(FunctionalTestFixture fixture)
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
 
-        var response = await client.PostAsync("/v1/webhooks/payments/Stub", WebhookBody());
+        var response = await client.PostAsync(
+            $"/v1/webhooks/payments/{TestConstants.TenantId}/Stub", WebhookBody());
 
         ((int)response.StatusCode).Should().NotBe(401);
         ((int)response.StatusCode).Should().NotBe(403,
@@ -67,17 +69,18 @@ public sealed class PaymentWebhookAuthTests(FunctionalTestFixture fixture)
     }
 
     [Fact]
-    public async Task PaymentWebhook_UnknownProvider_Returns500OrBadRequest()
+    public async Task PaymentWebhook_UnknownProvider_Returns4xxError()
     {
         await EnsureSeedAsync();
         var client = fixture.CreateAnonymousClient();
 
-        var response = await client.PostAsync("/v1/webhooks/payments/UnknownProvider", WebhookBody());
+        var response = await client.PostAsync(
+            $"/v1/webhooks/payments/{TestConstants.TenantId}/UnknownProvider", WebhookBody());
 
-        // Unknown provider should not return auth errors — it should be a domain/processing error
-        ((int)response.StatusCode).Should().NotBe(401);
-        ((int)response.StatusCode).Should().NotBe(403);
-        // It will be 400 or 500 depending on how PaymentProviderFactory handles unknown providers
+        // Unknown/unconfigured providers return 401 by design (security: don't reveal which
+        // providers are configured for a tenant). It should never be 403 (middleware auth rejection).
+        ((int)response.StatusCode).Should().NotBe(403,
+            "an unknown provider should not return a 403 Forbidden from auth middleware");
         ((int)response.StatusCode).Should().BeGreaterThanOrEqualTo(400,
             "an unknown provider should result in an error, not a success");
     }

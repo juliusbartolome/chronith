@@ -9,13 +9,14 @@ public sealed class PaymentWebhookEndpoint(ISender sender)
 {
     public override void Configure()
     {
-        Post("/webhooks/payments/{provider}");
+        Post("/webhooks/payments/{tenantId}/{provider}");
         AllowAnonymous(); // Webhooks come from external providers, no JWT
         Options(x => x.WithTags("Payments").RequireRateLimiting("Public"));
     }
 
     public override async Task HandleAsync(CancellationToken ct)
     {
+        var tenantId = Route<Guid>("tenantId");
         var provider = Route<string>("provider")!;
 
         // Read raw body for signature verification
@@ -31,6 +32,7 @@ public sealed class PaymentWebhookEndpoint(ISender sender)
 
         await sender.Send(new ProcessPaymentWebhookCommand
         {
+            TenantId = tenantId,
             ProviderName = provider,
             RawBody = rawBody,
             Headers = headers,
