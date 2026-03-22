@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Chronith.Application.DTOs;
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using Chronith.Tests.Functional.Fixtures;
 using Chronith.Tests.Functional.Helpers;

@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.ApiKeys;
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;

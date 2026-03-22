@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Auth;
 using FluentAssertions;

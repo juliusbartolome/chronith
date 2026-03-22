@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.Webhooks;
 using Chronith.Application.DTOs;
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;

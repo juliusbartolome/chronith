@@ -77,7 +77,7 @@ var healthChecksBuilder = builder.Services
 builder.Services.AddAuthorization(options =>
 {
     // Register one named policy per scope for use with Policies("scope:xxx") on endpoints
-    foreach (var scope in Chronith.Domain.Models.ApiKeyScope.All)
+    foreach (var scope in Chronith.Application.Models.ApiKeyScope.All)
         options.AddPolicy($"scope:{scope}",
             p => p.AddRequirements(new ApiKeyScopeRequirement(scope)));
 });

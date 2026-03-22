@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.Bookings;
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
