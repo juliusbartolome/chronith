@@ -1,4 +1,7 @@
 using System.Net;
+using System.Net.Http.Json;
+using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using Chronith.Tests.Functional.Fixtures;
 using Chronith.Tests.Functional.Helpers;
 
@@ -122,5 +125,52 @@ public sealed class SubscriptionAuthTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient(role, tenantId: SubTenantId);
         var response = await client.GetAsync("/v1/tenant/usage");
         response.StatusCode.Should().Be(expected);
+    }
+
+    // ── API Key scope tests ──────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetSubscription_WithApiKey_WithTenantReadScope_Returns200()
+    {
+        await EnsureTenantAsync();
+        var adminClient = fixture.CreateClient("TenantAdmin", tenantId: SubTenantId);
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.TenantRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync("/v1/tenant/subscription");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Subscribe_WithApiKey_WithTenantWriteScope_Returns201()
+    {
+        await EnsureTenantAsync();
+        var adminClient = fixture.CreateClient("TenantAdmin", tenantId: SubTenantId);
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.TenantWrite }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        string? paymentToken = null;
+        var response = await apiKeyClient.PostAsJsonAsync("/v1/tenant/subscribe", new
+        {
+            planId = FreePlanId,
+            paymentMethodToken = paymentToken
+        });
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 }

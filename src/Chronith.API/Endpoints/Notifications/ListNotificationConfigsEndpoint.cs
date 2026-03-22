@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.Notifications;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -11,7 +12,9 @@ public sealed class ListNotificationConfigsEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/tenant/notifications");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.NotificationsWrite}");
         Options(x => x.WithTags("Notifications").RequireRateLimiting("Authenticated"));
     }
 

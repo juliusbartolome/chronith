@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.NotificationConfig;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -17,7 +18,9 @@ public sealed class UpdateNotificationConfigEndpoint(ISender sender)
     public override void Configure()
     {
         Put("/tenant/notifications/{channelType}");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.NotificationsWrite}");
         Options(x => x.WithTags("Notifications").RequireRateLimiting("Authenticated"));
     }
 

@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.Webhooks.ListWebhookDeliveries;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -18,7 +19,9 @@ public sealed class ListWebhookDeliveriesEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/webhooks/{webhookId}/deliveries");
-        Roles("TenantAdmin", "TenantStaff");
+        Roles("TenantAdmin", "TenantStaff", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.WebhooksRead}");
         Options(x => x.WithTags("Webhooks").RequireRateLimiting("Authenticated"));
         Summary(s =>
         {

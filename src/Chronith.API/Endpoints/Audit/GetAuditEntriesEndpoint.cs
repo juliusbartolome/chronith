@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.Audit;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -38,7 +39,9 @@ public sealed class GetAuditEntriesEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/audit");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.AuditRead}");
         Options(x => x.WithTags("Audit").RequireRateLimiting("Authenticated"));
     }
 

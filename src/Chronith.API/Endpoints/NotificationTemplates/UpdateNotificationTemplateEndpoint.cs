@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.NotificationTemplates;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -22,7 +23,9 @@ public sealed class UpdateNotificationTemplateEndpoint(ISender sender)
     public override void Configure()
     {
         Put("/tenant/notification-templates/{id}");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.NotificationTemplatesWrite}");
         Options(x => x.WithTags("NotificationTemplates").RequireRateLimiting("Authenticated"));
     }
 
