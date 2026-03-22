@@ -51,6 +51,12 @@ public interface IBookingRepository
     Task<Booking?> GetByPaymentReferenceAsync(Guid tenantId, string paymentReference, CancellationToken ct = default);
 
     /// <summary>
+    /// Public-safe lookup that bypasses the global tenant query filter.
+    /// Uses explicit TenantId + IsDeleted filters. Safe for anonymous endpoints.
+    /// </summary>
+    Task<Booking?> GetPublicByIdAsync(Guid tenantId, Guid bookingId, CancellationToken ct = default);
+
+    /// <summary>
     /// Returns all bookings for a specific customer (identified by CustomerId string field) within a tenant.
     /// </summary>
     Task<IReadOnlyList<Booking>> GetByCustomerIdAsync(

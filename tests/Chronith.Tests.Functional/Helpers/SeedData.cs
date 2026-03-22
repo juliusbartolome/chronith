@@ -52,18 +52,21 @@ public static class SeedData
         long priceInCentavos = 10_000,
         string currency = "PHP",
         PaymentMode paymentMode = PaymentMode.Manual,
-        string? paymentProvider = null)
+        string? paymentProvider = null,
+        Guid? tenantId = null)
     {
-        // Idempotent — return existing id if slug already seeded
+        var tid = tenantId ?? TestConstants.TenantId;
+
+        // Idempotent — return existing id if slug already seeded for this tenant
         var existing = db.BookingTypes.IgnoreQueryFilters()
-            .FirstOrDefault(bt => bt.Slug == slug && bt.TenantId == TestConstants.TenantId);
+            .FirstOrDefault(bt => bt.Slug == slug && bt.TenantId == tid);
         if (existing is not null) return existing.Id;
 
         var id = Guid.NewGuid();
         db.BookingTypes.Add(new BookingTypeEntity
         {
             Id = id,
-            TenantId = TestConstants.TenantId,
+            TenantId = tid,
             Slug = slug,
             Name = "Test Type",
             Kind = BookingKind.TimeSlot,
@@ -104,13 +107,16 @@ public static class SeedData
         BookingStatus status = BookingStatus.PendingPayment,
         string customerId = "cust-seed-1",
         long amountInCentavos = 0,
-        Guid? staffMemberId = null)
+        Guid? staffMemberId = null,
+        string? paymentReference = null,
+        string? checkoutUrl = null,
+        Guid? tenantId = null)
     {
         var id = Guid.NewGuid();
         db.Bookings.Add(new BookingEntity
         {
             Id = id,
-            TenantId = TestConstants.TenantId,
+            TenantId = tenantId ?? TestConstants.TenantId,
             BookingTypeId = bookingTypeId,
             Start = start,
             End = end,
@@ -119,6 +125,8 @@ public static class SeedData
             CustomerEmail = $"{customerId}@example.com",
             AmountInCentavos = amountInCentavos,
             StaffMemberId = staffMemberId,
+            PaymentReference = paymentReference,
+            CheckoutUrl = checkoutUrl,
             IsDeleted = false
         });
         await db.SaveChangesAsync();
