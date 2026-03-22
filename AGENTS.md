@@ -9,22 +9,23 @@ Read it fully before making any changes.
 
 **Chronith** is a multi-tenant booking engine API built in .NET 10 using clean architecture.
 
-| Concern         | Technology                                                                |
-| --------------- | ------------------------------------------------------------------------- |
-| Web framework   | FastEndpoints 8.x                                                         |
-| CQRS / Mediator | MediatR 14.x                                                              |
-| Validation      | FluentValidation 12.x                                                     |
-| ORM             | EF Core 10.x + Npgsql                                                     |
-| Database        | PostgreSQL 17                                                             |
-| Cache           | Redis 8 (StackExchange.Redis)                                             |
-| Auth            | JWT (HMAC symmetric) + API Key (`X-Api-Key`)                              |
-| Observability   | OpenTelemetry (traces + metrics, OTLP export)                             |
-| Logging         | Serilog (console sink)                                                    |
-| Notifications   | MailKit (SMTP), Twilio (SMS), FirebaseAdmin (push)                        |
-| Payments        | Pluggable `IPaymentProvider` (Stub / PayMongo)                            |
-| Testing         | xUnit, FluentAssertions, NSubstitute, Testcontainers, BenchmarkDotNet, k6 |
-| CI              | GitHub Actions (6 jobs), CodeQL                                           |
-| Container       | Docker multi-stage, Docker Compose                                        |
+| Concern          | Technology                                                                |
+| ---------------- | ------------------------------------------------------------------------- |
+| Web framework    | FastEndpoints 8.x                                                         |
+| CQRS / Mediator  | MediatR 14.x                                                              |
+| Validation       | FluentValidation 12.x                                                     |
+| ORM              | EF Core 10.x + Npgsql                                                     |
+| Database         | PostgreSQL 17                                                             |
+| Cache            | Redis 8 (StackExchange.Redis)                                             |
+| Auth             | JWT (HMAC symmetric) + API Key (`X-Api-Key`)                              |
+| Password hashing | Argon2id (customer accounts)                                              |
+| Observability    | OpenTelemetry (traces + metrics, OTLP export)                             |
+| Logging          | Serilog (console sink)                                                    |
+| Notifications    | MailKit (SMTP), Twilio (SMS), FirebaseAdmin (push)                        |
+| Payments         | Pluggable `IPaymentProvider` (Stub / PayMongo)                            |
+| Testing          | xUnit, FluentAssertions, NSubstitute, Testcontainers, BenchmarkDotNet, k6 |
+| CI               | GitHub Actions (6 jobs), CodeQL                                           |
+| Container        | Docker multi-stage, Docker Compose                                        |
 
 Solution file: `Chronith.slnx` (.NET XML-based solution format).
 SDK pinned to `10.0.100` in `global.json`.
@@ -242,6 +243,27 @@ Two test files per feature: `*EndpointsTests.cs` (happy paths) and `*AuthTests.c
 
 ## 7. Git & Branching Model
 
+### Sensitive Data in Commits
+
+**Never commit real secrets.** Before staging any file, verify it contains no plaintext credentials.
+
+What counts as sensitive: JWT signing keys, API keys (PayMongo, Twilio, Firebase), database connection strings with real passwords, SMTP credentials, webhook secrets, AES encryption keys, OAuth tokens, bearer tokens, and any value sourced from Key Vault or a secrets manager.
+
+**Placeholder conventions — stay consistent with what is already in the codebase:**
+
+| Field type                   | Placeholder                                     |
+| ---------------------------- | ----------------------------------------------- |
+| JWT / HMAC signing key       | `REPLACE_WITH_SECRET__run_openssl_rand_-hex_32` |
+| AES encryption key versions  | `SET_VIA_AZURE_APP_SERVICE_OR_ENV`              |
+| Payment provider credentials | `""` (empty string)                             |
+| Callback / redirect URLs     | `https://example.com/...`                       |
+| k6 / load-test signing keys  | `change-me-in-production-at-least-32-chars`     |
+| HMAC zero-value placeholder  | `AAAA...=` (base64-encoded zero bytes)          |
+
+If a real secret is already staged, un-stage it and rotate the credential immediately. Do not attempt to rewrite history — rotate first, redact second.
+
+---
+
 ### Conventional Commits
 
 All commits must use conventional commit format with scope:
@@ -277,27 +299,46 @@ Tag releases on `main` after merge: `v0.1.0`, `v0.2.0`, ..., `v1.0.0`.
 
 ## 8. CI/CD & PR Lifecycle
 
-### CI Pipeline (`.github/workflows/ci.yml`)
+### CI Pipeline
 
-5 jobs run on every push to `main` and on PRs targeting `main`:
+Multiple workflow files run on pushes to `main` and on PRs targeting `main`:
 
-| Job             | Description                                                                                                  |
-| --------------- | ------------------------------------------------------------------------------------------------------------ |
-| `dotnet-test`   | Postgres 17 + Redis 8 service containers. Builds Release, runs unit/integration/functional tests separately. |
-| `docker-build`  | Multi-stage Docker build with Buildx + GHA cache.                                                            |
-| `k6-load-tests` | Builds image, starts docker-compose stack, seeds data, runs 4 k6 scripts.                                    |
-| `benchmarks`    | BenchmarkDotNet (push to `main` only).                                                                       |
-| `codeql`        | CodeQL `security-and-quality` for `[csharp, javascript]`.                                                    |
+**`ci.yml` — API (runs on API/infra path changes)**
 
-````
+| Job              | Description                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| `changes`        | Detect changed paths (dorny/paths-filter); gates downstream jobs.                                            |
+| `dotnet-test`    | Postgres 17 + Redis 8 service containers. Builds Release, runs unit/integration/functional tests separately. |
+| `docker-build`   | Multi-stage Docker build with Buildx + GHA cache.                                                            |
+| `playwright-e2e` | Builds API + dashboard images, starts compose stack, runs Playwright E2E suite.                              |
+| `benchmarks`     | BenchmarkDotNet (push to `main` only).                                                                       |
+| `codeql`         | CodeQL `security-and-quality` for `[csharp, javascript]`.                                                    |
+| `secret-scan`    | Scans for accidentally committed secrets.                                                                    |
+| `deploy-api`     | Deploys API to Azure App Service (`chronith-api`, `rg-chronith`, `southeastasia`) on push to `main`.         |
+
+**`dashboard-ci.yml` — Admin Dashboard**
+
+| Job                | Description                                      |
+| ------------------ | ------------------------------------------------ |
+| `lint-typecheck`   | ESLint + `tsc --noEmit`.                         |
+| `unit-tests`       | Vitest (component + hook tests).                 |
+| `build`            | `next build` — verify production build succeeds. |
+| `docker-build`     | Build dashboard Docker image.                    |
+| `deploy-dashboard` | Deploys dashboard to Azure on push to `main`.    |
+
+**`sdk-ci.yml` — TypeScript SDK** — lint + type-check + build.
+
+**`sdk-csharp-ci.yml` — C# SDK** — build + test + NuGet publish.
+
+**`docs-ci.yml` — Documentation site** — Starlight build + GitHub Pages deploy.
+
+**`docs-gate.yml` — Docs-only PRs** — posts a synthetic pass status so docs-only PRs are not blocked by skipped API jobs.
 
 ---
 
-## 9. Version History & Roadmap
+## 9. Version History
 
-### Completed Versions
-
-> **Note:** v0.8 was implemented before v0.7 intentionally. v0.8 ("Production Infrastructure") was prioritised first to establish observability, security hardening, and audit foundations that v0.7 features will build on. v0.7 remains in Upcoming.
+### Completed Versions (all tagged on `main`)
 
 | Version | Tag      | Summary                                                                                                                                                                     |
 | ------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -307,15 +348,24 @@ Tag releases on `main` after merge: `v0.1.0`, `v0.2.0`, ..., `v1.0.0`.
 | v0.4    | `v0.4.0` | JWT + API key auth, Redis caching, customer callbacks, rate limiting                                                                                                        |
 | v0.5    | `v0.5.0` | Payment/pricing integration, PayMongo provider, free booking flow                                                                                                           |
 | v0.6    | —        | Staff management, lifecycle enhancements (reschedule, waitlist, time blocks, custom fields), notifications (email/SMS/push), analytics, public booking endpoints, iCal feed |
-| v0.8    | —        | Audit logging, OpenTelemetry observability, security hardening, database optimization, notification templates                                                               |
+| v0.7    | `v0.7.0` | API versioning (`/v1/`), customer accounts (built-in + OIDC), recurring bookings, idempotency keys                                                                          |
+| v0.8    | `v0.8.0` | Audit logging, OpenTelemetry observability, security hardening, database optimization, notification templates                                                               |
+| v0.8.2  | `v0.8.2` | Magic link auth, OTel spans + metrics, API key aging service                                                                                                                |
+| v0.9    | `v0.9.0` | TypeScript SDK, Next.js admin dashboard, C# SDK + NuGet, Starlight docs, Playwright E2E                                                                                     |
+| v1.0    | `v1.0.0` | GA: complete dashboard, public booking page, security audit, k6 load tests, CHANGELOG                                                                                       |
 
-### Upcoming — Design Docs
+### Post-v1.0 (main, untagged)
 
-| Version | Design Doc                                      | Focus                  |
-| ------- | ----------------------------------------------- | ---------------------- |
-| v0.7    | `docs/plans/2026-03-07-chronith-v0.7-design.md` | Next planned milestone |
-| v0.9    | `docs/plans/2026-03-07-chronith-v0.9-design.md` | —                      |
-| v1.0    | `docs/plans/2026-03-07-chronith-v1.0-design.md` | Production release     |
+Work merged to `main` after the v1.0.0 GA tag:
+
+| Feature area               | PRs           | Description                                                                                                                           |
+| -------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Deployment infrastructure  | #20–#29       | Azure App Service (live at `chronith-api.azurewebsites.net`), Fly.io config, Podman local dev, GitHub Flow migration, CI path filters |
+| Per-tenant payment config  | #32           | Full CRUD for `TenantPaymentConfig` with AES-256-GCM encryption of provider credentials                                               |
+| Security hardening         | #37, #41, #42 | Webhook secret encryption, Argon2id password hashing, AES-256-GCM PII field encryption                                                |
+| API key scopes (RBAC)      | #44–#48       | Scope-based authorization on all API key-authenticated endpoints                                                                      |
+| Per-tenant payment webhook | #49           | PayMongo inbound webhook route scoped per tenant slug                                                                                 |
+| Public booking status      | #51           | Anonymous `GET /v1/public/{tenantSlug}/bookings/{id}` endpoint                                                                        |
 
 Implementation plans live in `docs/plans/` following the naming pattern:
 `YYYY-MM-DD-chronith-v{X.Y}-plan.md`
@@ -401,4 +451,7 @@ openssl rand -base64 32
 ```
 
 Set the result as `Security:EncryptionKey` via an environment variable or secrets manager — never commit a real key to source control.
-````
+
+```
+
+```
