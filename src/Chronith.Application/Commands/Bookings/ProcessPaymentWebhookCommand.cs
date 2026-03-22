@@ -10,6 +10,7 @@ namespace Chronith.Application.Commands.Bookings;
 
 public sealed record ProcessPaymentWebhookCommand : IRequest
 {
+    public required Guid TenantId { get; init; }
     public required string ProviderName { get; init; }
     public required string RawBody { get; init; }
     public required IDictionary<string, string> Headers { get; init; }
@@ -23,6 +24,7 @@ public sealed class ProcessPaymentWebhookValidator
 {
     public ProcessPaymentWebhookValidator()
     {
+        RuleFor(x => x.TenantId).NotEmpty();
         RuleFor(x => x.ProviderName).NotEmpty();
         RuleFor(x => x.RawBody).NotEmpty();
     }
@@ -31,7 +33,7 @@ public sealed class ProcessPaymentWebhookValidator
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 public sealed class ProcessPaymentWebhookHandler(
-    IPaymentProviderFactory paymentProviderFactory,
+    ITenantPaymentProviderResolver resolver,
     IBookingRepository bookingRepo,
     IBookingTypeRepository bookingTypeRepo,
     IUnitOfWork unitOfWork,
@@ -40,9 +42,12 @@ public sealed class ProcessPaymentWebhookHandler(
 {
     public async Task Handle(ProcessPaymentWebhookCommand cmd, CancellationToken ct)
     {
-        var provider = paymentProviderFactory.GetProvider(cmd.ProviderName);
+        // Resolve the provider per-tenant — loads webhook secret from the tenant's payment config
+        var provider = await resolver.ResolveAsync(cmd.TenantId, cmd.ProviderName, ct);
+        if (provider is null)
+            throw new UnauthorizedException("Webhook validation failed");
 
-        // Validate webhook authenticity
+        // Validate webhook authenticity using the tenant's webhook secret
         var validationContext = new WebhookValidationContext(
             cmd.Headers, cmd.RawBody, cmd.SourceIpAddress);
 
@@ -56,9 +61,9 @@ public sealed class ProcessPaymentWebhookHandler(
         if (paymentEvent.EventType != PaymentEventType.Success)
             return;
 
-        // Find booking by provider transaction ID (cross-tenant — webhooks don't carry tenant context)
+        // Find booking by provider transaction ID (scoped to the tenant from the route)
         var booking = await bookingRepo.GetByPaymentReferenceAsync(
-                Guid.Empty, paymentEvent.ProviderTransactionId, ct)
+                cmd.TenantId, paymentEvent.ProviderTransactionId, ct)
             ?? throw new NotFoundException("Booking",
                 $"PaymentReference={paymentEvent.ProviderTransactionId}");
 
