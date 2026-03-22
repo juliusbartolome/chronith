@@ -43,7 +43,8 @@ public sealed class SdkTestFixture : IAsyncLifetime
             builder.UseSetting("Database:Provider", "PostgreSQL");
             builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
             builder.UseSetting("Jwt:SigningKey", TestConstants.JwtSigningKey);
-            builder.UseSetting("Security:EncryptionKey", TestConstants.EncryptionKey);
+            builder.UseSetting("Security:EncryptionKeyVersion", "v1");
+            builder.UseSetting("Security:KeyVersions:v1", TestConstants.EncryptionKey);
             builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
             // Raise rate-limit permits very high so SDK tests never exhaust
             // the shared in-process IP bucket.
@@ -51,6 +52,8 @@ public sealed class SdkTestFixture : IAsyncLifetime
             builder.UseSetting("RateLimiting:Auth:WindowSeconds", "300");
             builder.UseSetting("RateLimiting:Authenticated:PermitLimit", "10000");
             builder.UseSetting("RateLimiting:Authenticated:WindowSeconds", "300");
+            builder.UseSetting("RateLimiting:Export:PermitLimit", "10000");
+            builder.UseSetting("RateLimiting:Export:WindowSeconds", "300");
         });
 
         // Run migrations
