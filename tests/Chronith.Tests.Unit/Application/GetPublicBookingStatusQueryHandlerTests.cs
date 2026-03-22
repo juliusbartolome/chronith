@@ -107,8 +107,9 @@ public sealed class GetPublicBookingStatusQueryHandlerTests
         var tenantId = Guid.NewGuid();
         var bookingId = Guid.NewGuid();
 
+        Booking? notFound = null;
         _repo.GetPublicByIdAsync(tenantId, bookingId, Arg.Any<CancellationToken>())
-             .Returns((Booking?)null);
+             .Returns(notFound);
 
         var handler = new GetPublicBookingStatusQueryHandler(_repo);
         var act = () => handler.Handle(
