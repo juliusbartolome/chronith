@@ -152,8 +152,12 @@ public sealed class SubscriptionAuthTests(FunctionalTestFixture fixture)
     [Fact]
     public async Task Subscribe_WithApiKey_WithTenantWriteScope_Returns201()
     {
-        await EnsureTenantAsync();
-        var adminClient = fixture.CreateClient("TenantAdmin", tenantId: SubTenantId);
+        // Use a dedicated tenant ID to avoid collision with SubscriptionEndpointsTests
+        var apiKeySubTenantId = Guid.Parse("00000000-0000-0000-0000-0000000000A2");
+        await using var db = SeedData.CreateDbContext(fixture.Factory, apiKeySubTenantId);
+        await SeedData.SeedTenantAsync(db, apiKeySubTenantId, "apikey-sub-test-tenant");
+
+        var adminClient = fixture.CreateClient("TenantAdmin", tenantId: apiKeySubTenantId);
         var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
         {
             description = $"key-{Guid.NewGuid():N}",

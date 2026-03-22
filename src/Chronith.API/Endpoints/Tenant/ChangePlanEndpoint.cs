@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.Subscriptions;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -16,7 +17,9 @@ public sealed class ChangePlanEndpoint(ISender sender)
     public override void Configure()
     {
         Put("/tenant/subscription/plan");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TenantWrite}");
         Options(x => x.WithTags("Subscriptions").RequireRateLimiting("Authenticated"));
     }
 
