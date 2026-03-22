@@ -203,7 +203,11 @@ public sealed class BookingTypeAuthTests(FunctionalTestFixture fixture)
             name = "API Key Created BT",
             isTimeSlot = true,
             capacity = 1,
-            durationMinutes = 60
+            durationMinutes = 60,
+            availabilityWindows = new[]
+            {
+                new { dayOfWeek = 1, startTime = "08:00:00", endTime = "18:00:00" }
+            }
         });
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
