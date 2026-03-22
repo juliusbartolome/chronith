@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.Waitlist;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -15,7 +16,9 @@ public sealed class RemoveFromWaitlistEndpoint(ISender sender)
     public override void Configure()
     {
         Delete("/waitlist/{id}");
-        Roles("Customer", "TenantAdmin");
+        Roles("Customer", "TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsCancel}");
         Options(x => x.WithTags("Waitlist").RequireRateLimiting("Authenticated"));
     }
 
