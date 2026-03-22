@@ -16,6 +16,13 @@ namespace Chronith.Tests.Functional.RateLimiting;
 /// UseSetting overrides so each test can configure per-policy permit limits
 /// without polluting the shared FunctionalTestFixture.
 /// </summary>
+/// <remarks>
+/// Placed in the "Functional" collection to prevent concurrent execution with
+/// other functional tests. FastEndpoints stores JsonSerializerOptions in
+/// process-global static state (Config.SerOpts), so concurrent WebApplicationFactory
+/// startups cause a race on set_TypeInfoResolver → InvalidOperationException.
+/// </remarks>
+[Collection("Functional")]
 public class RateLimitingTests : IAsyncLifetime
 {
     // Standard factory — default 300 req/min authenticated limit
