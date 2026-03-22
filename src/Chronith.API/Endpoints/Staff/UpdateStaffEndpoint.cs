@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.Staff;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -22,7 +23,9 @@ public sealed class UpdateStaffEndpoint(ISender sender)
     public override void Configure()
     {
         Put("/staff/{id}");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.StaffWrite}");
         Options(x => x.WithTags("Staff").RequireRateLimiting("Authenticated"));
     }
 
