@@ -45,7 +45,7 @@ public sealed class WebhookRepository(
             .TagWith("GetByIdCrossTenantAsync — WebhookRepository")
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(w => w.Id == webhookId, ct);
+            .FirstOrDefaultAsync(w => w.Id == webhookId && !w.IsDeleted, ct);
 
         return entity is null ? null : MapToDomain(entity);
     }
