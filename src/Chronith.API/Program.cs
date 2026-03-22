@@ -74,6 +74,14 @@ var healthChecksBuilder = builder.Services
     .AddCheck<DatabaseHealthCheck>("database")
     .AddCheck<BackgroundServiceHealthCheck>("background-services");
 
+// Register JsonStringEnumConverter via ASP.NET Core's minimal-API JSON options so
+// FastEndpoints picks it up through its IOptions<JsonOptions> copy on startup.
+// This avoids mutating FastEndpoints' process-global static JsonSerializerOptions
+// (Config.SerOpts) inside UseFastEndpoints, which is not safe when multiple
+// WebApplicationFactory instances start concurrently in tests.
+builder.Services.ConfigureHttpJsonOptions(o =>
+    o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
 builder.Services.AddAuthorization(options =>
 {
     // Register one named policy per scope for use with Policies("scope:xxx") on endpoints
@@ -315,7 +323,8 @@ app.UseFastEndpoints(c =>
 {
     c.Endpoints.RoutePrefix = "v1";
     c.Errors.UseProblemDetails();
-    c.Serializer.Options.Converters.Add(new JsonStringEnumConverter());
+    // JsonStringEnumConverter is registered via ConfigureHttpJsonOptions above;
+    // FastEndpoints copies it from IOptions<JsonOptions> on startup.
     c.Endpoints.Configurator = ep =>
     {
         ep.PreProcessor<IdempotencyPreProcessor>(Order.Before);
