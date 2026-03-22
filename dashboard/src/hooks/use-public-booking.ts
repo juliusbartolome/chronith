@@ -5,6 +5,7 @@ export type PublicBookingTypeDto = {
   slug: string;
   name: string;
   description: string | null;
+  kind: "TimeSlot" | "Calendar";
   durationMinutes: number;
   priceCentavos: number;
   requiresStaffAssignment: boolean;
@@ -58,7 +59,19 @@ export function usePublicBookingTypes(tenantSlug: string) {
     queryFn: async () => {
       const res = await fetch(`/api/public/${tenantSlug}/booking-types`);
       if (!res.ok) throw new Error("Failed to fetch booking types");
-      return res.json();
+      const data = await res.json();
+      // Map API response (with 'kind' from BookingKind enum) to PublicBookingTypeDto
+      return data.map((bt: Record<string, unknown>) => ({
+        id: bt.id,
+        slug: bt.slug,
+        name: bt.name,
+        description: bt.description,
+        kind: bt.kind === "Calendar" ? "Calendar" : "TimeSlot",
+        durationMinutes: bt.durationMinutes,
+        priceCentavos: bt.priceInCentavos,
+        requiresStaffAssignment: bt.requiresStaffAssignment,
+        customFieldSchema: bt.customFieldSchema,
+      }));
     },
     enabled: !!tenantSlug,
   });

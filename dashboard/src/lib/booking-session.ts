@@ -12,6 +12,7 @@ export type BookingSession = {
   tenantSlug: string;
   btSlug: string;
   btName: string;
+  kind: "TimeSlot" | "Calendar";
   durationMinutes: number;
   priceCentavos: number;
   requiresStaffAssignment: boolean;
@@ -30,6 +31,7 @@ type BookingSessionActions = {
     tenantSlug: string;
     btSlug: string;
     btName: string;
+    kind: "TimeSlot" | "Calendar";
     durationMinutes: number;
     priceCentavos: number;
     requiresStaffAssignment: boolean;
@@ -47,6 +49,7 @@ const initialState: BookingSession = {
   tenantSlug: "",
   btSlug: "",
   btName: "",
+  kind: "TimeSlot",
   durationMinutes: 0,
   priceCentavos: 0,
   requiresStaffAssignment: false,
@@ -71,6 +74,7 @@ export const useBookingSession = create<
           tenantSlug: bt.tenantSlug,
           btSlug: bt.btSlug,
           btName: bt.btName,
+          kind: bt.kind,
           durationMinutes: bt.durationMinutes,
           priceCentavos: bt.priceCentavos,
           requiresStaffAssignment: bt.requiresStaffAssignment,

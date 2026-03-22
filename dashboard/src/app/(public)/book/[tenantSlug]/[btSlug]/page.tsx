@@ -42,6 +42,7 @@ export default function AvailabilityPage() {
       tenantSlug,
       btSlug,
       btName: bookingType.name,
+      kind: bookingType.kind,
       durationMinutes: bookingType.durationMinutes,
       priceCentavos: bookingType.priceCentavos,
       requiresStaffAssignment: bookingType.requiresStaffAssignment,
@@ -90,31 +91,62 @@ export default function AvailabilityPage() {
               : "Select a date to see slots"}
           </p>
 
-          {isLoadingSlots && (
-            <div className="flex flex-wrap gap-2">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-8 w-20" />
-              ))}
+          {/* Calendar booking: full-day display */}
+          {bookingType?.kind === "Calendar" && selectedDate && (
+            <div className="space-y-4">
+              <div className="rounded-md border border-[var(--color-primary)] bg-[var(--color-primary)]/5 p-4">
+                <p className="text-sm font-medium text-[var(--color-primary)]">
+                  Full Day — {selectedDate.toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Overnight stay — available all day
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleSlotSelect(dateStr)}
+                className="w-full rounded-md bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              >
+                Continue
+              </button>
             </div>
           )}
 
-          {!isLoadingSlots && availability?.slots && availability.slots.length === 0 && (
-            <p className="text-sm text-zinc-500">No slots available for this date.</p>
-          )}
+          {/* TimeSlot booking: slot grid */}
+          {bookingType?.kind !== "Calendar" && (
+            <>
+              {isLoadingSlots && (
+                <div className="flex flex-wrap gap-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-8 w-20" />
+                  ))}
+                </div>
+              )}
 
-          {!isLoadingSlots && availability?.slots && availability.slots.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {availability.slots.map((slot) => (
-                <button
-                  key={slot}
-                  type="button"
-                  onClick={() => handleSlotSelect(slot)}
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
-                >
-                  {slot}
-                </button>
-              ))}
-            </div>
+              {!isLoadingSlots && availability?.slots && availability.slots.length === 0 && (
+                <p className="text-sm text-zinc-500">No slots available for this date.</p>
+              )}
+
+              {!isLoadingSlots && availability?.slots && availability.slots.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {availability.slots.map((slot) => (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => handleSlotSelect(slot)}
+                      className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
