@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using Chronith.Tests.Functional.Fixtures;
 using Chronith.Tests.Functional.Helpers;
 using FluentAssertions;
@@ -45,6 +46,47 @@ public class MeTests(FunctionalTestFixture fixture)
     {
         var client = fixture.CreateAnonymousClient();
         var response = await client.GetAsync("/v1/auth/me");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetMe_WithApiKey_Returns401()
+    {
+        // API keys must not reach /auth/me — it is Bearer-only.
+        // Create a key with tenant:read scope via admin, then try to GET /auth/me using it.
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"me-apikey-get-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.TenantRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync("/v1/auth/me");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task PatchMe_WithApiKey_Returns401()
+    {
+        // API keys must not reach PATCH /auth/me — it is Bearer-only.
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"me-apikey-patch-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.TenantWrite }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.PatchAsJsonAsync("/v1/auth/me", new { email = "hacker@evil.com" });
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 

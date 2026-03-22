@@ -12,6 +12,8 @@ public sealed class GetMeEndpoint(ISender sender) : EndpointWithoutRequest<UserP
     public override void Configure()
     {
         Get("/auth/me");
+        Roles("TenantAdmin", "TenantStaff");
+        AuthSchemes("Bearer");
         Options(x => x.WithTags("Auth").RequireRateLimiting("Auth"));
     }
 
@@ -36,6 +38,8 @@ public sealed class PatchMeEndpoint(ISender sender) : Endpoint<PatchMeRequest, U
     public override void Configure()
     {
         Patch("/auth/me");
+        Roles("TenantAdmin", "TenantStaff");
+        AuthSchemes("Bearer");
         Options(x => x.WithTags("Auth").RequireRateLimiting("Auth"));
     }
 
