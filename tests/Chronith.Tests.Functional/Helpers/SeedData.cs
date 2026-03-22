@@ -104,13 +104,16 @@ public static class SeedData
         BookingStatus status = BookingStatus.PendingPayment,
         string customerId = "cust-seed-1",
         long amountInCentavos = 0,
-        Guid? staffMemberId = null)
+        Guid? staffMemberId = null,
+        string? paymentReference = null,
+        string? checkoutUrl = null,
+        Guid? tenantId = null)
     {
         var id = Guid.NewGuid();
         db.Bookings.Add(new BookingEntity
         {
             Id = id,
-            TenantId = TestConstants.TenantId,
+            TenantId = tenantId ?? TestConstants.TenantId,
             BookingTypeId = bookingTypeId,
             Start = start,
             End = end,
@@ -119,6 +122,8 @@ public static class SeedData
             CustomerEmail = $"{customerId}@example.com",
             AmountInCentavos = amountInCentavos,
             StaffMemberId = staffMemberId,
+            PaymentReference = paymentReference,
+            CheckoutUrl = checkoutUrl,
             IsDeleted = false
         });
         await db.SaveChangesAsync();

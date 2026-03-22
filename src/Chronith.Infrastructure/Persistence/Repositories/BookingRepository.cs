@@ -155,6 +155,20 @@ public sealed class BookingRepository(
         return new BookingMetrics(total, byStatus, thisMonth);
     }
 
+    public async Task<Booking?> GetPublicByIdAsync(Guid tenantId, Guid bookingId, CancellationToken ct = default)
+    {
+        var entity = await _db.Bookings
+            .TagWith("GetPublicByIdAsync — BookingRepository")
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Include(b => b.StatusChanges)
+            .FirstOrDefaultAsync(b => b.TenantId == tenantId && b.Id == bookingId && !b.IsDeleted, ct);
+
+        if (entity is null) return null;
+        entity.CustomerEmail = DecryptCustomerEmail(entity.CustomerEmail);
+        return BookingEntityMapper.ToDomain(entity);
+    }
+
     public async Task<Booking?> GetByPaymentReferenceAsync(
         Guid tenantId, string paymentReference, CancellationToken ct = default)
     {
