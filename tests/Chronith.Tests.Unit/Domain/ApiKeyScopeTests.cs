@@ -1,5 +1,5 @@
 // tests/Chronith.Tests.Unit/Domain/ApiKeyScopeTests.cs
-using Chronith.Domain.Models;
+using Chronith.Application.Models;
 using FluentAssertions;
 
 namespace Chronith.Tests.Unit.Domain;

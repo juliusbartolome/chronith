@@ -1,4 +1,5 @@
 using Chronith.Application.Interfaces;
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Services;
 using FluentAssertions;

@@ -129,4 +129,28 @@ public sealed class WebhookRepositoryTests(PostgresFixture postgres)
         found.Should().NotBeNull();
         found!.Secret.Should().Be("cross_tenant_secret"); // decrypted
     }
+
+    [Fact]
+    public async Task GetByIdCrossTenantAsync_SoftDeletedWebhook_ReturnsNull()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var db = await DbContextFactory.CreateAsync(
+            postgres.ConnectionString, tenantId, applyMigrations: true);
+        var bookingTypeId = await SeedBookingTypeAsync(db, tenantId);
+
+        var repo = CreateRepo(db);
+        var webhook = Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "deleted_secret");
+
+        await repo.AddAsync(webhook);
+        await db.SaveChangesAsync();
+
+        // Soft-delete the webhook directly via repo
+        await repo.DeleteAsync(tenantId, webhook.Id);
+        await db.SaveChangesAsync();
+
+        // Cross-tenant lookup must NOT return soft-deleted webhooks
+        var found = await repo.GetByIdCrossTenantAsync(webhook.Id);
+
+        found.Should().BeNull();
+    }
 }

@@ -1,6 +1,7 @@
 using Chronith.Application.Commands.ApiKeys;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Exceptions;
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using FluentAssertions;
 using NSubstitute;

@@ -1,6 +1,7 @@
 using Chronith.Application.Commands.TenantPaymentConfig;
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.TenantPaymentConfig;
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;

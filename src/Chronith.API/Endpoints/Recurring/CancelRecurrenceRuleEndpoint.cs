@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.Recurring.CancelRecurrenceRule;
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;

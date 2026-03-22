@@ -1,3 +1,4 @@
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using FluentAssertions;
 

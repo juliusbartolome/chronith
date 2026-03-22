@@ -1,6 +1,7 @@
 using Chronith.Application.Commands.Recurring.CreateRecurrenceRule;
 using Chronith.Application.DTOs;
 using Chronith.Domain.Enums;
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;

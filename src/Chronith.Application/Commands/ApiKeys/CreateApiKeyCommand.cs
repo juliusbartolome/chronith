@@ -1,6 +1,7 @@
 // src/Chronith.Application/Commands/ApiKeys/CreateApiKeyCommand.cs
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Models;
 using Chronith.Domain.Models;
 using FluentValidation;
 using MediatR;

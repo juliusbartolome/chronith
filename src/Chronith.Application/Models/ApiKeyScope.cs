@@ -1,5 +1,5 @@
-// src/Chronith.Domain/Models/ApiKeyScope.cs
-namespace Chronith.Domain.Models;
+// src/Chronith.Application/Models/ApiKeyScope.cs
+namespace Chronith.Application.Models;
 
 public static class ApiKeyScope
 {
