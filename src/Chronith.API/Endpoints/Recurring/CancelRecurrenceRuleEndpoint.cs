@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.Recurring.CancelRecurrenceRule;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -15,7 +16,9 @@ public sealed class CancelRecurrenceRuleEndpoint(ISender sender)
     public override void Configure()
     {
         Delete("/recurring/{id}");
-        Roles("TenantAdmin", "TenantStaff", "Customer");
+        Roles("TenantAdmin", "TenantStaff", "Customer", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsCancel}");
         Options(x => x.WithTags("Recurring").RequireRateLimiting("Authenticated"));
     }
 

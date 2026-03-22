@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.Tenant.GetTenantMetrics;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -11,7 +12,9 @@ public sealed class GetTenantMetricsEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/tenant/metrics");
-        Roles("TenantAdmin", "TenantStaff");
+        Roles("TenantAdmin", "TenantStaff", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TenantRead}");
         Options(x => x.WithTags("Tenant").RequireRateLimiting("Authenticated"));
     }
 

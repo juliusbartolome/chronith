@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.TimeBlocks;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -15,7 +16,9 @@ public sealed class DeleteTimeBlockEndpoint(ISender sender)
     public override void Configure()
     {
         Delete("/time-blocks/{id}");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TimeBlocksWrite}");
         Options(x => x.WithTags("TimeBlocks").RequireRateLimiting("Authenticated"));
     }
 

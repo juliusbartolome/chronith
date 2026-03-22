@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.NotificationConfig;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -15,7 +16,9 @@ public sealed class DisableNotificationChannelEndpoint(ISender sender)
     public override void Configure()
     {
         Delete("/tenant/notifications/{channelType}");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.NotificationsWrite}");
         Options(x => x.WithTags("Notifications").RequireRateLimiting("Authenticated"));
     }
 

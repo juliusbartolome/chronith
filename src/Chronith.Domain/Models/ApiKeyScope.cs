@@ -15,14 +15,21 @@ public static class ApiKeyScope
     public const string BookingTypesRead  = "booking-types:read";
     public const string BookingTypesWrite = "booking-types:write";
     public const string AnalyticsRead     = "analytics:read";
+    public const string WebhooksRead      = "webhooks:read";
     public const string WebhooksWrite     = "webhooks:write";
     public const string TenantRead        = "tenant:read";
     public const string TenantWrite       = "tenant:write";
+    public const string AuditRead                 = "audit:read";
+    public const string NotificationsWrite         = "notifications:write";
+    public const string NotificationTemplatesWrite = "notification-templates:write";
+    public const string TimeBlocksWrite            = "time-blocks:write";
 
     public static readonly IReadOnlySet<string> All = new HashSet<string>
     {
         BookingsRead, BookingsWrite, BookingsDelete, BookingsConfirm, BookingsCancel,
         BookingsPay, AvailabilityRead, StaffRead, StaffWrite, BookingTypesRead,
-        BookingTypesWrite, AnalyticsRead, WebhooksWrite, TenantRead, TenantWrite,
+        BookingTypesWrite, AnalyticsRead, WebhooksRead, WebhooksWrite,
+        TenantRead, TenantWrite, AuditRead, NotificationsWrite,
+        NotificationTemplatesWrite, TimeBlocksWrite,
     };
 }

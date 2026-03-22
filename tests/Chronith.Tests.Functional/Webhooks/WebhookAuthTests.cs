@@ -1,4 +1,7 @@
 using System.Net;
+using System.Net.Http.Json;
+using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using Chronith.Tests.Functional.Fixtures;
 using Chronith.Tests.Functional.Helpers;
 
@@ -91,5 +94,77 @@ public sealed class WebhookAuthTests(FunctionalTestFixture fixture)
         var client = fixture.CreateAnonymousClient();
         var response = await client.DeleteAsync(DeleteUrl(Guid.NewGuid()));
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    // --- API Key scope tests ---
+
+    [Fact]
+    public async Task ListWebhooks_WithApiKey_WithWebhooksReadScope_Returns200()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.WebhooksRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync(ListUrl);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task CreateWebhook_WithApiKey_WithWebhooksWriteScope_Returns201()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.WebhooksWrite }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.PostAsJsonAsync(CreateUrl, new
+        {
+            url = $"https://example.com/api-key-hook-{Guid.NewGuid():N}",
+            secret = "api-key-secret-at-least-16chars"
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task ListWebhooks_WithApiKey_WithoutWebhooksReadScope_Returns403()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.BookingsRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync(ListUrl);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }

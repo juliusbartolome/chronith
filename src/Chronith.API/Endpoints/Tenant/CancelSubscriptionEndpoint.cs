@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.Subscriptions;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -15,7 +16,9 @@ public sealed class CancelSubscriptionEndpoint(ISender sender)
     public override void Configure()
     {
         Delete("/tenant/subscription");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TenantWrite}");
         Options(x => x.WithTags("Subscriptions").RequireRateLimiting("Authenticated"));
     }
 

@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.NotificationTemplates;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -16,7 +17,9 @@ public sealed class ResetNotificationTemplateEndpoint(ISender sender)
     public override void Configure()
     {
         Post("/tenant/notification-templates/reset/{eventType}");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.NotificationTemplatesWrite}");
         Options(x => x.WithTags("NotificationTemplates").RequireRateLimiting("Authenticated"));
     }
 

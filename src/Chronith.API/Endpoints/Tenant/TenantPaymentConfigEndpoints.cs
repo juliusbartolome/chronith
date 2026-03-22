@@ -1,6 +1,7 @@
 using Chronith.Application.Commands.TenantPaymentConfig;
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.TenantPaymentConfig;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -33,7 +34,9 @@ public sealed class ListTenantPaymentConfigsEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/tenant/payment-config");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TenantRead}");
         Options(x => x.WithTags("Tenant").RequireRateLimiting("Authenticated"));
     }
 
@@ -52,7 +55,9 @@ public sealed class CreateTenantPaymentConfigEndpoint(ISender sender)
     public override void Configure()
     {
         Post("/tenant/payment-config");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TenantWrite}");
         Options(x => x.WithTags("Tenant").RequireRateLimiting("Authenticated"));
     }
 
@@ -79,7 +84,9 @@ public sealed class UpdateTenantPaymentConfigEndpoint(ISender sender)
     public override void Configure()
     {
         Put("/tenant/payment-config/{id}");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TenantWrite}");
         Options(x => x.WithTags("Tenant").RequireRateLimiting("Authenticated"));
     }
 
@@ -107,7 +114,9 @@ public sealed class DeleteTenantPaymentConfigEndpoint(ISender sender)
     public override void Configure()
     {
         Delete("/tenant/payment-config/{id}");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TenantWrite}");
         Options(x => x.WithTags("Tenant").RequireRateLimiting("Authenticated"));
     }
 
@@ -127,7 +136,9 @@ public sealed class ActivateTenantPaymentConfigEndpoint(ISender sender)
     public override void Configure()
     {
         Patch("/tenant/payment-config/{id}/activate");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TenantWrite}");
         Options(x => x.WithTags("Tenant").RequireRateLimiting("Authenticated"));
     }
 
@@ -147,7 +158,9 @@ public sealed class DeactivateTenantPaymentConfigEndpoint(ISender sender)
     public override void Configure()
     {
         Patch("/tenant/payment-config/{id}/deactivate");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TenantWrite}");
         Options(x => x.WithTags("Tenant").RequireRateLimiting("Authenticated"));
     }
 

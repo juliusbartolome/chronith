@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.BookingTypes;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -15,7 +16,9 @@ public sealed class DeleteBookingTypeEndpoint(ISender sender)
     public override void Configure()
     {
         Delete("/booking-types/{slug}");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingTypesWrite}");
         Options(x => x.WithTags("BookingTypes").RequireRateLimiting("Authenticated"));
     }
 

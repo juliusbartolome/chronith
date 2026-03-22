@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.Analytics;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -20,7 +21,9 @@ public sealed class GetUtilizationAnalyticsEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/analytics/utilization");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.AnalyticsRead}");
         Options(x => x.WithTags("Analytics").RequireRateLimiting("Export"));
     }
 

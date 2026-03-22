@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.TimeBlocks;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -20,7 +21,9 @@ public sealed class CreateTimeBlockEndpoint(ISender sender)
     public override void Configure()
     {
         Post("/time-blocks");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TimeBlocksWrite}");
         Options(x => x.WithTags("TimeBlocks").RequireRateLimiting("Authenticated"));
     }
 

@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using Chronith.Tests.Functional.Fixtures;
 using Chronith.Tests.Functional.Helpers;
 
@@ -165,5 +167,97 @@ public sealed class StaffAuthTests(FunctionalTestFixture fixture)
             staffMemberId = Guid.NewGuid()
         });
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    // --- API Key scope tests ---
+
+    [Fact]
+    public async Task ListStaff_WithApiKey_WithStaffReadScope_Returns200()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"staff-read-key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.StaffRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync("/v1/staff");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ListStaff_WithApiKey_WithoutStaffReadScope_Returns403()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"wrong-scope-key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.StaffWrite }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync("/v1/staff");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task DeleteStaff_WithApiKey_WithStaffWriteScope_Returns404OrNoContent()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"staff-write-key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.StaffWrite }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        // Non-existent staff id: auth passes → 404 (not 401/403)
+        var response = await apiKeyClient.DeleteAsync($"/v1/staff/{Guid.NewGuid()}");
+
+        response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task DeleteStaff_WithApiKey_WithoutStaffWriteScope_Returns403()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"read-only-staff-key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.StaffRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.DeleteAsync($"/v1/staff/{Guid.NewGuid()}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }

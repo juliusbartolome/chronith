@@ -46,6 +46,8 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
                 builder.UseSetting("RateLimiting:Auth:WindowSeconds", "300");
                 builder.UseSetting("RateLimiting:Authenticated:PermitLimit", "10000");
                 builder.UseSetting("RateLimiting:Authenticated:WindowSeconds", "300");
+                builder.UseSetting("RateLimiting:Export:PermitLimit", "10000");
+                builder.UseSetting("RateLimiting:Export:WindowSeconds", "300");
             });
 
         // Run migrations

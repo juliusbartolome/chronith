@@ -1,4 +1,7 @@
 using System.Net;
+using System.Net.Http.Json;
+using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using Chronith.Tests.Functional.Fixtures;
 using Chronith.Tests.Functional.Helpers;
 
@@ -90,5 +93,112 @@ public sealed class AnalyticsAuthTests(FunctionalTestFixture fixture)
         var client = fixture.CreateAnonymousClient();
         var response = await client.GetAsync($"/v1/analytics/utilization{BuildQueryString()}");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    // API key scope tests
+
+    [Fact]
+    public async Task GetBookingAnalytics_WithApiKey_WithAnalyticsReadScope_Returns200()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.AnalyticsRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync($"/v1/analytics/bookings{BuildQueryString()}");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetRevenueAnalytics_WithApiKey_WithAnalyticsReadScope_Returns200()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.AnalyticsRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync($"/v1/analytics/revenue{BuildQueryString()}");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetUtilizationAnalytics_WithApiKey_WithAnalyticsReadScope_Returns200()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.AnalyticsRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync($"/v1/analytics/utilization{BuildQueryString()}");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ExportAnalytics_WithApiKey_WithAnalyticsReadScope_Returns200()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.AnalyticsRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync($"/v1/analytics/bookings/export{BuildQueryString()}");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetBookingAnalytics_WithApiKey_WithoutAnalyticsReadScope_Returns403()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.BookingsRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync($"/v1/analytics/bookings{BuildQueryString()}");
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }

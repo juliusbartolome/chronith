@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.TenantAuthConfig.GetTenantAuthConfig;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -11,7 +12,9 @@ public sealed class GetTenantAuthConfigEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/tenant/auth-config");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.TenantRead}");
         Options(x => x.WithTags("Tenant").RequireRateLimiting("Authenticated"));
     }
 

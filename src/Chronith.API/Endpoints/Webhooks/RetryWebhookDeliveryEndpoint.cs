@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.Webhooks.RetryWebhookDelivery;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -10,7 +11,9 @@ public sealed class RetryWebhookDeliveryEndpoint(ISender sender)
     public override void Configure()
     {
         Post("/webhooks/{webhookId}/deliveries/{deliveryId}/retry");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.WebhooksWrite}");
         Options(x => x.WithTags("Webhooks").RequireRateLimiting("Authenticated"));
         Summary(s =>
         {

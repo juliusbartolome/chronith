@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.Waitlist;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -22,7 +23,9 @@ public sealed class ListWaitlistEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/booking-types/{bookingTypeSlug}/waitlist");
-        Roles("TenantAdmin", "TenantStaff");
+        Roles("TenantAdmin", "TenantStaff", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsRead}");
         Options(x => x.WithTags("Waitlist").RequireRateLimiting("Authenticated"));
     }
 

@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.Webhooks;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -16,7 +17,9 @@ public sealed class ListWebhooksEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/booking-types/{slug}/webhooks");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.WebhooksRead}");
         Options(x => x.WithTags("Webhooks").RequireRateLimiting("Authenticated"));
     }
 

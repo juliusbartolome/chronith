@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.Webhooks;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -16,7 +17,9 @@ public sealed class DeleteWebhookEndpoint(ISender sender)
     public override void Configure()
     {
         Delete("/booking-types/{slug}/webhooks/{webhookId}");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.WebhooksWrite}");
         Options(x => x.WithTags("Webhooks").RequireRateLimiting("Authenticated"));
     }
 

@@ -1,4 +1,7 @@
 using System.Net;
+using System.Net.Http.Json;
+using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using Chronith.Tests.Functional.Fixtures;
 using Chronith.Tests.Functional.Helpers;
 
@@ -42,5 +45,25 @@ public sealed class TenantAuthTests(FunctionalTestFixture fixture)
         var client = fixture.CreateAnonymousClient();
         var response = await client.GetAsync("/v1/tenant");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetTenant_WithApiKey_WithTenantReadScope_Returns200()
+    {
+        await EnsureSeedAsync();
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.TenantRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync("/v1/tenant");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }

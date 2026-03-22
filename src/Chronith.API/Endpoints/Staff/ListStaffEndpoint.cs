@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.Staff;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -11,7 +12,9 @@ public sealed class ListStaffEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/staff");
-        Roles("TenantAdmin", "TenantStaff");
+        Roles("TenantAdmin", "TenantStaff", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.StaffRead}");
         Options(x => x.WithTags("Staff").RequireRateLimiting("Authenticated"));
     }
 

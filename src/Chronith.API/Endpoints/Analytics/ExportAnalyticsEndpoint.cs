@@ -1,4 +1,5 @@
 using Chronith.Application.Queries.Analytics;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -17,7 +18,9 @@ public sealed class ExportAnalyticsEndpoint(ISender sender) : Endpoint<ExportAna
     public override void Configure()
     {
         Get("/analytics/bookings/export");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.AnalyticsRead}");
         Options(x => x.WithTags("Analytics").RequireRateLimiting("Authenticated"));
     }
 

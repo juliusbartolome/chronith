@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.Bookings;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -17,7 +18,9 @@ public sealed class ConfirmBookingEndpoint(ISender sender)
     public override void Configure()
     {
         Post("/bookings/{bookingId}/confirm");
-        Roles("TenantAdmin", "TenantStaff");
+        Roles("TenantAdmin", "TenantStaff", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.BookingsConfirm}");
         Options(x => x.WithTags("Bookings").RequireRateLimiting("Authenticated"));
     }
 

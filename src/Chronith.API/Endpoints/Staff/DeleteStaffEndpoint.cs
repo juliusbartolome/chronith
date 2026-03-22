@@ -1,4 +1,5 @@
 using Chronith.Application.Commands.Staff;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -15,7 +16,9 @@ public sealed class DeleteStaffEndpoint(ISender sender)
     public override void Configure()
     {
         Delete("/staff/{id}");
-        Roles("TenantAdmin");
+        Roles("TenantAdmin", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.StaffWrite}");
         Options(x => x.WithTags("Staff").RequireRateLimiting("Authenticated"));
     }
 

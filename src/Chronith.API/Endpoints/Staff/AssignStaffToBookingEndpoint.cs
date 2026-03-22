@@ -1,5 +1,6 @@
 using Chronith.Application.Commands.Staff;
 using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -20,7 +21,9 @@ public sealed class AssignStaffToBookingEndpoint(ISender sender)
     public override void Configure()
     {
         Post("/bookings/{bookingId}/assign-staff");
-        Roles("TenantAdmin", "TenantStaff");
+        Roles("TenantAdmin", "TenantStaff", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.StaffWrite}");
         Options(x => x.WithTags("Staff").RequireRateLimiting("Authenticated"));
     }
 
