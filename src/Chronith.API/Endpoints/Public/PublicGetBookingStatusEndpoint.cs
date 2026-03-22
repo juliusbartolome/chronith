@@ -8,7 +8,7 @@ using MediatR;
 namespace Chronith.API.Endpoints.Public;
 
 public sealed class PublicGetBookingStatusEndpoint(ISender sender, ITenantRepository tenantRepo)
-    : EndpointWithoutRequest
+    : EndpointWithoutRequest<PublicBookingStatusDto>
 {
     public override void Configure()
     {

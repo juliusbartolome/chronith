@@ -52,18 +52,21 @@ public static class SeedData
         long priceInCentavos = 10_000,
         string currency = "PHP",
         PaymentMode paymentMode = PaymentMode.Manual,
-        string? paymentProvider = null)
+        string? paymentProvider = null,
+        Guid? tenantId = null)
     {
-        // Idempotent — return existing id if slug already seeded
+        var tid = tenantId ?? TestConstants.TenantId;
+
+        // Idempotent — return existing id if slug already seeded for this tenant
         var existing = db.BookingTypes.IgnoreQueryFilters()
-            .FirstOrDefault(bt => bt.Slug == slug && bt.TenantId == TestConstants.TenantId);
+            .FirstOrDefault(bt => bt.Slug == slug && bt.TenantId == tid);
         if (existing is not null) return existing.Id;
 
         var id = Guid.NewGuid();
         db.BookingTypes.Add(new BookingTypeEntity
         {
             Id = id,
-            TenantId = TestConstants.TenantId,
+            TenantId = tid,
             Slug = slug,
             Name = "Test Type",
             Kind = BookingKind.TimeSlot,

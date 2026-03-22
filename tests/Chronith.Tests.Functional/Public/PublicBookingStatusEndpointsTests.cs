@@ -99,24 +99,8 @@ public sealed class PublicBookingStatusEndpointsTests(FunctionalTestFixture fixt
         var otherTenantId = Guid.NewGuid();
         await SeedData.SeedTenantAsync(db, otherTenantId, "other-tenant");
 
-        // We need a booking type under the other tenant
-        var otherBookingTypeId = Guid.NewGuid();
-        db.BookingTypes.Add(new Chronith.Infrastructure.Persistence.Entities.BookingTypeEntity
-        {
-            Id = otherBookingTypeId,
-            TenantId = otherTenantId,
-            Slug = "other-type",
-            Name = "Other Type",
-            Kind = Chronith.Domain.Enums.BookingKind.TimeSlot,
-            Capacity = 5,
-            DurationMinutes = 60,
-            BufferBeforeMinutes = 0,
-            BufferAfterMinutes = 0,
-            PriceInCentavos = 0,
-            Currency = "PHP",
-            IsDeleted = false
-        });
-        await db.SaveChangesAsync();
+        var otherBookingTypeId = await SeedData.SeedBookingTypeAsync(
+            db, slug: "other-type", tenantId: otherTenantId);
 
         var start = DateTimeOffset.UtcNow.AddDays(4);
         var otherBookingId = await SeedData.SeedBookingAsync(
