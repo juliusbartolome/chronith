@@ -7,9 +7,9 @@ namespace Chronith.Tests.Unit.Domain;
 public sealed class ApiKeyScopeTests
 {
     [Fact]
-    public void All_ContainsExactlyFifteenScopes()
+    public void All_ContainsExactlyTwentyScopes()
     {
-        ApiKeyScope.All.Should().HaveCount(15);
+        ApiKeyScope.All.Should().HaveCount(20);
     }
 
     [Fact]
@@ -44,9 +44,14 @@ public sealed class ApiKeyScopeTests
     [InlineData(ApiKeyScope.BookingTypesRead)]
     [InlineData(ApiKeyScope.BookingTypesWrite)]
     [InlineData(ApiKeyScope.AnalyticsRead)]
+    [InlineData(ApiKeyScope.WebhooksRead)]
     [InlineData(ApiKeyScope.WebhooksWrite)]
     [InlineData(ApiKeyScope.TenantRead)]
     [InlineData(ApiKeyScope.TenantWrite)]
+    [InlineData(ApiKeyScope.AuditRead)]
+    [InlineData(ApiKeyScope.NotificationsWrite)]
+    [InlineData(ApiKeyScope.NotificationTemplatesWrite)]
+    [InlineData(ApiKeyScope.TimeBlocksWrite)]
     public void EachConstant_IsInAll(string scope)
     {
         ApiKeyScope.All.Should().Contain(scope);
