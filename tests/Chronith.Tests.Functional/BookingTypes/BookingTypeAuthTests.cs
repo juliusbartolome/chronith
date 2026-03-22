@@ -1,4 +1,7 @@
 using System.Net;
+using System.Net.Http.Json;
+using Chronith.Application.DTOs;
+using Chronith.Domain.Models;
 using Chronith.Tests.Functional.Fixtures;
 using Chronith.Tests.Functional.Helpers;
 
@@ -130,5 +133,106 @@ public sealed class BookingTypeAuthTests(FunctionalTestFixture fixture)
         var client = fixture.CreateAnonymousClient();
         var response = await client.DeleteAsync($"{BaseUrl}/will-not-delete");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    // --- API Key scope tests ---
+
+    [Fact]
+    public async Task ListBookingTypes_WithApiKey_WithReadScope_Returns200()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"bt-read-key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.BookingTypesRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync(BaseUrl);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ListBookingTypes_WithApiKey_WithoutReadScope_Returns403()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"bt-write-only-key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.BookingTypesWrite }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.GetAsync(BaseUrl);
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task CreateBookingType_WithApiKey_WithWriteScope_Returns201()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"bt-write-key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.BookingTypesWrite }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var slug = $"api-key-bt-{Guid.NewGuid():N}";
+        var response = await apiKeyClient.PostAsJsonAsync(BaseUrl, new
+        {
+            slug,
+            name = "API Key Created BT",
+            isTimeSlot = true,
+            capacity = 1,
+            durationMinutes = 60
+        });
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task CreateBookingType_WithApiKey_WithoutWriteScope_Returns403()
+    {
+        await EnsureSeedAsync();
+
+        var adminClient = fixture.CreateClient("TenantAdmin");
+        var createResp = await adminClient.PostAsJsonAsync("/v1/tenant/api-keys", new
+        {
+            description = $"bt-read-only-key-{Guid.NewGuid():N}",
+            scopes = new[] { ApiKeyScope.BookingTypesRead }
+        });
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResp.ReadFromApiJsonAsync<CreateApiKeyResult>();
+
+        var apiKeyClient = fixture.CreateAnonymousClient();
+        apiKeyClient.DefaultRequestHeaders.Add("X-Api-Key", created!.RawKey);
+
+        var response = await apiKeyClient.PostAsJsonAsync(BaseUrl, new
+        {
+            slug = $"should-not-create-{Guid.NewGuid():N}",
+            name = "Should Not Create",
+            isTimeSlot = true,
+            capacity = 1,
+            durationMinutes = 60
+        });
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }

@@ -1,5 +1,6 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Queries.Availability;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
@@ -22,7 +23,9 @@ public sealed class GetAvailabilityEndpoint(ISender sender)
     public override void Configure()
     {
         Get("/booking-types/{slug}/availability");
-        Roles("TenantAdmin", "TenantStaff", "Customer");
+        Roles("TenantAdmin", "TenantStaff", "Customer", "ApiKey");
+        AuthSchemes("Bearer", "ApiKey");
+        Policies($"scope:{ApiKeyScope.AvailabilityRead}");
         Options(x => x.WithTags("Availability").RequireRateLimiting("Authenticated"));
     }
 

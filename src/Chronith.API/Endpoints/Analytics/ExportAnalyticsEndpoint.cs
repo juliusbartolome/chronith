@@ -1,4 +1,5 @@
 using Chronith.Application.Queries.Analytics;
+using Chronith.Domain.Models;
 using FastEndpoints;
 using MediatR;
 
