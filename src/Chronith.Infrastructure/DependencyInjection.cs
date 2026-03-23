@@ -151,6 +151,10 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, Argon2idPasswordHasher>();
         services.AddScoped<IAuditPiiRedactor, AuditPiiRedactor>();
 
+        // Booking URL signing (HMAC-based payment flow)
+        services.Configure<PaymentPageOptions>(configuration.GetSection(PaymentPageOptions.SectionName));
+        services.AddSingleton<IBookingUrlSigner, HmacBookingUrlSigner>();
+
         // Rate limiting
         services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
 
