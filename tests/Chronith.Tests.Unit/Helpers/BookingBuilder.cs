@@ -1,3 +1,4 @@
+using System.Reflection;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 
@@ -10,6 +11,7 @@ namespace Chronith.Tests.Unit.Helpers;
 public sealed class BookingBuilder
 {
     private Guid _tenantId = Guid.NewGuid();
+    private Guid? _id = null;
     private Guid _bookingTypeId = Guid.NewGuid();
     private DateTimeOffset _start = DateTimeOffset.UtcNow;
     private DateTimeOffset _end = DateTimeOffset.UtcNow.AddHours(1);
@@ -19,8 +21,10 @@ public sealed class BookingBuilder
     private long _amountInCentavos = 0;
     private string _currency = "PHP";
     private BookingStatus _targetStatus = BookingStatus.PendingPayment;
+    private string? _checkoutUrl = null;
 
     public BookingBuilder WithTenantId(Guid tenantId) { _tenantId = tenantId; return this; }
+    public BookingBuilder WithId(Guid id) { _id = id; return this; }
     public BookingBuilder WithBookingTypeId(Guid id) { _bookingTypeId = id; return this; }
     public BookingBuilder WithStart(DateTimeOffset start) { _start = start; return this; }
     public BookingBuilder WithEnd(DateTimeOffset end) { _end = end; return this; }
@@ -28,7 +32,9 @@ public sealed class BookingBuilder
     public BookingBuilder WithCustomerEmail(string email) { _customerEmail = email; return this; }
     public BookingBuilder WithPaymentReference(string? reference) { _paymentReference = reference; return this; }
     public BookingBuilder WithAmountInCentavos(long amount) { _amountInCentavos = amount; return this; }
+    public BookingBuilder WithAmount(long amount) { _amountInCentavos = amount; return this; }
     public BookingBuilder WithCurrency(string currency) { _currency = currency; return this; }
+    public BookingBuilder WithCheckoutUrl(string? url) { _checkoutUrl = url; return this; }
 
     public BookingBuilder InStatus(BookingStatus status)
     {
@@ -56,6 +62,10 @@ public sealed class BookingBuilder
             _currency,
             _paymentReference);
 
+        // Set overridden Id via reflection if specified
+        if (_id.HasValue)
+            SetProperty(booking, "Id", _id.Value);
+
         const string actor = "test-user";
         const string role = "test-role";
 
@@ -78,6 +88,37 @@ public sealed class BookingBuilder
                 throw new InvalidOperationException($"Unknown status: {_targetStatus}");
         }
 
+        // Set checkout URL via reflection if specified
+        if (_checkoutUrl is not null)
+            SetProperty(booking, "CheckoutUrl", _checkoutUrl);
+
         return booking;
+    }
+
+    private static void SetProperty(object obj, string propertyName, object? value)
+    {
+        var type = obj.GetType();
+        while (type != null)
+        {
+            var field = type.GetField($"<{propertyName}>k__BackingField",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field != null)
+            {
+                field.SetValue(obj, value);
+                return;
+            }
+
+            var prop = type.GetProperty(propertyName,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (prop != null && prop.CanWrite)
+            {
+                prop.SetValue(obj, value);
+                return;
+            }
+
+            type = type.BaseType;
+        }
+        throw new InvalidOperationException(
+            $"Could not find property or backing field for '{propertyName}' on {obj.GetType().Name}");
     }
 }
