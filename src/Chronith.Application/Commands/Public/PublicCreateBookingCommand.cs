@@ -1,11 +1,13 @@
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
+using Chronith.Application.Options;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 namespace Chronith.Application.Commands.Public;
 
@@ -42,7 +44,8 @@ public sealed class PublicCreateBookingHandler(
     ITenantRepository tenantRepo,
     IUnitOfWork unitOfWork,
     IPublisher publisher,
-    IPaymentProviderFactory paymentProviderFactory)
+    IBookingUrlSigner signer,
+    IOptions<PaymentPageOptions> pageOptions)
     : IRequestHandler<PublicCreateBookingCommand, BookingDto>
 {
     private static readonly BookingStatus[] ConflictStatuses =
@@ -88,21 +91,13 @@ public sealed class PublicCreateBookingHandler(
         await bookingRepo.AddAsync(booking, ct);
         await tx.CommitAsync(ct);
 
+        // For Automatic payment mode with a non-free booking, generate HMAC-signed payment URL.
+        // Checkout sessions are created on-demand when the customer picks a provider.
+        string? paymentUrl = null;
         if (bookingType.PaymentMode == PaymentMode.Automatic && bookingType.PriceInCentavos > 0)
         {
-            var providerName = bookingType.PaymentProvider ?? "Stub";
-            var provider = paymentProviderFactory.GetProvider(providerName);
-            var checkoutResult = await provider.CreateCheckoutSessionAsync(
-                new CreateCheckoutRequest(
-                    AmountInCentavos: bookingType.PriceInCentavos,
-                    Currency: bookingType.Currency,
-                    Description: $"{bookingType.Name} booking",
-                    BookingId: booking.Id,
-                    TenantId: cmd.TenantId),
-                ct);
-
-            booking.SetCheckoutDetails(checkoutResult.CheckoutUrl, checkoutResult.ProviderTransactionId);
-            await bookingRepo.UpdateAsync(booking, ct);
+            paymentUrl = signer.GenerateSignedUrl(
+                pageOptions.Value.BaseUrl, booking.Id, tenant.Slug);
         }
 
         await publisher.Publish(
@@ -119,6 +114,6 @@ public sealed class PublicCreateBookingHandler(
                 CustomerEmail: booking.CustomerEmail),
             ct);
 
-        return booking.ToDto();
+        return booking.ToDto(paymentUrl);
     }
 }
