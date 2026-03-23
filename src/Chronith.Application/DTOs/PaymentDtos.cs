@@ -7,7 +7,9 @@ public sealed record CreateCheckoutRequest(
     string Currency,
     string Description,
     Guid BookingId,
-    Guid TenantId);
+    Guid TenantId,
+    string? SuccessUrl = null,
+    string? CancelUrl = null);
 
 public sealed record CreateCheckoutResult(
     string CheckoutUrl,
