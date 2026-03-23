@@ -15,7 +15,8 @@ public sealed record BookingDto(
     string Currency,
     string? CheckoutUrl,
     Guid? StaffMemberId,
-    IReadOnlyList<BookingStatusChangeDto> StatusChanges
+    IReadOnlyList<BookingStatusChangeDto> StatusChanges,
+    string? PaymentUrl = null
 );
 
 public sealed record BookingStatusChangeDto(

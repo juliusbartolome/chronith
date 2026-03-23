@@ -6,6 +6,9 @@ namespace Chronith.Application.Mappers;
 public static class BookingMapper
 {
     public static BookingDto ToDto(this Booking booking) =>
+        booking.ToDto(paymentUrl: null);
+
+    public static BookingDto ToDto(this Booking booking, string? paymentUrl) =>
         new(
             Id: booking.Id,
             BookingTypeId: booking.BookingTypeId,
@@ -27,6 +30,7 @@ public static class BookingMapper
                     sc.ChangedById,
                     sc.ChangedByRole,
                     sc.ChangedAt))
-                .ToList()
+                .ToList(),
+            PaymentUrl: paymentUrl
         );
 }
