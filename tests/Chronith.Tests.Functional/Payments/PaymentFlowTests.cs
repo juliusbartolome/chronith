@@ -94,7 +94,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
             "free bookings should not have a checkout URL since no payment is needed");
     }
 
-    // ── Paid + Automatic + Stub: creates checkout session ──
+    // ── Paid + Automatic + Stub: defers checkout, returns HMAC payment URL ──
 
     [Fact]
     public async Task CreateBooking_AutomaticWithStub_StatusIsPendingPayment()
@@ -119,7 +119,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
     }
 
     [Fact]
-    public async Task CreateBooking_AutomaticWithStub_ReturnsCheckoutUrl()
+    public async Task CreateBooking_AutomaticWithStub_ReturnsPaymentUrlNotCheckoutUrl()
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient("Customer");
@@ -135,14 +135,16 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
-        booking!.CheckoutUrl.Should().NotBeNullOrEmpty(
-            "Automatic mode with Stub provider should return a checkout URL");
-        booking.CheckoutUrl.Should().StartWith("https://stub-checkout.local/",
-            "the checkout URL should come from the Stub payment provider");
+        booking!.CheckoutUrl.Should().BeNull(
+            "checkout is now deferred to the on-demand endpoint; no checkout URL at creation");
+        booking.PaymentUrl.Should().NotBeNullOrEmpty(
+            "Automatic mode should return an HMAC-signed payment URL for on-demand checkout");
+        booking.PaymentUrl.Should().StartWith("https://test.example.com/pay",
+            "payment URL should use the configured PaymentPage:BaseUrl");
     }
 
     [Fact]
-    public async Task CreateBooking_AutomaticWithStub_HasPaymentReference()
+    public async Task CreateBooking_AutomaticWithStub_NoPaymentReferenceAtCreation()
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient("Customer");
@@ -158,10 +160,8 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
-        booking!.PaymentReference.Should().NotBeNullOrEmpty(
-            "Automatic mode with Stub provider should set a payment reference (provider transaction ID)");
-        booking.PaymentReference.Should().StartWith("stub_",
-            "Stub provider transaction IDs start with 'stub_'");
+        booking!.PaymentReference.Should().BeNull(
+            "payment reference is set later when the customer creates a checkout session on-demand");
     }
 
     // ── Manual mode: no automatic checkout ──

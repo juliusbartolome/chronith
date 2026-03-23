@@ -10,10 +10,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Chronith.Tests.Functional.Bookings;
 
 /// <summary>
-/// Verifies that CheckoutUrl is persisted to the database after POST /bookings
-/// so that a subsequent GET /bookings/{id} returns the same non-null value.
-/// Regression test for the data-loss bug where CheckoutUrl was set in memory
-/// but not written to the bookings table.
+/// Verifies that the HMAC payment URL flow correctly defers checkout session creation.
+/// With the new HMAC-signed payment flow, CheckoutUrl is null at creation time and
+/// PaymentUrl (HMAC-signed) is returned instead. CheckoutUrl is only populated after
+/// the customer creates a checkout session on-demand via the public checkout endpoint.
 /// </summary>
 [Collection("Functional")]
 public sealed class BookingCheckoutUrlPersistenceTests(FunctionalTestFixture fixture)
@@ -67,13 +67,13 @@ public sealed class BookingCheckoutUrlPersistenceTests(FunctionalTestFixture fix
     }
 
     [Fact]
-    public async Task CreateBooking_WithAutomaticPaymentMode_CheckoutUrlPersistedAfterGet()
+    public async Task CreateBooking_WithAutomaticPaymentMode_ReturnsPaymentUrlNotCheckoutUrl()
     {
         await EnsureSeedAsync();
 
         var client = fixture.CreateClient("Customer");
 
-        // POST — creates booking; handler calls StubPaymentProvider and sets CheckoutUrl in memory
+        // POST — creates booking; handler now generates HMAC payment URL instead of checkout session
         var createResp = await client.PostAsJsonAsync(
             $"/v1/booking-types/{AutoPayBookingTypeSlug}/bookings",
             new
@@ -86,20 +86,24 @@ public sealed class BookingCheckoutUrlPersistenceTests(FunctionalTestFixture fix
         var created = await createResp.ReadFromApiJsonAsync<BookingDto>();
         created.Should().NotBeNull();
 
-        // The POST response itself should already have CheckoutUrl
-        created!.CheckoutUrl.Should().NotBeNullOrEmpty(
-            "the create response should include the checkout URL from the payment provider");
+        // CheckoutUrl should be null — checkout is now deferred to the on-demand endpoint
+        created!.CheckoutUrl.Should().BeNull(
+            "checkout session creation is deferred; CheckoutUrl is null until on-demand checkout");
 
-        // GET — loads the booking fresh from the database
+        // PaymentUrl should be an HMAC-signed URL pointing to the payment selection page
+        created.PaymentUrl.Should().NotBeNullOrEmpty(
+            "Automatic mode should return an HMAC-signed PaymentUrl for the payment selection page");
+        created.PaymentUrl.Should().StartWith("https://test.example.com/pay",
+            "the payment URL should use the configured PaymentPage:BaseUrl");
+
+        // GET — verify the booking round-trips correctly
         var getResp = await client.GetAsync($"/v1/bookings/{created.Id}");
         getResp.StatusCode.Should().Be(HttpStatusCode.OK);
         var fetched = await getResp.ReadFromApiJsonAsync<BookingDto>();
         fetched.Should().NotBeNull();
 
-        // This is the regression assertion: CheckoutUrl must survive the round-trip to the DB
-        fetched!.CheckoutUrl.Should().NotBeNullOrEmpty(
-            "CheckoutUrl must be persisted to the database and returned on GET");
-        fetched.CheckoutUrl.Should().Be(created.CheckoutUrl,
-            "the persisted CheckoutUrl must match the one returned at creation time");
+        // CheckoutUrl remains null on GET (no checkout session created yet)
+        fetched!.CheckoutUrl.Should().BeNull(
+            "CheckoutUrl should remain null until on-demand checkout is triggered");
     }
 }

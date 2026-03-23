@@ -48,6 +48,9 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
                 builder.UseSetting("RateLimiting:Authenticated:WindowSeconds", "300");
                 builder.UseSetting("RateLimiting:Export:PermitLimit", "10000");
                 builder.UseSetting("RateLimiting:Export:WindowSeconds", "300");
+                // HMAC payment page settings for signed URL generation
+                builder.UseSetting("PaymentPage:BaseUrl", "https://test.example.com/pay");
+                builder.UseSetting("PaymentPage:TokenLifetimeSeconds", "3600");
             });
 
         // Run migrations
