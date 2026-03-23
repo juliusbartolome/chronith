@@ -1,11 +1,13 @@
 using Chronith.Application.Commands.Bookings;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Options;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using Chronith.Tests.Unit.Helpers;
 using FluentAssertions;
 using MediatR;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using NSubstitute.ReceivedExtensions;
 
@@ -50,15 +52,15 @@ public sealed class CreateBookingHandlerTests
     /// <summary>
     /// Builds a fully-wired handler with all collaborators substituted.
     /// Returns the handler, the IUnitOfWork mock, the IBookingRepository mock,
-    /// the IPaymentProvider mock, and the IBookingMetrics mock.
+    /// the IBookingUrlSigner mock, and the IBookingMetrics mock.
     /// </summary>
     private static (
         CreateBookingHandler Handler,
         IUnitOfWork UnitOfWork,
         IBookingRepository BookingRepo,
-        IPaymentProvider Provider,
+        IBookingUrlSigner Signer,
         IBookingMetrics Metrics)
-        Build(BookingType bookingType, bool resolverReturnsNull = false)
+        Build(BookingType bookingType)
     {
         var tenantCtx = Substitute.For<ITenantContext>();
         tenantCtx.TenantId.Returns(TenantId);
@@ -90,16 +92,11 @@ public sealed class CreateBookingHandlerTests
 
         var publisher = Substitute.For<IPublisher>();
 
-        var provider = Substitute.For<IPaymentProvider>();
-        provider.ProviderName.Returns("Stub");
-        provider
-            .CreateCheckoutSessionAsync(Arg.Any<CreateCheckoutRequest>(), Arg.Any<CancellationToken>())
-            .Returns(new CreateCheckoutResult("https://pay.example.com/checkout/123", "ext-id-123"));
+        var signer = Substitute.For<IBookingUrlSigner>();
+        signer.GenerateSignedUrl(Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<string>())
+            .Returns(ci => $"https://test.com/pay?bookingId={ci.ArgAt<Guid>(1)}&tenantSlug={ci.ArgAt<string>(2)}&expires=999&sig=abc");
 
-        var resolver = Substitute.For<ITenantPaymentProviderResolver>();
-        resolver
-            .ResolveAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(resolverReturnsNull ? (IPaymentProvider?)null : provider);
+        var pageOptions = Options.Create(new PaymentPageOptions { BaseUrl = "https://test.com/pay" });
 
         var metrics = Substitute.For<IBookingMetrics>();
 
@@ -110,10 +107,11 @@ public sealed class CreateBookingHandlerTests
             tenantRepo,
             unitOfWork,
             publisher,
-            resolver,
+            signer,
+            pageOptions,
             metrics);
 
-        return (handler, unitOfWork, bookingRepo, provider, metrics);
+        return (handler, unitOfWork, bookingRepo, signer, metrics);
     }
 
     private static CreateBookingCommand MakeCommand() => new()
@@ -126,127 +124,88 @@ public sealed class CreateBookingHandlerTests
     // ── Tests ─────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Handle_AutomaticPaymentMode_CallsCreateCheckoutSessionAsync()
+    public async Task Handle_AutomaticPaidBooking_ReturnsPaymentUrl()
     {
-        // Arrange
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
-        var (handler, _, _, provider, _) = Build(bookingType);
+        var (handler, _, _, _, _) = Build(bookingType);
 
-        // Act
-        await handler.Handle(MakeCommand(), CancellationToken.None);
+        var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        // Assert
-        await provider.Received(1)
-            .CreateCheckoutSessionAsync(Arg.Any<CreateCheckoutRequest>(), Arg.Any<CancellationToken>());
+        result.PaymentUrl.Should().NotBeNullOrEmpty();
+        result.PaymentUrl.Should().Contain("bookingId=");
+        result.PaymentUrl.Should().Contain("tenantSlug=");
+        result.PaymentUrl.Should().Contain("sig=");
     }
 
     [Fact]
-    public async Task Handle_AutomaticPaymentMode_CallsUpdateAsyncAfterCheckoutSessionCreation()
+    public async Task Handle_AutomaticPaidBooking_DoesNotCreateCheckoutSession()
     {
-        // Arrange
+        // Checkout sessions are now created on-demand, not at booking creation
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
         var (handler, _, bookingRepo, _, _) = Build(bookingType);
 
-        // Act
         await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        // Assert — UpdateAsync must be called so that PaymentReference and CheckoutUrl
-        // are persisted via ExecuteUpdateAsync.
-        await bookingRepo.Received().UpdateAsync(Arg.Any<Booking>(), Arg.Any<CancellationToken>());
+        // No UpdateAsync call for checkout details since no checkout is created
+        await bookingRepo.DidNotReceive().UpdateAsync(Arg.Any<Booking>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_AutomaticPaymentMode_ReturnedDtoContainsPaymentReference()
+    public async Task Handle_AutomaticPaidBooking_ReturnedDtoHasNullPaymentReference()
     {
-        // Arrange
+        // Payment reference is set later when checkout is created on-demand
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
         var (handler, _, _, _, _) = Build(bookingType);
 
-        // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        // Assert — the DTO returned to the caller must reflect the ProviderTransactionId
-        result.PaymentReference.Should().Be("ext-id-123");
+        result.PaymentReference.Should().BeNull();
     }
 
     [Fact]
-    public async Task Handle_AutomaticPaymentMode_ReturnedDtoContainsCheckoutUrl()
+    public async Task Handle_AutomaticPaidBooking_ReturnedDtoHasNullCheckoutUrl()
     {
-        // Arrange
+        // Checkout URL is set later when checkout is created on-demand
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
         var (handler, _, _, _, _) = Build(bookingType);
 
-        // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        // Assert — the DTO returned to the caller must include the CheckoutUrl
-        result.CheckoutUrl.Should().Be("https://pay.example.com/checkout/123");
+        result.CheckoutUrl.Should().BeNull();
     }
 
     [Fact]
-    public async Task Handle_ManualPaymentMode_DoesNotCallPaymentProvider()
+    public async Task Handle_ManualPaymentMode_PaymentUrlIsNull()
     {
-        // Arrange — Manual mode
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Manual);
-        var (handler, _, _, provider, _) = Build(bookingType);
+        var (handler, _, _, _, _) = Build(bookingType);
 
-        // Act
-        await handler.Handle(MakeCommand(), CancellationToken.None);
+        var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        // Assert
-        await provider.DidNotReceive()
-            .CreateCheckoutSessionAsync(Arg.Any<CreateCheckoutRequest>(), Arg.Any<CancellationToken>());
+        result.PaymentUrl.Should().BeNull();
     }
 
     [Fact]
     public async Task Handle_ManualPaymentMode_ReturnedDtoHasNullCheckoutUrl()
     {
-        // Arrange — Manual mode never calls payment provider
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Manual);
         var (handler, _, _, _, _) = Build(bookingType);
 
-        // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        // Assert
         result.CheckoutUrl.Should().BeNull();
     }
 
     [Fact]
-    public async Task Handle_AutomaticPaymentMode_FreeBooking_DoesNotCallPaymentProvider()
+    public async Task Handle_FreeBooking_PaymentUrlIsNull()
     {
-        // Arrange — Automatic mode but price is 0 (free)
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub", priceInCentavos: 0);
-        var (handler, _, _, provider, _) = Build(bookingType);
+        var (handler, _, _, _, _) = Build(bookingType);
 
-        // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        // Assert — Free bookings skip the checkout session entirely
-        await provider.DidNotReceive()
-            .CreateCheckoutSessionAsync(Arg.Any<CreateCheckoutRequest>(), Arg.Any<CancellationToken>());
+        result.PaymentUrl.Should().BeNull();
         result.Status.Should().Be(BookingStatus.PendingVerification);
-        result.CheckoutUrl.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task Handle_AutomaticPaymentMode_PassesCorrectCheckoutRequest()
-    {
-        // Arrange
-        var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
-        var (handler, _, _, provider, _) = Build(bookingType);
-
-        // Act
-        await handler.Handle(MakeCommand(), CancellationToken.None);
-
-        // Assert — verify the request params passed to the provider
-        await provider.Received(1).CreateCheckoutSessionAsync(
-            Arg.Is<CreateCheckoutRequest>(r =>
-                r.AmountInCentavos == bookingType.PriceInCentavos &&
-                r.Currency == bookingType.Currency &&
-                r.TenantId == TenantId &&
-                r.Description.Contains(bookingType.Name)),
-            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -261,31 +220,24 @@ public sealed class CreateBookingHandlerTests
     }
 
     [Fact]
-    public async Task Handle_AutomaticPaymentMode_RecordsPaymentProcessedMetric()
+    public async Task Handle_AutomaticPaidBooking_RecordsBookingCreatedMetric()
     {
         var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
         var (handler, _, _, _, metrics) = Build(bookingType);
 
         await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        metrics.Received(1).RecordPaymentProcessed(Arg.Any<string>(), Arg.Any<string>());
+        metrics.Received(1).RecordBookingCreated(Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Fact]
-    public async Task Handle_WhenResolverReturnsNull_SkipsCheckoutAndStaysAtPendingPayment()
+    public async Task Handle_AutomaticPaidBooking_StatusIsPendingPayment()
     {
-        // Arrange — Automatic mode but resolver returns null (no active config)
-        var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "PayMongo");
-        var (handler, _, bookingRepo, provider, _) = Build(bookingType, resolverReturnsNull: true);
+        var bookingType = BuildTimeSlotWithAllDayWindows(PaymentMode.Automatic, "Stub");
+        var (handler, _, _, _, _) = Build(bookingType);
 
-        // Act
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        // Assert — checkout never called, booking stays PendingPayment
-        await provider.DidNotReceive()
-            .CreateCheckoutSessionAsync(Arg.Any<CreateCheckoutRequest>(), Arg.Any<CancellationToken>());
-        await bookingRepo.DidNotReceive().UpdateAsync(Arg.Any<Booking>(), Arg.Any<CancellationToken>());
         result.Status.Should().Be(BookingStatus.PendingPayment);
-        result.CheckoutUrl.Should().BeNull();
     }
 }
