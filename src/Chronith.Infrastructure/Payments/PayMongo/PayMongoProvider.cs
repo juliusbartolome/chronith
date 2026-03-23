@@ -45,8 +45,10 @@ public sealed class PayMongoProvider(
                         }
                     },
                     payment_method_types = new[] { "gcash", "card", "grab_pay", "paymaya" },
-                    success_url = options.Value.SuccessUrl.Replace("{bookingId}", request.BookingId.ToString()),
-                    cancel_url = options.Value.FailureUrl.Replace("{bookingId}", request.BookingId.ToString()),
+                    success_url = request.SuccessUrl
+                        ?? options.Value.SuccessUrl.Replace("{bookingId}", request.BookingId.ToString()),
+                    cancel_url = request.CancelUrl
+                        ?? options.Value.FailureUrl.Replace("{bookingId}", request.BookingId.ToString()),
                     description = request.Description,
                     reference_number = request.BookingId.ToString()
                 }

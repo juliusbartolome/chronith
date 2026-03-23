@@ -2,12 +2,14 @@ using Chronith.Application.Behaviors;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Application.Mappers;
+using Chronith.Application.Options;
 using Chronith.Application.Telemetry;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 namespace Chronith.Application.Commands.Bookings;
 
@@ -50,7 +52,8 @@ public sealed class CreateBookingHandler(
     ITenantRepository tenantRepo,
     IUnitOfWork unitOfWork,
     IPublisher publisher,
-    ITenantPaymentProviderResolver tenantPaymentProviderResolver,
+    IBookingUrlSigner signer,
+    IOptions<PaymentPageOptions> pageOptions,
     IBookingMetrics metrics)
     : IRequestHandler<CreateBookingCommand, BookingDto>
 {
@@ -112,36 +115,13 @@ public sealed class CreateBookingHandler(
             tenantContext.TenantId.ToString(),
             bookingType is TimeSlotBookingType ? "TimeSlot" : "Calendar");
 
-        // For Automatic payment mode with a non-free booking, create a checkout session
+        // For Automatic payment mode with a non-free booking, generate HMAC-signed payment URL.
+        // Checkout sessions are created on-demand when the customer picks a provider.
+        string? paymentUrl = null;
         if (bookingType.PaymentMode == PaymentMode.Automatic && bookingType.PriceInCentavos > 0)
         {
-            var providerName = bookingType.PaymentProvider ?? "Stub";
-            using var payActivity = ChronithActivitySource.StartPaymentProcess(tenantContext.TenantId, providerName);
-            var provider = await tenantPaymentProviderResolver.ResolveAsync(tenantContext.TenantId, providerName, ct);
-
-            if (provider is not null)
-            {
-                var checkoutResult = await provider.CreateCheckoutSessionAsync(
-                    new CreateCheckoutRequest(
-                        AmountInCentavos: bookingType.PriceInCentavos,
-                        Currency: bookingType.Currency,
-                        Description: $"{bookingType.Name} booking",
-                        BookingId: booking.Id,
-                        TenantId: tenantContext.TenantId),
-                    ct);
-
-                booking.SetCheckoutDetails(checkoutResult.CheckoutUrl, checkoutResult.ProviderTransactionId);
-
-                metrics.RecordPaymentProcessed(tenantContext.TenantId.ToString(), providerName);
-
-                // Persist the updated PaymentReference and CheckoutUrl. The booking was
-                // committed inside the advisory-lock transaction above, so the tracked entity
-                // in the DbContext does not reflect these in-memory changes. Using UpdateAsync
-                // (which issues an ExecuteUpdateAsync SQL statement directly) ensures both
-                // fields are written to the database in a second round-trip.
-                await bookingRepo.UpdateAsync(booking, ct);
-            }
-            // provider is null → no active config for this provider; booking stays PendingPayment
+            paymentUrl = signer.GenerateSignedUrl(
+                pageOptions.Value.BaseUrl, booking.Id, tenant.Slug);
         }
 
         await publisher.Publish(
@@ -158,6 +138,6 @@ public sealed class CreateBookingHandler(
                 CustomerEmail: booking.CustomerEmail),
             ct);
 
-        return booking.ToDto();
+        return booking.ToDto(paymentUrl);
     }
 }

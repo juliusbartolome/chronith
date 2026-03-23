@@ -46,9 +46,12 @@ public sealed class MayaProvider(
             },
             redirectUrl = new
             {
-                success = options.Value.SuccessUrl.Replace("{bookingId}", request.BookingId.ToString()),
-                failure = options.Value.FailureUrl.Replace("{bookingId}", request.BookingId.ToString()),
-                cancel = options.Value.FailureUrl.Replace("{bookingId}", request.BookingId.ToString())
+                success = request.SuccessUrl
+                    ?? options.Value.SuccessUrl.Replace("{bookingId}", request.BookingId.ToString()),
+                failure = request.CancelUrl
+                    ?? options.Value.FailureUrl.Replace("{bookingId}", request.BookingId.ToString()),
+                cancel = request.CancelUrl
+                    ?? options.Value.FailureUrl.Replace("{bookingId}", request.BookingId.ToString())
             },
             requestReferenceNumber = request.BookingId.ToString()
         };
