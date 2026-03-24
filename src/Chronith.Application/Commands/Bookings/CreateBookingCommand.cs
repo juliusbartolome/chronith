@@ -115,10 +115,10 @@ public sealed class CreateBookingHandler(
             tenantContext.TenantId.ToString(),
             bookingType is TimeSlotBookingType ? "TimeSlot" : "Calendar");
 
-        // For Automatic payment mode with a non-free booking, generate HMAC-signed payment URL.
+        // For any non-free booking, generate HMAC-signed payment URL.
         // Checkout sessions are created on-demand when the customer picks a provider.
         string? paymentUrl = null;
-        if (bookingType.PaymentMode == PaymentMode.Automatic && bookingType.PriceInCentavos > 0)
+        if (bookingType.PriceInCentavos > 0)
         {
             paymentUrl = signer.GenerateSignedUrl(
                 pageOptions.Value.BaseUrl, booking.Id, tenant.Slug);

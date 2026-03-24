@@ -190,7 +190,7 @@ public sealed class PublicBookingEndpointsTests(FunctionalTestFixture fixture)
     }
 
     [Fact]
-    public async Task PublicCreateBooking_ManualMode_NoPaymentUrl()
+    public async Task PublicCreateBooking_ManualPaidMode_ReturnsPaymentUrl()
     {
         await EnsureSeedAsync();
         var client = fixture.CreateAnonymousClient();
@@ -208,7 +208,9 @@ public sealed class PublicBookingEndpointsTests(FunctionalTestFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
-        booking!.PaymentUrl.Should().BeNull(
-            "Manual payment mode should not generate a payment URL");
+        booking!.PaymentUrl.Should().NotBeNullOrEmpty(
+            "any paid booking should get a payment URL regardless of payment mode");
+        booking.PaymentUrl.Should().StartWith("https://test.example.com/pay",
+            "payment URL should use the configured PaymentPage:BaseUrl");
     }
 }
