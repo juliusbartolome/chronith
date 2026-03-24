@@ -112,14 +112,16 @@ public sealed class PublicCreateBookingHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ManualMode_NoPaymentUrl()
+    public async Task Handle_ManualPaidBooking_ReturnsPaymentUrl()
     {
         var bt = BuildTimeSlot(PaymentMode.Manual);
         var (handler, _) = Build(bt);
 
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-        result.PaymentUrl.Should().BeNull();
+        result.PaymentUrl.Should().NotBeNullOrEmpty(
+            "any paid booking should get a payment URL regardless of payment mode");
+        result.PaymentUrl.Should().Contain("bookingId=");
     }
 
     [Fact]
