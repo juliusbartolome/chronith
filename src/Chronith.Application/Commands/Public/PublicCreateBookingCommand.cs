@@ -48,6 +48,7 @@ public sealed class PublicCreateBookingHandler(
     IBookingTypeRepository bookingTypeRepo,
     IBookingRepository bookingRepo,
     ITenantRepository tenantRepo,
+    ICustomerRepository customerRepo,
     IUnitOfWork unitOfWork,
     IPublisher publisher,
     IBookingUrlSigner signer,
@@ -96,6 +97,38 @@ public sealed class PublicCreateBookingHandler(
             firstName: cmd.FirstName,
             lastName: cmd.LastName,
             mobile: cmd.Mobile);
+
+        // Customer upsert: only when contact fields are provided
+        var hasContactFields = !string.IsNullOrWhiteSpace(cmd.FirstName)
+            || !string.IsNullOrWhiteSpace(cmd.LastName)
+            || !string.IsNullOrWhiteSpace(cmd.Mobile);
+
+        if (hasContactFields)
+        {
+            var existing = await customerRepo.GetByEmailAsync(cmd.TenantId, cmd.CustomerEmail, ct);
+            if (existing is not null)
+            {
+                existing.UpdateProfile(
+                    cmd.FirstName ?? existing.FirstName,
+                    cmd.LastName ?? existing.LastName,
+                    cmd.Mobile ?? existing.Mobile);
+                customerRepo.Update(existing);
+                booking.LinkCustomerAccount(existing.Id);
+            }
+            else
+            {
+                var customer = Customer.Create(
+                    cmd.TenantId,
+                    cmd.CustomerEmail,
+                    passwordHash: null,
+                    firstName: cmd.FirstName ?? string.Empty,
+                    lastName: cmd.LastName ?? string.Empty,
+                    mobile: cmd.Mobile,
+                    authProvider: "public");
+                await customerRepo.AddAsync(customer, ct);
+                booking.LinkCustomerAccount(customer.Id);
+            }
+        }
 
         await bookingRepo.AddAsync(booking, ct);
         await tx.CommitAsync(ct);
