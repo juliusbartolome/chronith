@@ -65,7 +65,8 @@ public sealed class CustomerRegisterCommandHandlerTests
             TenantSlug = TenantSlug,
             Email = "test@example.com",
             Password = "Password1",
-            Name = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Act
@@ -76,7 +77,8 @@ public sealed class CustomerRegisterCommandHandlerTests
         result.AccessToken.Should().Be("access-token");
         result.RefreshToken.Should().Be("raw-token");
         result.Customer.Email.Should().Be("test@example.com");
-        result.Customer.Name.Should().Be("Test User");
+        result.Customer.FirstName.Should().Be("Test");
+        result.Customer.LastName.Should().Be("User");
         result.Customer.AuthProvider.Should().Be("builtin");
 
         await customerRepo.Received(1).AddAsync(Arg.Any<Customer>(), Arg.Any<CancellationToken>());
@@ -94,7 +96,7 @@ public sealed class CustomerRegisterCommandHandlerTests
         tenantRepo.GetBySlugAsync(TenantSlug, Arg.Any<CancellationToken>()).Returns(tenant);
         authConfigRepo.GetByTenantIdAsync(tenant.Id, Arg.Any<CancellationToken>()).Returns((TenantAuthConfig?)null);
 
-        var existingCustomer = Customer.Create(tenant.Id, "test@example.com", "hash", "Existing", null, "builtin");
+        var existingCustomer = Customer.Create(tenant.Id, "test@example.com", "hash", "Existing", "User", null, "builtin");
         customerRepo.GetByEmailAsync(tenant.Id, "test@example.com", Arg.Any<CancellationToken>()).Returns(existingCustomer);
 
         var command = new CustomerRegisterCommand
@@ -102,7 +104,8 @@ public sealed class CustomerRegisterCommandHandlerTests
             TenantSlug = TenantSlug,
             Email = "test@example.com",
             Password = "Password1",
-            Name = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Act
@@ -131,7 +134,8 @@ public sealed class CustomerRegisterCommandHandlerTests
             TenantSlug = TenantSlug,
             Email = "test@example.com",
             Password = "Password1",
-            Name = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Act
@@ -160,7 +164,8 @@ public sealed class CustomerRegisterCommandHandlerTests
             TenantSlug = TenantSlug,
             Email = "test@example.com",
             Password = "Password1",
-            Name = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Act
@@ -183,7 +188,8 @@ public sealed class CustomerRegisterCommandHandlerTests
             TenantSlug = "nonexistent",
             Email = "test@example.com",
             Password = "Password1",
-            Name = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Act

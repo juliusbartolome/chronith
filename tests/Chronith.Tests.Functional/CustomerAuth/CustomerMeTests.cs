@@ -28,7 +28,7 @@ public sealed class CustomerMeTests(FunctionalTestFixture fixture)
         // Register a customer to get a valid token
         var reg = await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/register", new
         {
-            email, password = "Password123!", name = "Me Test"
+            email, password = "Password123!", firstName = "Me", lastName = "Test"
         });
         var tokens = await reg.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
 
@@ -41,7 +41,8 @@ public sealed class CustomerMeTests(FunctionalTestFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.ReadFromApiJsonAsync<CustomerDto>();
         body!.Email.Should().Be(email);
-        body.Name.Should().Be("Me Test");
+        body.FirstName.Should().Be("Me");
+        body.LastName.Should().Be("Test");
     }
 
     [Fact]
@@ -53,7 +54,7 @@ public sealed class CustomerMeTests(FunctionalTestFixture fixture)
 
         var reg = await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/register", new
         {
-            email, password = "Password123!", name = "Original Name"
+            email, password = "Password123!", firstName = "Original", lastName = "Name"
         });
         var tokens = await reg.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
 
@@ -62,14 +63,16 @@ public sealed class CustomerMeTests(FunctionalTestFixture fixture)
 
         var response = await client.PutAsJsonAsync($"/v1/public/{TenantSlug}/auth/me", new
         {
-            name = "Updated Name",
-            phone = "+639171234567"
+            firstName = "Updated",
+            lastName = "Name",
+            mobile = "+639171234567"
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.ReadFromApiJsonAsync<CustomerDto>();
-        body!.Name.Should().Be("Updated Name");
-        body.Phone.Should().Be("+639171234567");
+        body!.FirstName.Should().Be("Updated");
+        body.LastName.Should().Be("Name");
+        body.Mobile.Should().Be("+639171234567");
     }
 
     [Fact]

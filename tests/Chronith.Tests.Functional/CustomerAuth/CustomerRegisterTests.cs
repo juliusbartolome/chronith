@@ -29,7 +29,8 @@ public sealed class CustomerRegisterTests(FunctionalTestFixture fixture)
         {
             email,
             password = "Password123!",
-            name = "Test Customer"
+            firstName = "Test",
+            lastName = "Customer"
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -37,7 +38,8 @@ public sealed class CustomerRegisterTests(FunctionalTestFixture fixture)
         body!.AccessToken.Should().NotBeNullOrWhiteSpace();
         body.RefreshToken.Should().NotBeNullOrWhiteSpace();
         body.Customer.Email.Should().Be(email);
-        body.Customer.Name.Should().Be("Test Customer");
+        body.Customer.FirstName.Should().Be("Test");
+        body.Customer.LastName.Should().Be("Customer");
     }
 
     [Fact]
@@ -51,14 +53,16 @@ public sealed class CustomerRegisterTests(FunctionalTestFixture fixture)
         {
             email,
             password = "Password123!",
-            name = "First"
+            firstName = "First",
+            lastName = "User"
         });
 
         var response = await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/register", new
         {
             email,
             password = "Password123!",
-            name = "Second"
+            firstName = "Second",
+            lastName = "User"
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
@@ -73,7 +77,8 @@ public sealed class CustomerRegisterTests(FunctionalTestFixture fixture)
         {
             email = "nobody@example.com",
             password = "Password123!",
-            name = "Test"
+            firstName = "Test",
+            lastName = "User"
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

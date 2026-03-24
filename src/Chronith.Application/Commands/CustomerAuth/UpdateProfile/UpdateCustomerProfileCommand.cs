@@ -13,8 +13,9 @@ namespace Chronith.Application.Commands.CustomerAuth.UpdateProfile;
 public sealed record UpdateCustomerProfileCommand : IRequest<CustomerDto>, IAuditable
 {
     public required Guid CustomerId { get; init; }
-    public required string Name { get; init; }
-    public string? Phone { get; init; }
+    public required string FirstName { get; init; }
+    public required string LastName { get; init; }
+    public string? Mobile { get; init; }
 
     public Guid EntityId => CustomerId;
     public string EntityType => "Customer";
@@ -28,7 +29,8 @@ public sealed class UpdateCustomerProfileCommandValidator : AbstractValidator<Up
     public UpdateCustomerProfileCommandValidator()
     {
         RuleFor(x => x.CustomerId).NotEmpty();
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.FirstName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.LastName).NotEmpty().MaximumLength(200);
     }
 }
 
@@ -45,7 +47,7 @@ public sealed class UpdateCustomerProfileCommandHandler(
         var customer = await customerRepository.GetByIdAsync(request.CustomerId, cancellationToken)
             ?? throw new NotFoundException(nameof(Customer), request.CustomerId);
 
-        customer.UpdateProfile(request.Name, request.Phone);
+        customer.UpdateProfile(request.FirstName, request.LastName, request.Mobile);
         customerRepository.Update(customer);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

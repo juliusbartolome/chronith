@@ -75,7 +75,8 @@ public sealed class CustomerOidcLoginCommandHandlerTests
         result.AccessToken.Should().Be("access-token");
         result.RefreshToken.Should().Be("raw-token");
         result.Customer.Email.Should().Be("oidc@example.com");
-        result.Customer.Name.Should().Be("OIDC User");
+        result.Customer.FirstName.Should().Be("OIDC");
+        result.Customer.LastName.Should().Be("User");
 
         await customerRepo.Received(1).AddAsync(Arg.Any<Customer>(), Arg.Any<CancellationToken>());
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());

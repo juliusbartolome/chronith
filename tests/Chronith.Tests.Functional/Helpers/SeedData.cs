@@ -255,7 +255,8 @@ public static class SeedData
         ChronithDbContext db,
         Guid? id = null,
         string email = "seeded-customer@example.com",
-        string name = "Seeded Customer",
+        string firstName = "Seeded",
+        string lastName = "Customer",
         string passwordHash = "$2a$11$dummyhashforseeding00000000000000000000000000000",
         Guid? tenantId = null)
     {
@@ -265,7 +266,8 @@ public static class SeedData
             Id = customerId,
             TenantId = tenantId ?? TestConstants.TenantId,
             Email = email,
-            Name = name,
+            FirstName = firstName,
+            LastName = lastName,
             PasswordHash = passwordHash,
             AuthProvider = "BuiltIn",
             IsEmailVerified = false,

@@ -7,8 +7,9 @@ namespace Chronith.API.Endpoints.Public.CustomerAuth;
 
 public sealed class UpdateCustomerMeRequest
 {
-    public string Name { get; set; } = string.Empty;
-    public string? Phone { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string? Mobile { get; set; }
 }
 
 public sealed class UpdateCustomerMeEndpoint(ISender sender)
@@ -28,8 +29,9 @@ public sealed class UpdateCustomerMeEndpoint(ISender sender)
         var result = await sender.Send(new UpdateCustomerProfileCommand
         {
             CustomerId = customerGuid,
-            Name = req.Name,
-            Phone = req.Phone
+            FirstName = req.FirstName,
+            LastName = req.LastName,
+            Mobile = req.Mobile
         }, ct);
 
         await Send.OkAsync(result, ct);

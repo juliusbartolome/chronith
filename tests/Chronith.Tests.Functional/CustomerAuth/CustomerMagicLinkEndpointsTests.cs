@@ -75,7 +75,8 @@ public sealed class CustomerMagicLinkEndpointsTests(FunctionalTestFixture fixtur
         var response = await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/magic-link/register", new
         {
             email,
-            name = "Magic User"
+            firstName = "Magic",
+            lastName = "User"
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
@@ -93,7 +94,8 @@ public sealed class CustomerMagicLinkEndpointsTests(FunctionalTestFixture fixtur
         var response = await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/magic-link/register", new
         {
             email = CustomerEmail,
-            name = "Duplicate"
+            firstName = "Duplicate",
+            lastName = "User"
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
@@ -107,7 +109,8 @@ public sealed class CustomerMagicLinkEndpointsTests(FunctionalTestFixture fixtur
         var response = await client.PostAsJsonAsync("/v1/public/nonexistent-magic/auth/magic-link/register", new
         {
             email = "nobody@example.com",
-            name = "Nobody"
+            firstName = "Nobody",
+            lastName = "User"
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

@@ -49,7 +49,7 @@ public sealed class CustomerAuthAccessTests(FunctionalTestFixture fixture)
         var client = fixture.CreateClient(role, tenantId: TenantId);
         var response = await client.PutAsJsonAsync($"/v1/public/{TenantSlug}/auth/me", new
         {
-            name = "Test", phone = (string?)null
+            firstName = "Test", lastName = "User", mobile = (string?)null
         });
         response.StatusCode.Should().Be(expected);
     }
@@ -60,7 +60,7 @@ public sealed class CustomerAuthAccessTests(FunctionalTestFixture fixture)
         var client = fixture.CreateAnonymousClient();
         var response = await client.PutAsJsonAsync($"/v1/public/{TenantSlug}/auth/me", new
         {
-            name = "Test", phone = (string?)null
+            firstName = "Test", lastName = "User", mobile = (string?)null
         });
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

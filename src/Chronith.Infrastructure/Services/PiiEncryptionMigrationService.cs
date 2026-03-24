@@ -84,8 +84,8 @@ public sealed class PiiEncryptionMigrationService(
             {
                 row.EmailEncrypted = encryption.Encrypt(row.Email) ?? string.Empty;
                 row.EmailToken = blindIndex.ComputeToken(row.Email);
-                if (row.Phone is not null && row.PhoneEncrypted is null)
-                    row.PhoneEncrypted = encryption.Encrypt(row.Phone);
+                if (row.Mobile is not null && row.MobileEncrypted is null)
+                    row.MobileEncrypted = encryption.Encrypt(row.Mobile);
             }
 
             await db.SaveChangesAsync(ct);

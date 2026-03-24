@@ -11,8 +11,9 @@ internal static class CustomerEntityMapper
         TenantId = c.TenantId,
         Email = c.Email,
         PasswordHash = c.PasswordHash,
-        Name = c.Name,
-        Phone = c.Phone,
+        FirstName = c.FirstName,
+        LastName = c.LastName,
+        Mobile = c.Mobile,
         ExternalId = c.ExternalId,
         AuthProvider = c.AuthProvider,
         IsEmailVerified = c.IsEmailVerified,
@@ -26,7 +27,7 @@ internal static class CustomerEntityMapper
     public static Customer ToDomain(this CustomerEntity e) =>
         Customer.Hydrate(
             e.Id, e.TenantId, e.Email, e.PasswordHash,
-            e.Name, e.Phone, e.ExternalId, e.AuthProvider,
+            e.FirstName, e.LastName, e.Mobile, e.ExternalId, e.AuthProvider,
             e.IsEmailVerified, e.IsActive, e.IsDeleted,
             e.CreatedAt, e.LastLoginAt, e.RowVersion);
 

@@ -54,7 +54,8 @@ public sealed class CustomerMagicLinkAuthTests(FunctionalTestFixture fixture)
         var response = await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/magic-link/register", new
         {
             email = $"open-{Guid.NewGuid():N}@example.com",
-            name = "Open Access"
+            firstName = "Open",
+            lastName = "Access"
         });
 
         // 202 = endpoint reached without auth challenge
@@ -95,7 +96,8 @@ public sealed class CustomerMagicLinkAuthTests(FunctionalTestFixture fixture)
         var response = await client.PostAsJsonAsync($"/v1/public/{disabledSlug}/auth/magic-link/register", new
         {
             email = "test@example.com",
-            name = "Test"
+            firstName = "Test",
+            lastName = "User"
         });
 
         // Expect 500 — InvalidOperationException is not a DomainException, falls through to catch-all in ExceptionHandlingMiddleware

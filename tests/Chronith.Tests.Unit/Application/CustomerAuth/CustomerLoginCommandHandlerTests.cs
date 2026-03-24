@@ -43,7 +43,7 @@ public sealed class CustomerLoginCommandHandlerTests
 
     private static Customer CreateActiveCustomer(string email = "customer@example.com", string password = "Password1")
     {
-        return Customer.Create(TenantId, email, "hashed-password", "Jane Doe", null, "builtin");
+        return Customer.Create(TenantId, email, "hashed-password", "Jane", "Doe", null, "builtin");
     }
 
     [Fact]

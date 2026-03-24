@@ -28,7 +28,7 @@ public sealed class CustomerLoginTests(FunctionalTestFixture fixture)
 
         await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/register", new
         {
-            email, password, name = "Login Test"
+            email, password, firstName = "Login", lastName = "Test"
         });
 
         var response = await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/login", new
@@ -52,7 +52,7 @@ public sealed class CustomerLoginTests(FunctionalTestFixture fixture)
 
         await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/register", new
         {
-            email, password = "Password123!", name = "Test"
+            email, password = "Password123!", firstName = "Test", lastName = "User"
         });
 
         var response = await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/login", new

@@ -9,8 +9,9 @@ public sealed class CustomerMagicLinkRegisterRequest
 {
     public string Slug { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string? Phone { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string? Mobile { get; set; }
 }
 
 public sealed class CustomerMagicLinkRegisterEndpoint(ISender sender)
@@ -29,8 +30,9 @@ public sealed class CustomerMagicLinkRegisterEndpoint(ISender sender)
         {
             TenantSlug = req.Slug,
             Email = req.Email,
-            Name = req.Name,
-            Phone = req.Phone
+            FirstName = req.FirstName,
+            LastName = req.LastName,
+            Mobile = req.Mobile
         }, ct);
 
         await Send.ResponseAsync(result, 202, ct);
