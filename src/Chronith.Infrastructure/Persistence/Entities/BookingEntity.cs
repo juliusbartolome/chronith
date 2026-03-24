@@ -12,6 +12,9 @@ public sealed class BookingEntity
     public BookingStatus Status { get; set; }
     public string CustomerId { get; set; } = string.Empty;
     public string CustomerEmail { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string? Mobile { get; set; }
     public string? PaymentReference { get; set; }
     public long AmountInCentavos { get; set; }
     public string Currency { get; set; } = "PHP";

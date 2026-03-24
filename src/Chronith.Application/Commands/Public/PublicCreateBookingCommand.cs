@@ -20,6 +20,9 @@ public sealed record PublicCreateBookingCommand : IRequest<BookingDto>
     public required DateTimeOffset StartTime { get; init; }
     public required string CustomerEmail { get; init; }
     public required string CustomerId { get; init; }
+    public string? FirstName { get; init; }
+    public string? LastName { get; init; }
+    public string? Mobile { get; init; }
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -33,6 +36,9 @@ public sealed class PublicCreateBookingValidator : AbstractValidator<PublicCreat
         RuleFor(x => x.StartTime).NotEmpty();
         RuleFor(x => x.CustomerEmail).NotEmpty().EmailAddress().MaximumLength(320);
         RuleFor(x => x.CustomerId).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.FirstName).MaximumLength(200).When(x => x.FirstName is not null);
+        RuleFor(x => x.LastName).MaximumLength(200).When(x => x.LastName is not null);
+        RuleFor(x => x.Mobile).MaximumLength(50).When(x => x.Mobile is not null);
     }
 }
 
@@ -86,7 +92,10 @@ public sealed class PublicCreateBookingHandler(
             cmd.CustomerId,
             cmd.CustomerEmail,
             amountInCentavos: bookingType.PriceInCentavos,
-            currency: bookingType.Currency);
+            currency: bookingType.Currency,
+            firstName: cmd.FirstName,
+            lastName: cmd.LastName,
+            mobile: cmd.Mobile);
 
         await bookingRepo.AddAsync(booking, ct);
         await tx.CommitAsync(ct);

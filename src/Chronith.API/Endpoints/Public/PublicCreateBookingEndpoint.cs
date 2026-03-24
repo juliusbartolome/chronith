@@ -14,6 +14,9 @@ public sealed class PublicCreateBookingRequest
     public DateTimeOffset StartTime { get; set; }
     public string CustomerEmail { get; set; } = string.Empty;
     public string CustomerId { get; set; } = string.Empty;
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string? Mobile { get; set; }
 }
 
 public sealed class PublicCreateBookingEndpoint(ISender sender, ITenantRepository tenantRepo)
@@ -37,7 +40,10 @@ public sealed class PublicCreateBookingEndpoint(ISender sender, ITenantRepositor
             BookingTypeSlug = req.Slug,
             StartTime = req.StartTime,
             CustomerEmail = req.CustomerEmail,
-            CustomerId = req.CustomerId
+            CustomerId = req.CustomerId,
+            FirstName = req.FirstName,
+            LastName = req.LastName,
+            Mobile = req.Mobile
         }, ct);
 
         await Send.ResponseAsync(result, 201, ct);
