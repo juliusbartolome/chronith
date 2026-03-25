@@ -1,7 +1,7 @@
 # Payment Failed Status, Pipeline Logging & Dashboard Pay Button
 
 **Date:** 2026-03-26
-**Status:** Approved
+**Status:** Implemented
 
 ---
 
@@ -21,31 +21,45 @@ Three gaps in the current payment flow:
 
 ### Feature 1: PaymentFailed Status (Terminal)
 
-#### State Machine (Updated)
+#### State Machine (Updated — Split Payment Flow)
+
+Two payment paths:
 
 ```
-PendingPayment ──Pay()──> PendingVerification ──Confirm()──> Confirmed
-      │                          │                              │
-      ├──FailPayment()──> PaymentFailed (terminal)              │
-      │                                                         │
-      └──Cancel()──────> Cancelled <─────────Cancel()───────────┘
-                              ^
-                              │
-               PendingVerification ──Cancel()──┘
+AUTOMATIC (webhook from PayMongo/GCash/Maya — trusted source):
+  PendingPayment ──ConfirmPayment()──> Confirmed
+
+MANUAL (admin "Mark as Paid" — needs staff verification):
+  PendingPayment ──Pay()──> PendingVerification ──Confirm()──> Confirmed
+
+FAILURE:
+  PendingPayment ──FailPayment()──> PaymentFailed (terminal)
+
+CANCEL:
+  PendingPayment/PendingVerification/Confirmed ──Cancel()──> Cancelled
+
+FREE BOOKINGS:
+  Created directly in Confirmed status (skip PendingPayment entirely)
 ```
 
 `PaymentFailed` is a **terminal state** like `Cancelled`. No transitions out. The customer must create a new booking.
 
+**Rationale for split flow:** `PendingVerification` only makes sense for manual payment flows where a customer claims they paid and staff needs to verify. For automated payments where the gateway confirms via webhook, going through PendingVerification is unnecessary — the payment is already verified by the trusted source.
+
+**Rationale for free bookings starting Confirmed:** Nothing to pay = nothing to verify. Free bookings skip the payment pipeline entirely.
+
 #### Domain Changes
 
 - **`BookingStatus` enum:** Add `PaymentFailed` (ordinal 4).
+- **`Booking.ConfirmPayment(string changedById, string changedByRole)`:** New method. Guard: `Status == PendingPayment`. Transition directly to `Confirmed`. Used by webhook handler for trusted automated payments.
 - **`Booking.FailPayment(string changedById, string changedByRole)`:** New method. Guard: `Status == PendingPayment`. Transition to `PaymentFailed`.
+- **`Booking.Create()`:** Free bookings (amount=0) now start at `Confirmed` instead of `PendingVerification`.
 - **`Booking.Cancel()`:** Also reject `PaymentFailed` (already terminal).
 - **`Booking.AssignStaff()` / `Booking.Reschedule()`:** Also reject `PaymentFailed`.
 
 #### Application Changes
 
-- **`ProcessPaymentWebhookHandler`:** On `PaymentEventType.Failed`, look up the booking by payment reference and call `booking.FailPayment()`. Publish `BookingStatusChangedNotification`.
+- **`ProcessPaymentWebhookHandler`:** On `PaymentEventType.Success`, call `booking.ConfirmPayment()` (automated path → Confirmed). On `PaymentEventType.Failed`, call `booking.FailPayment()`. Both paths publish `BookingStatusChangedNotification`.
 - **`ConflictStatuses` arrays:** No change needed — `PaymentFailed` bookings should NOT block slots. The existing arrays explicitly list `PendingPayment`, `PendingVerification`, `Confirmed` — any status not in the list is already excluded.
 - **Webhook/notification outbox handlers:** Add `PaymentFailed` case mapping to event types:
   - Tenant webhook: `booking.payment_failed`
@@ -65,7 +79,7 @@ PendingPayment ──Pay()──> PendingVerification ──Confirm()──> Con
 #### SDK Changes
 
 - **TypeScript SDK:** Types are auto-generated from OpenAPI — picks up `PaymentFailed` on next regeneration.
-- **C# SDK:** Add `PaymentFailed` to the `BookingStatus` enum.
+- **C# SDK:** Status is stored as `string` — no enum exists. `"PaymentFailed"` works automatically.
 
 ### Feature 2: Payment Pipeline Logging
 
@@ -134,7 +148,7 @@ Add structured `ILogger<T>` logging to all payment-flow components. Use Serilog 
 
 ### C# SDK
 
-- `packages/sdk-csharp/src/Chronith.Client/Models/BookingStatus.cs` (or equivalent enum)
+- `packages/sdk-csharp/src/Chronith.Client/Models/BookingDto.cs` — Status is `string`, no enum. No change needed.
 
 ### Tests
 
