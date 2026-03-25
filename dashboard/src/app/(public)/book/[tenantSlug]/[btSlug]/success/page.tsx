@@ -125,14 +125,21 @@ export default function SuccessPage() {
             stroke="currentColor"
             strokeWidth={2}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 13l4 4L19 7"
+            />
           </svg>
         </div>
       </div>
 
-      <h1 className="text-2xl font-bold text-zinc-900 mb-2">Booking Confirmed!</h1>
+      <h1 className="text-2xl font-bold text-zinc-900 mb-2">
+        Booking Confirmed!
+      </h1>
       <p className="text-zinc-500 text-sm mb-8">
-        Your appointment has been successfully booked. A confirmation email will be sent to{" "}
+        Your appointment has been successfully booked. A confirmation email will
+        be sent to{" "}
         <span className="font-medium">{session.customerInfo?.email}</span>.
       </p>
 
@@ -140,7 +147,9 @@ export default function SuccessPage() {
         <CardContent className="pt-4 space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-zinc-500">Booking ID</span>
-            <span className="font-mono text-xs text-zinc-700">{bookingId?.slice(0, 8)}</span>
+            <span className="font-mono text-xs text-zinc-700">
+              {bookingId?.replace(/-/g, "").slice(0, 8)}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-zinc-500">Service</span>
@@ -148,11 +157,15 @@ export default function SuccessPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-zinc-500">Date</span>
-            <span className="font-medium text-zinc-900">{session.selectedDate}</span>
+            <span className="font-medium text-zinc-900">
+              {session.selectedDate}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-zinc-500">Time</span>
-            <span className="font-medium text-zinc-900">{session.selectedSlot}</span>
+            <span className="font-medium text-zinc-900">
+              {session.selectedSlot}
+            </span>
           </div>
           {session.selectedStaffName && (
             <p>

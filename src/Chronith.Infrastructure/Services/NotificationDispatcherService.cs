@@ -127,7 +127,7 @@ public sealed class NotificationDispatcherService(
                 ["booking_type_slug"] = bookingTypeSlug,
                 ["status"] = status,
                 ["event_type"] = eventName,
-                ["booking_id"] = TryGetStringProperty(payload, "bookingId") ?? string.Empty,
+                ["booking_id"] = (TryGetStringProperty(payload, "bookingId") ?? string.Empty).Replace("-", ""),
                 ["booking_date"] = TryGetStringProperty(payload, "bookingDate") ?? string.Empty,
                 ["booking_time"] = TryGetStringProperty(payload, "bookingTime") ?? string.Empty,
                 ["staff_name"] = TryGetStringProperty(payload, "staffName") ?? string.Empty,

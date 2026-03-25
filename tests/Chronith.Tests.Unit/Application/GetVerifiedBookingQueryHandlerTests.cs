@@ -35,6 +35,7 @@ public sealed class GetVerifiedBookingQueryHandlerTests
             new GetVerifiedBookingQuery(TenantId, BookingId), CancellationToken.None);
 
         result.Id.Should().Be(BookingId);
+        result.ReferenceId.Should().Be(BookingId.ToString("N"));
         result.Status.Should().Be(BookingStatus.PendingPayment);
         result.AmountInCentavos.Should().Be(50_000);
     }

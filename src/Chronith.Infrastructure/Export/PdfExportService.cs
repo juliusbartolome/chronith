@@ -51,7 +51,7 @@ public sealed class PdfExportService : IPdfExportService
 
                     foreach (var row in rows)
                     {
-                        table.Cell().Padding(4).Text(row.Id.ToString()[..8]).FontSize(8);
+                        table.Cell().Padding(4).Text(row.Id.ToString("N")[..8]).FontSize(8);
                         table.Cell().Padding(4).Text(row.BookingTypeName).FontSize(8);
                         table.Cell().Padding(4).Text(row.CustomerEmail).FontSize(8);
                         table.Cell().Padding(4).Text(row.Start.ToString("yyyy-MM-dd HH:mm")).FontSize(8);

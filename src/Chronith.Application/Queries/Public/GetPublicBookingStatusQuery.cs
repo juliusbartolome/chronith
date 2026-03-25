@@ -31,6 +31,7 @@ public sealed class GetPublicBookingStatusQueryHandler(IBookingRepository bookin
 
         return new PublicBookingStatusDto(
             Id: booking.Id,
+            ReferenceId: booking.Id.ToString("N"),
             Status: booking.Status,
             Start: booking.Start,
             End: booking.End,

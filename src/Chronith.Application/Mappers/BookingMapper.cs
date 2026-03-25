@@ -11,6 +11,7 @@ public static class BookingMapper
     public static BookingDto ToDto(this Booking booking, string? paymentUrl) =>
         new(
             Id: booking.Id,
+            ReferenceId: booking.Id.ToString("N"),
             BookingTypeId: booking.BookingTypeId,
             Start: booking.Start,
             End: booking.End,
