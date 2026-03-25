@@ -18,7 +18,8 @@ public sealed class CreatePublicCheckoutCommandHandlerTests
     private static readonly Tenant TestTenant = Tenant.Create("test-tenant", "Test", "UTC");
 
     private static (CreatePublicCheckoutHandler Handler, IPaymentProvider Provider, IBookingRepository BookingRepo)
-        Build(Booking? booking = null, IPaymentProvider? provider = null)
+        Build(Booking? booking = null, IPaymentProvider? provider = null,
+              TenantPaymentConfig? tenantPaymentConfig = null)
     {
         var bookingRepo = Substitute.For<IBookingRepository>();
         var resolvedBooking = booking ?? new BookingBuilder()
@@ -44,12 +45,19 @@ public sealed class CreatePublicCheckoutCommandHandlerTests
 
         var signer = Substitute.For<IBookingUrlSigner>();
         signer.GenerateSignedUrl(Arg.Any<string>(), Arg.Any<Guid>(), Arg.Any<string>())
-            .Returns("https://test.com/pay/success?sig=abc");
+            .Returns(callInfo => callInfo.ArgAt<string>(0) + "?sig=abc");
 
         var pageOptions = Options.Create(new PaymentPageOptions { BaseUrl = "https://test.com/pay" });
 
+        var configRepo = Substitute.For<ITenantPaymentConfigRepository>();
+        if (tenantPaymentConfig is not null)
+        {
+            configRepo.GetActiveByProviderNameAsync(TestTenant.Id, "PayMongo", Arg.Any<CancellationToken>())
+                .Returns(tenantPaymentConfig);
+        }
+
         var handler = new CreatePublicCheckoutHandler(
-            bookingRepo, tenantRepo, resolver, signer, pageOptions);
+            bookingRepo, tenantRepo, resolver, signer, pageOptions, configRepo);
 
         return (handler, mockProvider, bookingRepo);
     }
@@ -121,6 +129,70 @@ public sealed class CreatePublicCheckoutCommandHandlerTests
         await provider.Received(1).CreateCheckoutSessionAsync(
             Arg.Is<CreateCheckoutRequest>(r =>
                 r.SuccessUrl != null && r.SuccessUrl.Contains("sig=")),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_WithRequestOverrideUrls_UsesRequestUrls()
+    {
+        var (handler, provider, _) = Build();
+
+        await handler.Handle(new CreatePublicCheckoutCommand
+        {
+            TenantSlug = "test-tenant",
+            BookingId = BookingId,
+            ProviderName = "PayMongo",
+            SuccessUrl = "https://custom.com/success",
+            FailureUrl = "https://custom.com/failed"
+        }, CancellationToken.None);
+
+        await provider.Received(1).CreateCheckoutSessionAsync(
+            Arg.Is<CreateCheckoutRequest>(r =>
+                r.SuccessUrl != null && r.SuccessUrl.Contains("custom.com/success")),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_WithTenantConfigUrls_UsesConfigUrls()
+    {
+        var config = TenantPaymentConfig.Create(
+            TestTenant.Id, "PayMongo", "Label", "{}", null, null,
+            "https://tenant.com/success", "https://tenant.com/failed");
+        var (handler, provider, _) = Build(tenantPaymentConfig: config);
+
+        await handler.Handle(new CreatePublicCheckoutCommand
+        {
+            TenantSlug = "test-tenant",
+            BookingId = BookingId,
+            ProviderName = "PayMongo"
+        }, CancellationToken.None);
+
+        await provider.Received(1).CreateCheckoutSessionAsync(
+            Arg.Is<CreateCheckoutRequest>(r =>
+                r.SuccessUrl != null && r.SuccessUrl.Contains("tenant.com/success")),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_RequestOverrideTakesPriorityOverTenantConfig()
+    {
+        var config = TenantPaymentConfig.Create(
+            TestTenant.Id, "PayMongo", "Label", "{}", null, null,
+            "https://tenant.com/success", "https://tenant.com/failed");
+        var (handler, provider, _) = Build(tenantPaymentConfig: config);
+
+        await handler.Handle(new CreatePublicCheckoutCommand
+        {
+            TenantSlug = "test-tenant",
+            BookingId = BookingId,
+            ProviderName = "PayMongo",
+            SuccessUrl = "https://override.com/success",
+            FailureUrl = "https://override.com/failed"
+        }, CancellationToken.None);
+
+        await provider.Received(1).CreateCheckoutSessionAsync(
+            Arg.Is<CreateCheckoutRequest>(r =>
+                r.SuccessUrl != null && r.SuccessUrl.Contains("override.com/success")),
             Arg.Any<CancellationToken>());
     }
 }
