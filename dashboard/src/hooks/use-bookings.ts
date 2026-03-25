@@ -50,6 +50,21 @@ export function useConfirmBooking() {
   });
 }
 
+export function usePayBooking() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/bookings/${id}/pay`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to mark booking as paid");
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bookings"] });
+    },
+  });
+}
+
 export function useCancelBooking() {
   const qc = useQueryClient();
   return useMutation({
