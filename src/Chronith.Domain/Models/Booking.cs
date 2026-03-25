@@ -54,7 +54,7 @@ public sealed class Booking
             BookingTypeId = bookingTypeId,
             Start = start,
             End = end,
-            Status = isFree ? BookingStatus.PendingVerification : BookingStatus.PendingPayment,
+            Status = isFree ? BookingStatus.Confirmed : BookingStatus.PendingPayment,
             CustomerId = customerId,
             CustomerEmail = customerEmail,
             AmountInCentavos = amountInCentavos,
@@ -85,6 +85,20 @@ public sealed class Booking
         Transition(BookingStatus.PendingVerification, changedById, changedByRole);
     }
 
+    public void ConfirmPayment(string changedById, string changedByRole)
+    {
+        if (Status != BookingStatus.PendingPayment)
+            throw new InvalidStateTransitionException(Status, "confirm payment");
+        Transition(BookingStatus.Confirmed, changedById, changedByRole);
+    }
+
+    public void FailPayment(string changedById, string changedByRole)
+    {
+        if (Status != BookingStatus.PendingPayment)
+            throw new InvalidStateTransitionException(Status, "fail payment");
+        Transition(BookingStatus.PaymentFailed, changedById, changedByRole);
+    }
+
     public void Confirm(string changedById, string changedByRole)
     {
         if (Status != BookingStatus.PendingVerification)
@@ -94,14 +108,14 @@ public sealed class Booking
 
     public void Cancel(string changedById, string changedByRole)
     {
-        if (Status == BookingStatus.Cancelled)
+        if (Status is BookingStatus.Cancelled or BookingStatus.PaymentFailed)
             throw new InvalidStateTransitionException(Status, "cancel");
         Transition(BookingStatus.Cancelled, changedById, changedByRole);
     }
 
     public void AssignStaff(Guid staffMemberId, string changedById, string changedByRole)
     {
-        if (Status == BookingStatus.Cancelled)
+        if (Status is BookingStatus.Cancelled or BookingStatus.PaymentFailed)
             throw new InvalidStateTransitionException(Status, "assign staff");
         StaffMemberId = staffMemberId;
     }
@@ -113,7 +127,7 @@ public sealed class Booking
 
     public void Reschedule(DateTimeOffset newStart, DateTimeOffset newEnd, string changedById, string changedByRole)
     {
-        if (Status == BookingStatus.Cancelled)
+        if (Status is BookingStatus.Cancelled or BookingStatus.PaymentFailed)
             throw new InvalidStateTransitionException(Status, "reschedule");
         Start = newStart;
         End = newEnd;
