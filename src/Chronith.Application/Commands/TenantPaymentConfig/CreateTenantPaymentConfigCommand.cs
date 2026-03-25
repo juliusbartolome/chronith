@@ -14,6 +14,8 @@ public sealed record CreateTenantPaymentConfigCommand : IRequest<TenantPaymentCo
     public required string Settings { get; init; }
     public string? PublicNote { get; init; }
     public string? QrCodeUrl { get; init; }
+    public string? PaymentSuccessUrl { get; init; }
+    public string? PaymentFailureUrl { get; init; }
 
     public Guid EntityId => Guid.Empty;
     public string EntityType => "TenantPaymentConfig";
@@ -37,6 +39,18 @@ public sealed class CreateTenantPaymentConfigCommandValidator
         RuleFor(x => x.Settings).NotEmpty().MaximumLength(4096);
         RuleFor(x => x.PublicNote).MaximumLength(500).When(x => x.PublicNote is not null);
         RuleFor(x => x.QrCodeUrl).MaximumLength(2048).When(x => x.QrCodeUrl is not null);
+
+        RuleFor(x => x.PaymentSuccessUrl)
+            .MaximumLength(2048)
+            .Must(url => Uri.TryCreate(url, UriKind.Absolute, out var u) && (u.Scheme == "https" || u.Scheme == "http"))
+            .When(x => x.PaymentSuccessUrl is not null)
+            .WithMessage("PaymentSuccessUrl must be a valid absolute URL");
+
+        RuleFor(x => x.PaymentFailureUrl)
+            .MaximumLength(2048)
+            .Must(url => Uri.TryCreate(url, UriKind.Absolute, out var u) && (u.Scheme == "https" || u.Scheme == "http"))
+            .When(x => x.PaymentFailureUrl is not null)
+            .WithMessage("PaymentFailureUrl must be a valid absolute URL");
     }
 }
 
@@ -55,7 +69,9 @@ public sealed class CreateTenantPaymentConfigCommandHandler(
             cmd.Label,
             cmd.Settings,
             cmd.PublicNote,
-            cmd.QrCodeUrl);
+            cmd.QrCodeUrl,
+            cmd.PaymentSuccessUrl,
+            cmd.PaymentFailureUrl);
 
         await repo.AddAsync(config, ct);
         await unitOfWork.SaveChangesAsync(ct);

@@ -19,6 +19,8 @@ public sealed class PublicCreateCheckoutRequest
     public string Sig { get; set; } = string.Empty;
 
     public string ProviderName { get; set; } = string.Empty;
+    public string? SuccessUrl { get; set; }
+    public string? FailureUrl { get; set; }
 }
 
 public sealed class PublicCreateCheckoutEndpoint(
@@ -42,7 +44,9 @@ public sealed class PublicCreateCheckoutEndpoint(
         {
             TenantSlug = req.TenantSlug,
             BookingId = req.BookingId,
-            ProviderName = req.ProviderName
+            ProviderName = req.ProviderName,
+            SuccessUrl = req.SuccessUrl,
+            FailureUrl = req.FailureUrl
         }, ct);
 
         await Send.OkAsync(result, ct);

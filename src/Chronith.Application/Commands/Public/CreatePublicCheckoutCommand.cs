@@ -16,6 +16,8 @@ public sealed record CreatePublicCheckoutCommand : IRequest<CreateCheckoutResult
     public required string TenantSlug { get; init; }
     public required Guid BookingId { get; init; }
     public required string ProviderName { get; init; }
+    public string? SuccessUrl { get; init; }
+    public string? FailureUrl { get; init; }
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -27,6 +29,18 @@ public sealed class CreatePublicCheckoutValidator : AbstractValidator<CreatePubl
         RuleFor(x => x.TenantSlug).NotEmpty();
         RuleFor(x => x.BookingId).NotEmpty();
         RuleFor(x => x.ProviderName).NotEmpty().MaximumLength(50);
+
+        RuleFor(x => x.SuccessUrl)
+            .MaximumLength(2048)
+            .Must(url => Uri.TryCreate(url, UriKind.Absolute, out var u) && (u.Scheme == "https" || u.Scheme == "http"))
+            .When(x => x.SuccessUrl is not null)
+            .WithMessage("SuccessUrl must be a valid absolute URL");
+
+        RuleFor(x => x.FailureUrl)
+            .MaximumLength(2048)
+            .Must(url => Uri.TryCreate(url, UriKind.Absolute, out var u) && (u.Scheme == "https" || u.Scheme == "http"))
+            .When(x => x.FailureUrl is not null)
+            .WithMessage("FailureUrl must be a valid absolute URL");
     }
 }
 
@@ -37,7 +51,8 @@ public sealed class CreatePublicCheckoutHandler(
     ITenantRepository tenantRepo,
     ITenantPaymentProviderResolver resolver,
     IBookingUrlSigner signer,
-    IOptions<PaymentPageOptions> pageOptions)
+    IOptions<PaymentPageOptions> pageOptions,
+    ITenantPaymentConfigRepository configRepo)
     : IRequestHandler<CreatePublicCheckoutCommand, CreateCheckoutResult>
 {
     public async Task<CreateCheckoutResult> Handle(
@@ -55,9 +70,23 @@ public sealed class CreatePublicCheckoutHandler(
         var provider = await resolver.ResolveAsync(tenant.Id, cmd.ProviderName, ct)
             ?? throw new NotFoundException("PaymentProvider", cmd.ProviderName);
 
+        // --- 3-tier URL resolution ---
         var baseUrl = pageOptions.Value.BaseUrl;
-        var successUrl = signer.GenerateSignedUrl($"{baseUrl}/success", cmd.BookingId, cmd.TenantSlug);
-        var failureUrl = signer.GenerateSignedUrl($"{baseUrl}/failed", cmd.BookingId, cmd.TenantSlug);
+        var defaultSuccessUrl = $"{baseUrl}/success";
+        var defaultFailureUrl = $"{baseUrl}/failed";
+
+        // Check tenant payment config for custom URLs
+        var config = await configRepo.GetActiveByProviderNameAsync(tenant.Id, cmd.ProviderName, ct);
+        var configSuccessUrl = config?.PaymentSuccessUrl;
+        var configFailureUrl = config?.PaymentFailureUrl;
+
+        // Resolution: request override > tenant config > global fallback
+        var resolvedSuccessBase = cmd.SuccessUrl ?? configSuccessUrl ?? defaultSuccessUrl;
+        var resolvedFailureBase = cmd.FailureUrl ?? configFailureUrl ?? defaultFailureUrl;
+
+        // Always append HMAC signature
+        var successUrl = signer.GenerateSignedUrl(resolvedSuccessBase, cmd.BookingId, cmd.TenantSlug);
+        var failureUrl = signer.GenerateSignedUrl(resolvedFailureBase, cmd.BookingId, cmd.TenantSlug);
 
         var checkoutResult = await provider.CreateCheckoutSessionAsync(
             new CreateCheckoutRequest(

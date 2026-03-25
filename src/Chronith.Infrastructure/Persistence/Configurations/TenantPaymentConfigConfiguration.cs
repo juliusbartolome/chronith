@@ -16,6 +16,8 @@ public sealed class TenantPaymentConfigConfiguration
         builder.Property(c => c.Settings).HasColumnType("text").IsRequired();
         builder.Property(c => c.PublicNote).HasColumnType("text");
         builder.Property(c => c.QrCodeUrl).HasColumnType("text");
+        builder.Property(c => c.PaymentSuccessUrl).HasMaxLength(2048);
+        builder.Property(c => c.PaymentFailureUrl).HasMaxLength(2048);
 
         // Unique label per tenant+provider (excluding deleted)
         builder.HasIndex(c => new { c.TenantId, c.ProviderName, c.Label })

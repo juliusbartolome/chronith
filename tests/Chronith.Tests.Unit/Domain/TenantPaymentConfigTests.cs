@@ -88,4 +88,29 @@ public sealed class TenantPaymentConfigTests
 
         config.IsDeleted.Should().BeTrue();
     }
+
+    [Fact]
+    public void Create_WithCustomRedirectUrls_StoresUrls()
+    {
+        var config = TenantPaymentConfig.Create(
+            Guid.NewGuid(), "PayMongo", "Label", "{}", null, null,
+            "https://mysite.com/success", "https://mysite.com/failed");
+
+        config.PaymentSuccessUrl.Should().Be("https://mysite.com/success");
+        config.PaymentFailureUrl.Should().Be("https://mysite.com/failed");
+    }
+
+    [Fact]
+    public void UpdateDetails_WithCustomRedirectUrls_UpdatesUrls()
+    {
+        var config = TenantPaymentConfig.Create(
+            Guid.NewGuid(), "PayMongo", "Label", "{}", null, null, null, null);
+        config.PaymentSuccessUrl.Should().BeNull();
+
+        config.UpdateDetails("Label", "{}", null, null,
+            "https://mysite.com/success", "https://mysite.com/failed");
+
+        config.PaymentSuccessUrl.Should().Be("https://mysite.com/success");
+        config.PaymentFailureUrl.Should().Be("https://mysite.com/failed");
+    }
 }

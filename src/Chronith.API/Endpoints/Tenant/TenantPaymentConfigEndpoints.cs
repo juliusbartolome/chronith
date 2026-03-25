@@ -17,6 +17,8 @@ public sealed class CreateTenantPaymentConfigRequest
     public string Settings { get; set; } = "{}";
     public string? PublicNote { get; set; }
     public string? QrCodeUrl { get; set; }
+    public string? PaymentSuccessUrl { get; set; }
+    public string? PaymentFailureUrl { get; set; }
 }
 
 public sealed class UpdateTenantPaymentConfigRequest
@@ -25,6 +27,8 @@ public sealed class UpdateTenantPaymentConfigRequest
     public string Settings { get; set; } = "{}";
     public string? PublicNote { get; set; }
     public string? QrCodeUrl { get; set; }
+    public string? PaymentSuccessUrl { get; set; }
+    public string? PaymentFailureUrl { get; set; }
 }
 
 // --- GET /tenant/payment-config ---
@@ -70,7 +74,9 @@ public sealed class CreateTenantPaymentConfigEndpoint(ISender sender)
             Label = req.Label,
             Settings = req.Settings,
             PublicNote = req.PublicNote,
-            QrCodeUrl = req.QrCodeUrl
+            QrCodeUrl = req.QrCodeUrl,
+            PaymentSuccessUrl = req.PaymentSuccessUrl,
+            PaymentFailureUrl = req.PaymentFailureUrl
         }, ct);
 
         await Send.OkAsync(result, ct);
@@ -100,7 +106,9 @@ public sealed class UpdateTenantPaymentConfigEndpoint(ISender sender)
             Label = req.Label,
             Settings = req.Settings,
             PublicNote = req.PublicNote,
-            QrCodeUrl = req.QrCodeUrl
+            QrCodeUrl = req.QrCodeUrl,
+            PaymentSuccessUrl = req.PaymentSuccessUrl,
+            PaymentFailureUrl = req.PaymentFailureUrl
         }, ct);
 
         await Send.OkAsync(result, ct);

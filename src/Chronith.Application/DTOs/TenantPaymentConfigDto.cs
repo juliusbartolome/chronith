@@ -8,5 +8,7 @@ public sealed record TenantPaymentConfigDto(
     bool IsActive,
     string? PublicNote,
     string? QrCodeUrl,
+    string? PaymentSuccessUrl,
+    string? PaymentFailureUrl,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);

@@ -13,6 +13,8 @@ public static class TenantPaymentConfigMapper
         config.IsActive,
         config.PublicNote,
         config.QrCodeUrl,
+        config.PaymentSuccessUrl,
+        config.PaymentFailureUrl,
         config.CreatedAt,
         config.UpdatedAt);
 
