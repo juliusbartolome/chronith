@@ -66,6 +66,7 @@ public sealed class GetPublicBookingStatusQueryHandlerTests
             new GetPublicBookingStatusQuery(tenantId, bookingId), CancellationToken.None);
 
         result.Status.Should().Be(BookingStatus.PendingPayment);
+        result.ReferenceId.Should().Be(booking.Id.ToString("N"));
         result.CheckoutUrl.Should().Be(checkoutUrl);
         result.PaymentReference.Should().Be("cs_live_abc123");
         result.AmountInCentavos.Should().Be(50000L);
