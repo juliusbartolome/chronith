@@ -84,15 +84,21 @@ public sealed class NotificationDispatcherTemplateTests
         Guid? id = null,
         string eventType = "notification.booking_confirmed.email",
         string bookingEventType = "booking.confirmed",
-        string status = "confirmed")
+        string status = "confirmed",
+        Guid? bookingId = null)
     {
-        var payload = JsonSerializer.Serialize(new
+        var payloadObj = new Dictionary<string, object?>
         {
-            customerEmail = "customer@example.com",
-            @event = bookingEventType,
-            status,
-            bookingTypeSlug = "massage-therapy"
-        });
+            ["customerEmail"] = "customer@example.com",
+            ["event"] = bookingEventType,
+            ["status"] = status,
+            ["bookingTypeSlug"] = "massage-therapy"
+        };
+
+        if (bookingId.HasValue)
+            payloadObj["bookingId"] = bookingId.Value.ToString();
+
+        var payload = JsonSerializer.Serialize(payloadObj);
 
         return new PendingOutboxEntry(
             id ?? Guid.NewGuid(),
@@ -231,5 +237,32 @@ public sealed class NotificationDispatcherTemplateTests
         capturedContext["status"].Should().Be("confirmed");
         capturedContext.Should().ContainKey("event_type");
         capturedContext["event_type"].Should().Be("booking.confirmed");
+    }
+
+    [Fact]
+    public async Task DispatchBatchAsync_WithTemplate_BookingIdContextHasNoDashes()
+    {
+        var bookingId = Guid.NewGuid();
+        var entry = CreateEmailEntry(bookingId: bookingId);
+        var template = NotificationTemplate.Create(TenantId, "booking.confirmed", "email",
+            "Subject", "Your booking ref: {{booking_id}}");
+
+        IReadOnlyDictionary<string, string>? capturedContext = null;
+        var (sut, _, _, templateRepo, templateRenderer, _) = BuildSut([entry]);
+        templateRepo.GetByEventAndChannelAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(template);
+        templateRenderer.Render(Arg.Any<string>(), Arg.Any<IReadOnlyDictionary<string, string>>())
+            .Returns(ci =>
+            {
+                capturedContext = ci.Arg<IReadOnlyDictionary<string, string>>();
+                return "rendered";
+            });
+
+        await sut.DispatchBatchAsync(CancellationToken.None);
+
+        capturedContext.Should().NotBeNull();
+        capturedContext!.Should().ContainKey("booking_id");
+        capturedContext["booking_id"].Should().NotContain("-");
+        capturedContext["booking_id"].Should().Be(bookingId.ToString("N"));
     }
 }
