@@ -2,6 +2,7 @@ using Chronith.Application.Interfaces;
 using Chronith.Domain.Models;
 using Chronith.Infrastructure.Payments;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
 namespace Chronith.Tests.Unit.Infrastructure;
@@ -14,7 +15,7 @@ public sealed class TenantPaymentProviderResolverTests
         Substitute.For<IHttpClientFactory>();
 
     private TenantPaymentProviderResolver CreateSut() =>
-        new(_repo, _httpClientFactory);
+        new(_repo, _httpClientFactory, NullLoggerFactory.Instance);
 
     [Fact]
     public async Task ResolveAsync_Stub_AlwaysReturnsProvider_WithoutDbLookup()

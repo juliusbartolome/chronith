@@ -1,15 +1,20 @@
 using System.Text.Json;
 using Chronith.Application.Interfaces;
 using Chronith.Infrastructure.Payments.PayMongo;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Chronith.Infrastructure.Payments;
 
 public sealed class TenantPaymentProviderResolver(
     ITenantPaymentConfigRepository configRepo,
-    IHttpClientFactory httpClientFactory)
+    IHttpClientFactory httpClientFactory,
+    ILoggerFactory loggerFactory)
     : ITenantPaymentProviderResolver
 {
+    private readonly ILogger<TenantPaymentProviderResolver> _logger =
+        loggerFactory.CreateLogger<TenantPaymentProviderResolver>();
+
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 
     public async Task<IPaymentProvider?> ResolveAsync(
@@ -22,20 +27,39 @@ public sealed class TenantPaymentProviderResolver(
             return null;
 
         var config = await configRepo.GetActiveByProviderNameAsync(tenantId, providerName, ct);
-        if (config is null) return null;
+        if (config is null)
+        {
+            _logger.LogWarning("No active payment config found for tenant {TenantId} provider {ProviderName}",
+                tenantId, providerName);
+            return null;
+        }
 
-        return providerName.ToUpperInvariant() switch
+        var provider = providerName.ToUpperInvariant() switch
         {
             "PAYMONGO" => BuildPayMongo(config.Settings),
             "MAYA"     => BuildMaya(config.Settings),
-            _          => null
+            _          => (IPaymentProvider?)null
         };
+
+        if (provider is not null)
+        {
+            _logger.LogInformation("Resolved payment provider {ProviderName} for tenant {TenantId}",
+                providerName, tenantId);
+        }
+        else
+        {
+            _logger.LogWarning("Unknown payment provider name {ProviderName} for tenant {TenantId}",
+                providerName, tenantId);
+        }
+
+        return provider;
     }
 
     private IPaymentProvider BuildPayMongo(string settings)
     {
         var opts = JsonSerializer.Deserialize<PayMongoOptions>(settings, JsonOpts) ?? new PayMongoOptions();
-        return new PayMongoProvider(Options.Create(opts), httpClientFactory);
+        return new PayMongoProvider(Options.Create(opts), httpClientFactory,
+            loggerFactory.CreateLogger<PayMongoProvider>());
     }
 
     private IPaymentProvider BuildMaya(string settings)
