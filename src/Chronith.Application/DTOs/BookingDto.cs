@@ -4,6 +4,7 @@ namespace Chronith.Application.DTOs;
 
 public sealed record BookingDto(
     Guid Id,
+    string ReferenceId,
     Guid BookingTypeId,
     DateTimeOffset Start,
     DateTimeOffset End,
