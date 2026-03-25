@@ -11,6 +11,8 @@ public sealed class TenantPaymentConfigEntity
     public string Settings { get; set; } = "{}";
     public string? PublicNote { get; set; }
     public string? QrCodeUrl { get; set; }
+    public string? PaymentSuccessUrl { get; set; }
+    public string? PaymentFailureUrl { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }

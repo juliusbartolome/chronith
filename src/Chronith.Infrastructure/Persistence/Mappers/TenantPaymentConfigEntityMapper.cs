@@ -17,6 +17,8 @@ public static class TenantPaymentConfigEntityMapper
         SetProperty(domain, nameof(TenantPaymentConfig.Settings), entity.Settings);
         SetProperty(domain, nameof(TenantPaymentConfig.PublicNote), entity.PublicNote);
         SetProperty(domain, nameof(TenantPaymentConfig.QrCodeUrl), entity.QrCodeUrl);
+        SetProperty(domain, nameof(TenantPaymentConfig.PaymentSuccessUrl), entity.PaymentSuccessUrl);
+        SetProperty(domain, nameof(TenantPaymentConfig.PaymentFailureUrl), entity.PaymentFailureUrl);
         SetProperty(domain, nameof(TenantPaymentConfig.CreatedAt), entity.CreatedAt);
         SetProperty(domain, nameof(TenantPaymentConfig.UpdatedAt), entity.UpdatedAt);
         return domain;
@@ -33,6 +35,8 @@ public static class TenantPaymentConfigEntityMapper
         Settings = domain.Settings,
         PublicNote = domain.PublicNote,
         QrCodeUrl = domain.QrCodeUrl,
+        PaymentSuccessUrl = domain.PaymentSuccessUrl,
+        PaymentFailureUrl = domain.PaymentFailureUrl,
         CreatedAt = domain.CreatedAt,
         UpdatedAt = domain.UpdatedAt
     };
