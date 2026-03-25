@@ -41,8 +41,9 @@ public sealed class CustomerMagicLinkVerifyCommandHandlerTests
             tenantId: tenantId ?? Guid.NewGuid(),
             email: "alice@example.com",
             passwordHash: null,
-            name: "Alice",
-            phone: null,
+            firstName: "Alice",
+            lastName: "Doe",
+            mobile: null,
             authProvider: "magic-link");
 
     [Fact]

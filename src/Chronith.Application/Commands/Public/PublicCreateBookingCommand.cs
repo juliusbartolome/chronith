@@ -20,6 +20,9 @@ public sealed record PublicCreateBookingCommand : IRequest<BookingDto>
     public required DateTimeOffset StartTime { get; init; }
     public required string CustomerEmail { get; init; }
     public required string CustomerId { get; init; }
+    public string? FirstName { get; init; }
+    public string? LastName { get; init; }
+    public string? Mobile { get; init; }
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -33,6 +36,9 @@ public sealed class PublicCreateBookingValidator : AbstractValidator<PublicCreat
         RuleFor(x => x.StartTime).NotEmpty();
         RuleFor(x => x.CustomerEmail).NotEmpty().EmailAddress().MaximumLength(320);
         RuleFor(x => x.CustomerId).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.FirstName).MaximumLength(200).When(x => x.FirstName is not null);
+        RuleFor(x => x.LastName).MaximumLength(200).When(x => x.LastName is not null);
+        RuleFor(x => x.Mobile).MaximumLength(50).When(x => x.Mobile is not null);
     }
 }
 
@@ -42,6 +48,7 @@ public sealed class PublicCreateBookingHandler(
     IBookingTypeRepository bookingTypeRepo,
     IBookingRepository bookingRepo,
     ITenantRepository tenantRepo,
+    ICustomerRepository customerRepo,
     IUnitOfWork unitOfWork,
     IPublisher publisher,
     IBookingUrlSigner signer,
@@ -86,7 +93,42 @@ public sealed class PublicCreateBookingHandler(
             cmd.CustomerId,
             cmd.CustomerEmail,
             amountInCentavos: bookingType.PriceInCentavos,
-            currency: bookingType.Currency);
+            currency: bookingType.Currency,
+            firstName: cmd.FirstName,
+            lastName: cmd.LastName,
+            mobile: cmd.Mobile);
+
+        // Customer upsert: only when contact fields are provided
+        var hasContactFields = !string.IsNullOrWhiteSpace(cmd.FirstName)
+            || !string.IsNullOrWhiteSpace(cmd.LastName)
+            || !string.IsNullOrWhiteSpace(cmd.Mobile);
+
+        if (hasContactFields)
+        {
+            var existing = await customerRepo.GetByEmailAsync(cmd.TenantId, cmd.CustomerEmail, ct);
+            if (existing is not null)
+            {
+                existing.UpdateProfile(
+                    cmd.FirstName ?? existing.FirstName,
+                    cmd.LastName ?? existing.LastName,
+                    cmd.Mobile ?? existing.Mobile);
+                customerRepo.Update(existing);
+                booking.LinkCustomerAccount(existing.Id);
+            }
+            else
+            {
+                var customer = Customer.Create(
+                    cmd.TenantId,
+                    cmd.CustomerEmail,
+                    passwordHash: null,
+                    firstName: cmd.FirstName ?? string.Empty,
+                    lastName: cmd.LastName ?? string.Empty,
+                    mobile: cmd.Mobile,
+                    authProvider: "public");
+                await customerRepo.AddAsync(customer, ct);
+                booking.LinkCustomerAccount(customer.Id);
+            }
+        }
 
         await bookingRepo.AddAsync(booking, ct);
         await tx.CommitAsync(ct);
@@ -111,7 +153,10 @@ public sealed class PublicCreateBookingHandler(
                 Start: booking.Start,
                 End: booking.End,
                 CustomerId: booking.CustomerId,
-                CustomerEmail: booking.CustomerEmail),
+                CustomerEmail: booking.CustomerEmail,
+                CustomerFirstName: booking.FirstName,
+                CustomerLastName: booking.LastName,
+                CustomerMobile: booking.Mobile),
             ct);
 
         return booking.ToDto(paymentUrl);

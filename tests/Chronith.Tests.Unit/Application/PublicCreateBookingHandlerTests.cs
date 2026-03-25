@@ -36,8 +36,9 @@ public sealed class PublicCreateBookingHandlerTests
             priceInCentavos: priceInCentavos);
     }
 
-    private static (PublicCreateBookingHandler Handler, IBookingUrlSigner Signer) Build(
-        BookingType bookingType)
+    private static (PublicCreateBookingHandler Handler, IBookingUrlSigner Signer, ICustomerRepository CustomerRepo, IBookingRepository BookingRepo) Build(
+        BookingType bookingType,
+        Customer? existingCustomer = null)
     {
         var tenant = Tenant.Create("test-tenant", "Test Tenant", "UTC");
 
@@ -53,6 +54,10 @@ public sealed class PublicCreateBookingHandlerTests
 
         var tenantRepo = Substitute.For<ITenantRepository>();
         tenantRepo.GetByIdAsync(TenantId, Arg.Any<CancellationToken>()).Returns(tenant);
+
+        var customerRepo = Substitute.For<ICustomerRepository>();
+        customerRepo.GetByEmailAsync(Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(existingCustomer);
 
         var tx = Substitute.For<IUnitOfWorkTransaction>();
         var unitOfWork = Substitute.For<IUnitOfWork>();
@@ -70,12 +75,13 @@ public sealed class PublicCreateBookingHandlerTests
             bookingTypeRepo,
             bookingRepo,
             tenantRepo,
+            customerRepo,
             unitOfWork,
             publisher,
             signer,
             pageOptions);
 
-        return (handler, signer);
+        return (handler, signer, customerRepo, bookingRepo);
     }
 
     private static PublicCreateBookingCommand MakeCommand() => new()
@@ -91,7 +97,7 @@ public sealed class PublicCreateBookingHandlerTests
     public async Task Handle_AutomaticPaidBooking_ReturnsPaymentUrl()
     {
         var bt = BuildTimeSlot(PaymentMode.Automatic, "PayMongo");
-        var (handler, _) = Build(bt);
+        var (handler, _, _, _) = Build(bt);
 
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
@@ -103,7 +109,7 @@ public sealed class PublicCreateBookingHandlerTests
     public async Task Handle_FreeBooking_NoPaymentUrl()
     {
         var bt = BuildTimeSlot(PaymentMode.Automatic, "Stub", priceInCentavos: 0);
-        var (handler, _) = Build(bt);
+        var (handler, _, _, _) = Build(bt);
 
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
@@ -115,7 +121,7 @@ public sealed class PublicCreateBookingHandlerTests
     public async Task Handle_ManualPaidBooking_ReturnsPaymentUrl()
     {
         var bt = BuildTimeSlot(PaymentMode.Manual);
-        var (handler, _) = Build(bt);
+        var (handler, _, _, _) = Build(bt);
 
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
@@ -128,7 +134,7 @@ public sealed class PublicCreateBookingHandlerTests
     public async Task Handle_AutomaticPaidBooking_StatusIsPendingPayment()
     {
         var bt = BuildTimeSlot(PaymentMode.Automatic, "PayMongo");
-        var (handler, _) = Build(bt);
+        var (handler, _, _, _) = Build(bt);
 
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
@@ -139,10 +145,84 @@ public sealed class PublicCreateBookingHandlerTests
     public async Task Handle_AutomaticPaidBooking_CheckoutUrlIsNull()
     {
         var bt = BuildTimeSlot(PaymentMode.Automatic, "PayMongo");
-        var (handler, _) = Build(bt);
+        var (handler, _, _, _) = Build(bt);
 
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
         result.CheckoutUrl.Should().BeNull("checkout is created on-demand, not at booking creation");
+    }
+
+    // ── Customer Upsert Tests ────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Handle_WithContactFields_NoExistingCustomer_CreatesCustomer()
+    {
+        var bt = BuildTimeSlot(priceInCentavos: 0);
+        var (handler, _, customerRepo, _) = Build(bt);
+
+        var cmd = MakeCommand() with
+        {
+            FirstName = "Julius",
+            LastName = "Bartolome",
+            Mobile = "+639171234567"
+        };
+
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        await customerRepo.Received(1).AddAsync(
+            Arg.Is<Customer>(c =>
+                c.FirstName == "Julius" &&
+                c.LastName == "Bartolome" &&
+                c.Mobile == "+639171234567" &&
+                c.AuthProvider == "public" &&
+                c.Email == "customer@example.com" &&
+                !c.IsEmailVerified),
+            Arg.Any<CancellationToken>());
+
+        result.CustomerAccountId.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task Handle_WithContactFields_ExistingCustomer_UpdatesCustomer()
+    {
+        var bt = BuildTimeSlot(priceInCentavos: 0);
+        var existing = Customer.Create(TenantId, "customer@example.com", null,
+            "Old", "Name", "+639170000000", "public");
+        var (handler, _, customerRepo, _) = Build(bt, existingCustomer: existing);
+
+        var cmd = MakeCommand() with
+        {
+            FirstName = "Julius",
+            LastName = "Bartolome",
+            Mobile = "+639171234567"
+        };
+
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        customerRepo.Received(1).Update(
+            Arg.Is<Customer>(c =>
+                c.FirstName == "Julius" &&
+                c.LastName == "Bartolome" &&
+                c.Mobile == "+639171234567"));
+
+        await customerRepo.DidNotReceive().AddAsync(
+            Arg.Any<Customer>(), Arg.Any<CancellationToken>());
+
+        result.CustomerAccountId.Should().Be(existing.Id);
+    }
+
+    [Fact]
+    public async Task Handle_WithoutContactFields_NoCustomerUpsert()
+    {
+        var bt = BuildTimeSlot(priceInCentavos: 0);
+        var (handler, _, customerRepo, _) = Build(bt);
+
+        var result = await handler.Handle(MakeCommand(), CancellationToken.None);
+
+        await customerRepo.DidNotReceive().AddAsync(
+            Arg.Any<Customer>(), Arg.Any<CancellationToken>());
+        customerRepo.DidNotReceive().Update(Arg.Any<Customer>());
+
+        result.CustomerAccountId.Should().BeNull();
     }
 }

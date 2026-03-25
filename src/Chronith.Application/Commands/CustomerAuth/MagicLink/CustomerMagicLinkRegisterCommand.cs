@@ -11,8 +11,9 @@ public sealed record CustomerMagicLinkRegisterCommand : IRequest<MagicLinkInitia
 {
     public required string TenantSlug { get; init; }
     public required string Email { get; init; }
-    public required string Name { get; init; }
-    public string? Phone { get; init; }
+    public required string FirstName { get; init; }
+    public required string LastName { get; init; }
+    public string? Mobile { get; init; }
 }
 
 public sealed class CustomerMagicLinkRegisterCommandValidator
@@ -22,7 +23,8 @@ public sealed class CustomerMagicLinkRegisterCommandValidator
     {
         RuleFor(x => x.TenantSlug).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(320);
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.FirstName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.LastName).NotEmpty().MaximumLength(200);
     }
 }
 
@@ -52,7 +54,7 @@ public sealed class CustomerMagicLinkRegisterCommandHandler(
 
         var customer = Customer.Create(
             tenant.Id, request.Email, passwordHash: null,
-            request.Name, request.Phone, authProvider: "magic-link");
+            request.FirstName, request.LastName, request.Mobile, authProvider: "magic-link");
 
         await customerRepository.AddAsync(customer, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

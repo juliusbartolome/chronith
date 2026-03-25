@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,9 +10,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -20,20 +20,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { useRecurringRules, useCancelRecurringSeries } from '@/hooks/use-recurring'
+} from "@/components/ui/table";
+import {
+  useRecurringRules,
+  useCancelRecurringSeries,
+} from "@/hooks/use-recurring";
 
-const FREQ_COLORS: Record<string, 'default' | 'secondary' | 'outline'> = {
-  Daily: 'default',
-  Weekly: 'secondary',
-  Monthly: 'outline',
-}
+const FREQ_COLORS: Record<string, "default" | "secondary" | "outline"> = {
+  Daily: "default",
+  Weekly: "secondary",
+  Monthly: "outline",
+};
 
 export default function RecurringPage() {
-  const [page, setPage] = useState(1)
-  const [confirmId, setConfirmId] = useState<string | null>(null)
-  const { data, isLoading, isError } = useRecurringRules({ page })
-  const cancel = useCancelRecurringSeries()
+  const [page, setPage] = useState(1);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const { data, isLoading, isError } = useRecurringRules({ page });
+  const cancel = useCancelRecurringSeries();
 
   return (
     <div className="space-y-6 p-6">
@@ -44,7 +47,11 @@ export default function RecurringPage() {
         </p>
       </div>
       {isLoading && <p>Loading...</p>}
-      {isError && <p className="text-sm text-red-600">Failed to load recurring bookings.</p>}
+      {isError && (
+        <p className="text-sm text-red-600">
+          Failed to load recurring bookings.
+        </p>
+      )}
       {data && (
         <div className="rounded-md border">
           <Table>
@@ -61,27 +68,31 @@ export default function RecurringPage() {
             <TableBody>
               {data.items.map((rule) => (
                 <TableRow key={rule.id}>
-                  <TableCell className="font-medium">{rule.customerName}</TableCell>
+                  <TableCell className="font-medium">
+                    {rule.customerFirstName} {rule.customerLastName}
+                  </TableCell>
                   <TableCell>{rule.bookingTypeName}</TableCell>
                   <TableCell>
-                    <Badge variant={FREQ_COLORS[rule.frequency] ?? 'default'}>
+                    <Badge variant={FREQ_COLORS[rule.frequency] ?? "default"}>
                       {rule.frequency}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     {rule.nextOccurrenceAt
                       ? new Date(rule.nextOccurrenceAt).toLocaleString()
-                      : '—'}
+                      : "—"}
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={rule.status === 'Active' ? 'default' : 'secondary'}
+                      variant={
+                        rule.status === "Active" ? "default" : "secondary"
+                      }
                     >
                       {rule.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {rule.status === 'Active' && (
+                    {rule.status === "Active" && (
                       <Button
                         variant="destructive"
                         size="sm"
@@ -134,7 +145,9 @@ export default function RecurringPage() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
-                  cancel.mutateAsync(confirmId).finally(() => setConfirmId(null))
+                  cancel
+                    .mutateAsync(confirmId)
+                    .finally(() => setConfirmId(null));
                 }}
               >
                 Cancel Series
@@ -144,5 +157,5 @@ export default function RecurringPage() {
         </AlertDialog>
       )}
     </div>
-  )
+  );
 }

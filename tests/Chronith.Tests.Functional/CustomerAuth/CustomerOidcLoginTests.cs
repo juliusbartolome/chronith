@@ -194,7 +194,7 @@ public sealed class CustomerOidcLoginTests(FunctionalTestFixture fixture)
         // Register
         var reg = await client.PostAsJsonAsync($"/v1/public/{builtInSlug}/auth/register", new
         {
-            email, password, name = "Regression User"
+            email, password, firstName = "Regression", lastName = "User"
         });
         reg.StatusCode.Should().Be(HttpStatusCode.Created);
 

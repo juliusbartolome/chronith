@@ -41,6 +41,9 @@ public sealed class NotificationOutboxHandler(
             End: notification.End,
             CustomerId: notification.CustomerId,
             CustomerEmail: notification.CustomerEmail,
+            CustomerFirstName: notification.CustomerFirstName,
+            CustomerLastName: notification.CustomerLastName,
+            CustomerMobile: notification.CustomerMobile,
             OccurredAt: DateTimeOffset.UtcNow);
 
         var payloadJson = JsonSerializer.Serialize(payload, JsonOptions);
@@ -70,4 +73,7 @@ file sealed record NotificationPayload(
     DateTimeOffset End,
     string CustomerId,
     string CustomerEmail,
+    string CustomerFirstName,
+    string CustomerLastName,
+    string? CustomerMobile,
     DateTimeOffset OccurredAt);

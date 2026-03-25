@@ -47,7 +47,11 @@ vi.mock("@/lib/booking-session", () => ({
       selectedStaffName: null,
       durationMinutes: 60,
       priceCentavos: 50000,
-      customerInfo: { name: "John Doe", email: "john@example.com" },
+      customerInfo: {
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@example.com",
+      },
       customFields: {},
       confirmedBookingId: "booking-123",
       requiresStaffAssignment: false,

@@ -13,7 +13,11 @@ const createWrapper = () => {
     defaultOptions: { queries: { retry: false } },
   });
   function Wrapper({ children }: { children: React.ReactNode }) {
-    return React.createElement(QueryClientProvider, { client: queryClient }, children);
+    return React.createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      children,
+    );
   }
   return Wrapper;
 };
@@ -24,7 +28,8 @@ describe("useCustomerLogin", () => {
   it("calls POST /api/public/auth/customer/login", async () => {
     const mockProfile = {
       id: "abc",
-      name: "Test User",
+      firstName: "Test",
+      lastName: "User",
       email: "test@example.com",
     };
     global.fetch = vi.fn().mockResolvedValueOnce({
@@ -57,7 +62,8 @@ describe("useCustomerRegister", () => {
   it("calls POST /api/public/auth/customer/register", async () => {
     const mockProfile = {
       id: "xyz",
-      name: "New User",
+      firstName: "New",
+      lastName: "User",
       email: "new@example.com",
     };
     global.fetch = vi.fn().mockResolvedValueOnce({
@@ -71,7 +77,8 @@ describe("useCustomerRegister", () => {
 
     act(() => {
       result.current.mutate({
-        name: "New User",
+        firstName: "New",
+        lastName: "User",
         email: "new@example.com",
         password: "Test1234!",
       });
@@ -91,7 +98,8 @@ describe("useCustomerMe", () => {
   it("calls GET /api/public/auth/customer/me", async () => {
     const mockProfile = {
       id: "abc",
-      name: "Test User",
+      firstName: "Test",
+      lastName: "User",
       email: "test@example.com",
     };
     global.fetch = vi.fn().mockResolvedValueOnce({

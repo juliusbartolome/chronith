@@ -3,9 +3,10 @@ import { persist } from "zustand/middleware";
 import type { PublicCustomField } from "@/hooks/use-public-booking";
 
 export type CustomerInfo = {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  phone?: string;
+  mobile?: string;
 };
 
 export type BookingSession = {

@@ -27,7 +27,7 @@ public sealed class CustomerBookingsTests(FunctionalTestFixture fixture)
 
         var reg = await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/register", new
         {
-            email, password = "Password123!", name = "Booking Test"
+            email, password = "Password123!", firstName = "Booking", lastName = "Test"
         });
         var tokens = await reg.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
 
@@ -48,7 +48,7 @@ public sealed class CustomerBookingsTests(FunctionalTestFixture fixture)
 
         var reg = await client.PostAsJsonAsync($"/v1/public/{TenantSlug}/auth/register", new
         {
-            email, password = "Password123!", name = "Detail Test"
+            email, password = "Password123!", firstName = "Detail", lastName = "Test"
         });
         var tokens = await reg.ReadFromApiJsonAsync<CustomerAuthTokenDto>();
 

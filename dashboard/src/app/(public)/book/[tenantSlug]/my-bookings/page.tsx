@@ -52,7 +52,7 @@ export default function MyBookingsPage() {
       <div>
         <h1 className="text-2xl font-bold">My Bookings</h1>
         <p className="text-muted-foreground text-sm">
-          Welcome, {customer.name}
+          Welcome, {customer.firstName} {customer.lastName}
         </p>
       </div>
 

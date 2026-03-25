@@ -12,6 +12,10 @@ public sealed class Booking
     public BookingStatus Status { get; private set; }
     public string CustomerId { get; private set; } = string.Empty;
     public string CustomerEmail { get; private set; } = string.Empty;
+    public string FirstName { get; private set; } = string.Empty;
+    public string LastName { get; private set; } = string.Empty;
+    public string? Mobile { get; private set; }
+    public Guid? CustomerAccountId { get; private set; }
     public string? PaymentReference { get; private set; }
     public long AmountInCentavos { get; private set; }
     public string Currency { get; private set; } = "PHP";
@@ -37,7 +41,10 @@ public sealed class Booking
         long amountInCentavos,
         string currency,
         string? paymentReference = null,
-        string? customFields = null)
+        string? customFields = null,
+        string? firstName = null,
+        string? lastName = null,
+        string? mobile = null)
     {
         var isFree = amountInCentavos == 0;
         return new Booking
@@ -53,8 +60,16 @@ public sealed class Booking
             AmountInCentavos = amountInCentavos,
             Currency = currency,
             PaymentReference = paymentReference,
-            CustomFields = customFields
+            CustomFields = customFields,
+            FirstName = firstName ?? string.Empty,
+            LastName = lastName ?? string.Empty,
+            Mobile = mobile
         };
+    }
+
+    public void LinkCustomerAccount(Guid customerAccountId)
+    {
+        CustomerAccountId = customerAccountId;
     }
 
     public void SetCheckoutDetails(string checkoutUrl, string providerTransactionId)

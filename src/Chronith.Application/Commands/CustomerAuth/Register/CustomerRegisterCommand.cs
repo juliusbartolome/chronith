@@ -18,8 +18,9 @@ public sealed record CustomerRegisterCommand : IRequest<CustomerAuthTokenDto>, I
     public required string TenantSlug { get; init; }
     public required string Email { get; init; }
     public required string Password { get; init; }
-    public required string Name { get; init; }
-    public string? Phone { get; init; }
+    public required string FirstName { get; init; }
+    public required string LastName { get; init; }
+    public string? Mobile { get; init; }
 
     public Guid EntityId => Guid.Empty;
     public string EntityType => "Customer";
@@ -40,7 +41,8 @@ public sealed class CustomerRegisterCommandValidator : AbstractValidator<Custome
             .NotEmpty()
             .MinimumLength(8).WithMessage("Password must be at least 8 characters.")
             .Matches(@"\d").WithMessage("Password must contain at least one digit.");
-        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.FirstName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.LastName).NotEmpty().MaximumLength(200);
     }
 }
 
@@ -76,8 +78,8 @@ public sealed class CustomerRegisterCommandHandler(
             throw new ConflictException($"A customer with email '{request.Email}' already exists.");
 
         var passwordHash = passwordHasher.Hash(request.Password);
-        var customer = Customer.Create(tenant.Id, request.Email, passwordHash, request.Name,
-            request.Phone, "builtin");
+        var customer = Customer.Create(tenant.Id, request.Email, passwordHash, request.FirstName,
+            request.LastName, request.Mobile, "builtin");
 
         await customerRepository.AddAsync(customer, cancellationToken);
 

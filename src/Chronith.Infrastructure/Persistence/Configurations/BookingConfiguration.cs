@@ -19,6 +19,20 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
         builder.Property(b => b.CustomerEmail)
             .IsRequired();
 
+        builder.Property(b => b.FirstName)
+            .IsRequired()
+            .HasMaxLength(200)
+            .HasDefaultValue(string.Empty);
+
+        builder.Property(b => b.LastName)
+            .IsRequired()
+            .HasMaxLength(200)
+            .HasDefaultValue(string.Empty);
+
+        builder.Property(b => b.Mobile)
+            .HasMaxLength(50)
+            .IsRequired(false);
+
         builder.Property(b => b.PaymentReference)
             .HasMaxLength(200);
 

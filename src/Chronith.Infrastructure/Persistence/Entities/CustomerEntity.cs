@@ -9,11 +9,12 @@ public sealed class CustomerEntity
     public string? EmailEncrypted { get; set; }
     /// <summary>HMAC-SHA256 token for equality lookup. Populated by migration service.</summary>
     public string? EmailToken { get; set; }
-    /// <summary>AES-256-GCM ciphertext of Phone. Nullable — same as Phone.</summary>
-    public string? PhoneEncrypted { get; set; }
+    /// <summary>AES-256-GCM ciphertext of Mobile. Nullable — same as Mobile.</summary>
+    public string? MobileEncrypted { get; set; }
     public string? PasswordHash { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? Phone { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string? Mobile { get; set; }
     public string? ExternalId { get; set; }
     public string AuthProvider { get; set; } = string.Empty;
     public bool IsEmailVerified { get; set; }

@@ -47,9 +47,10 @@ public sealed class CustomerAuthAccessTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role, tenantId: TenantId);
+        string? noMobile = null;
         var response = await client.PutAsJsonAsync($"/v1/public/{TenantSlug}/auth/me", new
         {
-            name = "Test", phone = (string?)null
+            firstName = "Test", lastName = "User", mobile = noMobile
         });
         response.StatusCode.Should().Be(expected);
     }
@@ -58,9 +59,10 @@ public sealed class CustomerAuthAccessTests(FunctionalTestFixture fixture)
     public async Task UpdateMe_Anonymous_Returns401()
     {
         var client = fixture.CreateAnonymousClient();
+        string? noMobile = null;
         var response = await client.PutAsJsonAsync($"/v1/public/{TenantSlug}/auth/me", new
         {
-            name = "Test", phone = (string?)null
+            firstName = "Test", lastName = "User", mobile = noMobile
         });
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

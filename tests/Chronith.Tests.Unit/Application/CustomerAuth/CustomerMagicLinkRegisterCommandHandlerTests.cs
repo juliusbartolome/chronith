@@ -72,7 +72,8 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         {
             TenantSlug = TenantSlug,
             Email = "test@example.com",
-            Name = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Act
@@ -84,7 +85,7 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
                 c.AuthProvider == "magic-link" &&
                 !c.IsEmailVerified &&
                 c.Email == "test@example.com" &&
-                c.Name == "Test User" &&
+                c.FirstName == "Test" && c.LastName == "User" &&
                 c.PasswordHash == null),
             Arg.Any<CancellationToken>());
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -107,7 +108,8 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         {
             TenantSlug = TenantSlug,
             Email = "test@example.com",
-            Name = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Act
@@ -138,7 +140,8 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         {
             TenantSlug = TenantSlug,
             Email = "test@example.com",
-            Name = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Act
@@ -164,7 +167,8 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         {
             TenantSlug = TenantSlug,
             Email = "test@example.com",
-            Name = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Act
@@ -186,7 +190,7 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         tenantRepo.GetBySlugAsync(TenantSlug, Arg.Any<CancellationToken>()).Returns(tenant);
         authConfigRepo.GetByTenantIdAsync(tenant.Id, Arg.Any<CancellationToken>()).Returns(authConfig);
 
-        var existingCustomer = Customer.Create(tenant.Id, "test@example.com", null, "Existing", null, "magic-link");
+        var existingCustomer = Customer.Create(tenant.Id, "test@example.com", null, "Existing", "User", null, "magic-link");
         customerRepo.GetByEmailAsync(tenant.Id, "test@example.com", Arg.Any<CancellationToken>())
             .Returns(existingCustomer);
 
@@ -194,7 +198,8 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         {
             TenantSlug = TenantSlug,
             Email = "test@example.com",
-            Name = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Act
@@ -234,7 +239,8 @@ public sealed class CustomerMagicLinkRegisterCommandHandlerTests
         {
             TenantSlug = TenantSlug,
             Email = "test@example.com",
-            Name = "Test User"
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Act

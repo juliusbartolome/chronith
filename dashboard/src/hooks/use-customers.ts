@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface CustomerDto {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   authProvider: "BuiltIn" | "Oidc";
   bookingCount: number;

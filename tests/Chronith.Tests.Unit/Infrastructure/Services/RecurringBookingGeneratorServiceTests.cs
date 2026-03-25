@@ -78,7 +78,7 @@ public sealed class RecurringBookingGeneratorServiceTests
         => Tenant.Create("test-tenant", "Test Tenant", "UTC");
 
     private static Customer BuildCustomer()
-        => Customer.Create(TenantId, "customer@example.com", null, "Test Customer", null, "local");
+        => Customer.Create(TenantId, "customer@example.com", null, "Test", "Customer", null, "local");
 
     private static (
         RecurringBookingGeneratorService Service,

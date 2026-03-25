@@ -21,15 +21,19 @@ public sealed class CustomerConfiguration : IEntityTypeConfiguration<CustomerEnt
         builder.Property(c => c.EmailToken)
             .HasMaxLength(64);
 
-        builder.Property(c => c.PhoneEncrypted);
+        builder.Property(c => c.MobileEncrypted);
 
         builder.Property(c => c.PasswordHash);
 
-        builder.Property(c => c.Name)
+        builder.Property(c => c.FirstName)
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(c => c.Phone)
+        builder.Property(c => c.LastName)
+            .IsRequired()
+            .HasMaxLength(200);
+
+        builder.Property(c => c.Mobile)
             .HasMaxLength(50);
 
         builder.Property(c => c.ExternalId)

@@ -26,13 +26,13 @@ public sealed class CustomerRepository(
         }
     }
 
-    private string? DecryptPhone(string? value)
+    private string? DecryptMobile(string? value)
     {
         if (value is null) return null;
         try { return encryptionService.Decrypt(value); }
         catch (Exception ex) when (ex is FormatException or InvalidOperationException)
         {
-            logger.LogWarning("Customer.PhoneEncrypted could not be decrypted — " +
+            logger.LogWarning("Customer.MobileEncrypted could not be decrypted — " +
                 "treating as legacy plaintext row. Next write will encrypt it.");
             return value;
         }
@@ -42,8 +42,8 @@ public sealed class CustomerRepository(
     {
         // Prefer encrypted values if available; fall back to plaintext Email column
         e.Email = e.EmailEncrypted is not null ? DecryptEmail(e.EmailEncrypted) : e.Email;
-        if (e.PhoneEncrypted is not null)
-            e.Phone = DecryptPhone(e.PhoneEncrypted);
+        if (e.MobileEncrypted is not null)
+            e.Mobile = DecryptMobile(e.MobileEncrypted);
         return e.ToDomain();
     }
 
@@ -96,8 +96,8 @@ public sealed class CustomerRepository(
         var entity = customer.ToEntity();
         entity.EmailEncrypted = encryptionService.Encrypt(customer.Email) ?? string.Empty;
         entity.EmailToken = blindIndexService.ComputeToken(customer.Email);
-        if (customer.Phone is not null)
-            entity.PhoneEncrypted = encryptionService.Encrypt(customer.Phone);
+        if (customer.Mobile is not null)
+            entity.MobileEncrypted = encryptionService.Encrypt(customer.Mobile);
         await db.Customers.AddAsync(entity, ct);
     }
 
@@ -106,7 +106,7 @@ public sealed class CustomerRepository(
         var entity = customer.ToEntity();
         entity.EmailEncrypted = encryptionService.Encrypt(customer.Email) ?? string.Empty;
         entity.EmailToken = blindIndexService.ComputeToken(customer.Email);
-        entity.PhoneEncrypted = customer.Phone is not null ? encryptionService.Encrypt(customer.Phone) : null;
+        entity.MobileEncrypted = customer.Mobile is not null ? encryptionService.Encrypt(customer.Mobile) : null;
         db.Customers.Update(entity);
     }
 

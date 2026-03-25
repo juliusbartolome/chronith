@@ -113,9 +113,16 @@ public sealed class NotificationDispatcherService(
             var bookingTypeSlug = payload.GetProperty("bookingTypeSlug").GetString() ?? string.Empty;
 
             // Build context dictionary for template rendering
+            var customerFirstName = TryGetStringProperty(payload, "customerFirstName") ?? string.Empty;
+            var customerLastName = TryGetStringProperty(payload, "customerLastName") ?? string.Empty;
+            var customerName = $"{customerFirstName} {customerLastName}".Trim();
+
             var context = new Dictionary<string, string>
             {
-                ["customer_name"] = TryGetStringProperty(payload, "customerName") ?? customerEmail,
+                ["customer_name"] = string.IsNullOrEmpty(customerName) ? customerEmail : customerName,
+                ["customer_first_name"] = customerFirstName,
+                ["customer_last_name"] = customerLastName,
+                ["customer_mobile"] = TryGetStringProperty(payload, "customerMobile") ?? string.Empty,
                 ["customer_email"] = customerEmail,
                 ["booking_type_slug"] = bookingTypeSlug,
                 ["status"] = status,

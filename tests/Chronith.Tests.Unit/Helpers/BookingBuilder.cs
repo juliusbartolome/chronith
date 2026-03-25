@@ -22,6 +22,9 @@ public sealed class BookingBuilder
     private string _currency = "PHP";
     private BookingStatus _targetStatus = BookingStatus.PendingPayment;
     private string? _checkoutUrl = null;
+    private string? _firstName = null;
+    private string? _lastName = null;
+    private string? _mobile = null;
 
     public BookingBuilder WithTenantId(Guid tenantId) { _tenantId = tenantId; return this; }
     public BookingBuilder WithId(Guid id) { _id = id; return this; }
@@ -35,6 +38,9 @@ public sealed class BookingBuilder
     public BookingBuilder WithAmount(long amount) { _amountInCentavos = amount; return this; }
     public BookingBuilder WithCurrency(string currency) { _currency = currency; return this; }
     public BookingBuilder WithCheckoutUrl(string? url) { _checkoutUrl = url; return this; }
+    public BookingBuilder WithFirstName(string? firstName) { _firstName = firstName; return this; }
+    public BookingBuilder WithLastName(string? lastName) { _lastName = lastName; return this; }
+    public BookingBuilder WithMobile(string? mobile) { _mobile = mobile; return this; }
 
     public BookingBuilder InStatus(BookingStatus status)
     {
@@ -60,7 +66,10 @@ public sealed class BookingBuilder
             _customerEmail,
             _amountInCentavos,
             _currency,
-            _paymentReference);
+            _paymentReference,
+            firstName: _firstName,
+            lastName: _lastName,
+            mobile: _mobile);
 
         // Set overridden Id via reflection if specified
         if (_id.HasValue)

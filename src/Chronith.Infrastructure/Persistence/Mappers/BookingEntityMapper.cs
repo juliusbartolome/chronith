@@ -21,6 +21,10 @@ public static class BookingEntityMapper
         SetPrivate(domain, nameof(Booking.Status), entity.Status);
         SetPrivate(domain, nameof(Booking.CustomerId), entity.CustomerId);
         SetPrivate(domain, nameof(Booking.CustomerEmail), entity.CustomerEmail);
+        SetPrivate(domain, nameof(Booking.FirstName), entity.FirstName);
+        SetPrivate(domain, nameof(Booking.LastName), entity.LastName);
+        SetPrivate(domain, nameof(Booking.Mobile), entity.Mobile);
+        SetPrivate(domain, nameof(Booking.CustomerAccountId), entity.CustomerAccountId);
         SetPrivate(domain, nameof(Booking.PaymentReference), entity.PaymentReference);
         SetPrivate(domain, nameof(Booking.AmountInCentavos), entity.AmountInCentavos);
         SetPrivate(domain, nameof(Booking.Currency), entity.Currency);
@@ -44,6 +48,10 @@ public static class BookingEntityMapper
             Status = domain.Status,
             CustomerId = domain.CustomerId,
             CustomerEmail = domain.CustomerEmail,
+            FirstName = domain.FirstName,
+            LastName = domain.LastName,
+            Mobile = domain.Mobile,
+            CustomerAccountId = domain.CustomerAccountId,
             PaymentReference = domain.PaymentReference,
             AmountInCentavos = domain.AmountInCentavos,
             Currency = domain.Currency,

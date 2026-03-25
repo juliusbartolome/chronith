@@ -64,8 +64,9 @@ public class JwtTokenServiceTests
             tenantId: tenantId,
             email: "alice@example.com",
             passwordHash: "hashed-password",
-            name: "Alice",
-            phone: null,
+            firstName: "Alice",
+            lastName: "Doe",
+            mobile: null,
             authProvider: "builtin");
 
         var before = DateTime.UtcNow;
@@ -99,8 +100,9 @@ public class JwtTokenServiceTests
             tenantId: tenantId ?? Guid.NewGuid(),
             email: "alice@example.com",
             passwordHash: null,
-            name: "Alice",
-            phone: null,
+            firstName: "Alice",
+            lastName: "Doe",
+            mobile: null,
             authProvider: "magic-link");
 
     [Fact]
