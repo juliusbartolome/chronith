@@ -232,7 +232,10 @@ public sealed class RecurringBookingGeneratorService(
                 Start: booking.Start,
                 End: booking.End,
                 CustomerId: booking.CustomerId,
-                CustomerEmail: booking.CustomerEmail),
+                CustomerEmail: booking.CustomerEmail,
+                CustomerFirstName: booking.FirstName,
+                CustomerLastName: booking.LastName,
+                CustomerMobile: booking.Mobile),
             ct);
     }
 }

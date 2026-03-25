@@ -17,4 +17,7 @@ public sealed record BookingStatusChangedNotification(
     DateTimeOffset Start,
     DateTimeOffset End,
     string CustomerId,
-    string CustomerEmail) : INotification;
+    string CustomerEmail,
+    string CustomerFirstName = "",
+    string CustomerLastName = "",
+    string? CustomerMobile = null) : INotification;
