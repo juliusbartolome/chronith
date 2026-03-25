@@ -57,10 +57,6 @@ public sealed class ProcessPaymentWebhookHandler(
         // Parse the provider-specific payload
         var paymentEvent = provider.ParseWebhookPayload(cmd.RawBody);
 
-        // Only process success events — others are acknowledged but not acted on
-        if (paymentEvent.EventType != PaymentEventType.Success)
-            return;
-
         // Find booking by provider transaction ID (scoped to the tenant from the route)
         var booking = await bookingRepo.GetByPaymentReferenceAsync(
                 cmd.TenantId, paymentEvent.ProviderTransactionId, ct)
@@ -71,7 +67,11 @@ public sealed class ProcessPaymentWebhookHandler(
         var bookingType = await bookingTypeRepo.GetByIdAsync(booking.BookingTypeId, ct);
 
         var from = booking.Status;
-        booking.Pay("payment-webhook", cmd.ProviderName);
+
+        if (paymentEvent.EventType == PaymentEventType.Success)
+            booking.ConfirmPayment("payment-webhook", cmd.ProviderName);
+        else
+            booking.FailPayment("payment-webhook", cmd.ProviderName);
 
         await bookingRepo.UpdateAsync(booking, ct);
         await unitOfWork.SaveChangesAsync(ct);
