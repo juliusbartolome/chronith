@@ -16,6 +16,8 @@ public sealed record CreatePublicCheckoutCommand : IRequest<CreateCheckoutResult
     public required string TenantSlug { get; init; }
     public required Guid BookingId { get; init; }
     public required string ProviderName { get; init; }
+    public string? SuccessUrl { get; init; }
+    public string? FailureUrl { get; init; }
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
