@@ -8,6 +8,7 @@ using Chronith.Domain.Models;
 using Chronith.Tests.Unit.Helpers;
 using FluentAssertions;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
 
@@ -20,6 +21,7 @@ public sealed class ProcessPaymentWebhookHandlerTests
     private readonly IBookingTypeRepository _bookingTypeRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPublisher _publisher;
+    private readonly ILogger<ProcessPaymentWebhookHandler> _logger;
     private readonly ProcessPaymentWebhookHandler _handler;
 
     private static readonly Guid TenantId = Guid.NewGuid();
@@ -31,8 +33,9 @@ public sealed class ProcessPaymentWebhookHandlerTests
         _bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _publisher = Substitute.For<IPublisher>();
+        _logger = Substitute.For<ILogger<ProcessPaymentWebhookHandler>>();
         _handler = new ProcessPaymentWebhookHandler(
-            _resolver, _bookingRepo, _bookingTypeRepo, _unitOfWork, _publisher);
+            _resolver, _bookingRepo, _bookingTypeRepo, _unitOfWork, _publisher, _logger);
     }
 
     [Fact]
