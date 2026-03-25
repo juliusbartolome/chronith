@@ -22,7 +22,10 @@ vi.mock("@/hooks/use-recurring", () => ({
 
 import { useAuditEntries, useAuditEntry } from "@/hooks/use-audit";
 import { useCustomers, useDeactivateCustomer } from "@/hooks/use-customers";
-import { useRecurringRules, useCancelRecurringSeries } from "@/hooks/use-recurring";
+import {
+  useRecurringRules,
+  useCancelRecurringSeries,
+} from "@/hooks/use-recurring";
 import AuditPage from "@/app/(dashboard)/audit/page";
 import CustomersPage from "@/app/(dashboard)/customers/page";
 import RecurringPage from "@/app/(dashboard)/recurring/page";
@@ -53,15 +56,25 @@ describe("AuditPage", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("shows loading state", () => {
-    vi.mocked(useAuditEntries).mockReturnValue({ isLoading: true, isError: false, data: undefined } as unknown as ReturnType<typeof useAuditEntries>);
+    vi.mocked(useAuditEntries).mockReturnValue({
+      isLoading: true,
+      isError: false,
+      data: undefined,
+    } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("shows error state", () => {
-    vi.mocked(useAuditEntries).mockReturnValue({ isLoading: false, isError: true, data: undefined } as unknown as ReturnType<typeof useAuditEntries>);
+    vi.mocked(useAuditEntries).mockReturnValue({
+      isLoading: false,
+      isError: true,
+      data: undefined,
+    } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
-    expect(screen.getByText(/Failed to load audit entries/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Failed to load audit entries/i),
+    ).toBeInTheDocument();
   });
 
   it("renders audit entries when data is available", () => {
@@ -92,7 +105,11 @@ describe("AuditPage", () => {
   });
 
   it("renders heading", () => {
-    vi.mocked(useAuditEntries).mockReturnValue({ isLoading: false, isError: false, data: undefined } as unknown as ReturnType<typeof useAuditEntries>);
+    vi.mocked(useAuditEntries).mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: undefined,
+    } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Audit Log")).toBeInTheDocument();
   });
@@ -124,11 +141,18 @@ describe("AuditPage", () => {
       data: { items: [entry], totalCount: 1, pageSize: 20 },
     } as unknown as ReturnType<typeof useAuditEntries>);
     vi.mocked(useAuditEntry).mockReturnValue({
-      data: { ...entry, ipAddress: "127.0.0.1", oldValues: null, newValues: null },
+      data: {
+        ...entry,
+        ipAddress: "127.0.0.1",
+        oldValues: null,
+        newValues: null,
+      },
     } as unknown as ReturnType<typeof useAuditEntry>);
 
     const { getByRole } = render(<AuditPage />, { wrapper: createWrapper() });
-    act(() => { fireEvent.click(getByRole("button", { name: /view/i })); });
+    act(() => {
+      fireEvent.click(getByRole("button", { name: /view/i }));
+    });
     // After clicking View, the modal should render the action
     expect(screen.getAllByText("Create").length).toBeGreaterThan(0);
   });
@@ -150,11 +174,18 @@ describe("AuditPage", () => {
       data: { items: [entry], totalCount: 1, pageSize: 20 },
     } as unknown as ReturnType<typeof useAuditEntries>);
     vi.mocked(useAuditEntry).mockReturnValue({
-      data: { ...entry, ipAddress: "192.168.1.1", oldValues: null, newValues: null },
+      data: {
+        ...entry,
+        ipAddress: "192.168.1.1",
+        oldValues: null,
+        newValues: null,
+      },
     } as unknown as ReturnType<typeof useAuditEntry>);
 
     render(<AuditPage />, { wrapper: createWrapper() });
-    act(() => { fireEvent.click(screen.getByRole("button", { name: /view/i })); });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /view/i }));
+    });
     expect(screen.getByText("192.168.1.1")).toBeInTheDocument();
   });
 
@@ -184,7 +215,9 @@ describe("AuditPage", () => {
     } as unknown as ReturnType<typeof useAuditEntry>);
 
     render(<AuditPage />, { wrapper: createWrapper() });
-    act(() => { fireEvent.click(screen.getByRole("button", { name: /view/i })); });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /view/i }));
+    });
     expect(screen.getByText("Old Values")).toBeInTheDocument();
     expect(screen.getByText("New Values")).toBeInTheDocument();
   });
@@ -228,9 +261,13 @@ describe("AuditPage", () => {
     render(<AuditPage />, { wrapper: createWrapper() });
     const next = screen.getByRole("button", { name: /^next$/i });
     expect(next).not.toBeDisabled();
-    act(() => { fireEvent.click(next); });
+    act(() => {
+      fireEvent.click(next);
+    });
     // After click, page state updates — just verify it didn't throw
-    expect(screen.getByRole("button", { name: /previous/i })).not.toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /previous/i }),
+    ).not.toBeDisabled();
   });
 
   it("clicking Previous on audit page after advancing decrements page", () => {
@@ -251,12 +288,16 @@ describe("AuditPage", () => {
     } as unknown as ReturnType<typeof useAuditEntries>);
     render(<AuditPage />, { wrapper: createWrapper() });
     // Advance to page 2
-    act(() => { fireEvent.click(screen.getByRole("button", { name: /^next$/i })); });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /^next$/i }));
+    });
     // Previous should now be enabled (page > 1)
     const prev = screen.getByRole("button", { name: /previous/i });
     expect(prev).not.toBeDisabled();
     // Go back to page 1
-    act(() => { fireEvent.click(prev); });
+    act(() => {
+      fireEvent.click(prev);
+    });
     expect(screen.getByRole("button", { name: /previous/i })).toBeDisabled();
   });
 });
@@ -266,17 +307,27 @@ describe("AuditPage", () => {
 describe("CustomersPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useDeactivateCustomer).mockReturnValue(mockMutation as unknown as ReturnType<typeof useDeactivateCustomer>);
+    vi.mocked(useDeactivateCustomer).mockReturnValue(
+      mockMutation as unknown as ReturnType<typeof useDeactivateCustomer>,
+    );
   });
 
   it("shows loading state", () => {
-    vi.mocked(useCustomers).mockReturnValue({ isLoading: true, isError: false, data: undefined } as unknown as ReturnType<typeof useCustomers>);
+    vi.mocked(useCustomers).mockReturnValue({
+      isLoading: true,
+      isError: false,
+      data: undefined,
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("shows error state", () => {
-    vi.mocked(useCustomers).mockReturnValue({ isLoading: false, isError: true, data: undefined } as unknown as ReturnType<typeof useCustomers>);
+    vi.mocked(useCustomers).mockReturnValue({
+      isLoading: false,
+      isError: true,
+      data: undefined,
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     expect(screen.getByText(/Failed to load customers/i)).toBeInTheDocument();
   });
@@ -289,9 +340,10 @@ describe("CustomersPage", () => {
         items: [
           {
             id: "c1",
-            name: "Bob Smith",
+            firstName: "Bob",
+            lastName: "Smith",
             email: "bob@example.com",
-            phone: "+639171234567",
+            mobile: "+639171234567",
             isActive: true,
             totalBookings: 3,
             createdAt: "2026-01-01T00:00:00Z",
@@ -307,7 +359,11 @@ describe("CustomersPage", () => {
   });
 
   it("renders heading", () => {
-    vi.mocked(useCustomers).mockReturnValue({ isLoading: false, isError: false, data: undefined } as unknown as ReturnType<typeof useCustomers>);
+    vi.mocked(useCustomers).mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: undefined,
+    } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Customers")).toBeInTheDocument();
   });
@@ -330,9 +386,10 @@ describe("CustomersPage", () => {
         items: [
           {
             id: "c2",
-            name: "Dave",
+            firstName: "Dave",
+            lastName: "",
             email: "dave@x.com",
-            phone: null,
+            mobile: null,
             isActive: false,
             totalBookings: 0,
             createdAt: "2026-01-01T00:00:00Z",
@@ -352,7 +409,9 @@ describe("CustomersPage", () => {
 describe("CustomersPage — deactivate dialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useDeactivateCustomer).mockReturnValue(mockMutation as unknown as ReturnType<typeof useDeactivateCustomer>);
+    vi.mocked(useDeactivateCustomer).mockReturnValue(
+      mockMutation as unknown as ReturnType<typeof useDeactivateCustomer>,
+    );
   });
 
   it("shows Deactivate button for active customers", () => {
@@ -363,9 +422,10 @@ describe("CustomersPage — deactivate dialog", () => {
         items: [
           {
             id: "c1",
-            name: "Alice",
+            firstName: "Alice",
+            lastName: "",
             email: "alice@x.com",
-            phone: null,
+            mobile: null,
             authProvider: "Email",
             bookingCount: 2,
             isActive: true,
@@ -377,7 +437,9 @@ describe("CustomersPage — deactivate dialog", () => {
       },
     } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
-    expect(screen.getByRole("button", { name: /deactivate/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /deactivate/i }),
+    ).toBeInTheDocument();
   });
 
   it("opens confirmation dialog on Deactivate click", () => {
@@ -388,9 +450,10 @@ describe("CustomersPage — deactivate dialog", () => {
         items: [
           {
             id: "c1",
-            name: "Alice",
+            firstName: "Alice",
+            lastName: "",
             email: "alice@x.com",
-            phone: null,
+            mobile: null,
             authProvider: "Email",
             bookingCount: 2,
             isActive: true,
@@ -402,7 +465,9 @@ describe("CustomersPage — deactivate dialog", () => {
       },
     } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
-    act(() => { fireEvent.click(screen.getByRole("button", { name: /deactivate/i })); });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /deactivate/i }));
+    });
     expect(screen.getByText("Deactivate customer?")).toBeInTheDocument();
   });
 
@@ -436,9 +501,10 @@ describe("CustomersPage — deactivate dialog", () => {
         items: [
           {
             id: "c2",
-            name: "Dave",
+            firstName: "Dave",
+            lastName: "",
             email: "dave@x.com",
-            phone: null,
+            mobile: null,
             authProvider: "Email",
             bookingCount: 0,
             isActive: false,
@@ -450,7 +516,9 @@ describe("CustomersPage — deactivate dialog", () => {
       },
     } as unknown as ReturnType<typeof useCustomers>);
     render(<CustomersPage />, { wrapper: createWrapper() });
-    expect(screen.queryByRole("button", { name: /deactivate/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /deactivate/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("clicking Deactivate action in dialog calls mutateAsync", () => {
@@ -461,9 +529,10 @@ describe("CustomersPage — deactivate dialog", () => {
         items: [
           {
             id: "c1",
-            name: "Alice",
+            firstName: "Alice",
+            lastName: "",
             email: "alice@x.com",
-            phone: null,
+            mobile: null,
             authProvider: "Email",
             bookingCount: 2,
             isActive: true,
@@ -475,22 +544,32 @@ describe("CustomersPage — deactivate dialog", () => {
       },
     } as unknown as ReturnType<typeof useCustomers>);
     const mutateAsync = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useDeactivateCustomer).mockReturnValue({ ...mockMutation, mutateAsync } as unknown as ReturnType<typeof useDeactivateCustomer>);
+    vi.mocked(useDeactivateCustomer).mockReturnValue({
+      ...mockMutation,
+      mutateAsync,
+    } as unknown as ReturnType<typeof useDeactivateCustomer>);
     render(<CustomersPage />, { wrapper: createWrapper() });
-    act(() => { fireEvent.click(screen.getByRole("button", { name: /deactivate/i })); });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /deactivate/i }));
+    });
     // Dialog is open, click the Deactivate action button
-    const deactivateActions = screen.getAllByRole("button", { name: /deactivate/i });
+    const deactivateActions = screen.getAllByRole("button", {
+      name: /deactivate/i,
+    });
     // The last one is inside the dialog
-    act(() => { fireEvent.click(deactivateActions[deactivateActions.length - 1]); });
+    act(() => {
+      fireEvent.click(deactivateActions[deactivateActions.length - 1]);
+    });
     expect(mutateAsync).toHaveBeenCalledWith("c1");
   });
 
   it("clicking Next on customers page when full page is possible", () => {
     const items = Array.from({ length: 20 }, (_, i) => ({
       id: `c${i}`,
-      name: `Customer${i}`,
+      firstName: `Customer${i}`,
+      lastName: "",
       email: `c${i}@x.com`,
-      phone: null,
+      mobile: null,
       isActive: true,
       totalBookings: 0,
       createdAt: "2026-01-01T00:00:00Z",
@@ -503,8 +582,12 @@ describe("CustomersPage — deactivate dialog", () => {
     render(<CustomersPage />, { wrapper: createWrapper() });
     const next = screen.getByRole("button", { name: /^next$/i });
     expect(next).not.toBeDisabled();
-    act(() => { fireEvent.click(next); });
-    expect(screen.getByRole("button", { name: /previous/i })).not.toBeDisabled();
+    act(() => {
+      fireEvent.click(next);
+    });
+    expect(
+      screen.getByRole("button", { name: /previous/i }),
+    ).not.toBeDisabled();
   });
 });
 
@@ -513,19 +596,31 @@ describe("CustomersPage — deactivate dialog", () => {
 describe("RecurringPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useCancelRecurringSeries).mockReturnValue(mockMutation as unknown as ReturnType<typeof useCancelRecurringSeries>);
+    vi.mocked(useCancelRecurringSeries).mockReturnValue(
+      mockMutation as unknown as ReturnType<typeof useCancelRecurringSeries>,
+    );
   });
 
   it("shows loading state", () => {
-    vi.mocked(useRecurringRules).mockReturnValue({ isLoading: true, isError: false, data: undefined } as unknown as ReturnType<typeof useRecurringRules>);
+    vi.mocked(useRecurringRules).mockReturnValue({
+      isLoading: true,
+      isError: false,
+      data: undefined,
+    } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("shows error state", () => {
-    vi.mocked(useRecurringRules).mockReturnValue({ isLoading: false, isError: true, data: undefined } as unknown as ReturnType<typeof useRecurringRules>);
+    vi.mocked(useRecurringRules).mockReturnValue({
+      isLoading: false,
+      isError: true,
+      data: undefined,
+    } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
-    expect(screen.getByText(/Failed to load recurring bookings/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Failed to load recurring bookings/i),
+    ).toBeInTheDocument();
   });
 
   it("renders recurring rules when data is available", () => {
@@ -537,7 +632,8 @@ describe("RecurringPage", () => {
           {
             id: "r1",
             bookingTypeName: "Haircut",
-            customerName: "Carol",
+            customerFirstName: "Carol",
+            customerLastName: "",
             frequency: "Weekly",
             status: "Active",
             nextOccurrenceAt: "2026-01-12T09:00:00Z",
@@ -553,7 +649,11 @@ describe("RecurringPage", () => {
   });
 
   it("renders heading", () => {
-    vi.mocked(useRecurringRules).mockReturnValue({ isLoading: false, isError: false, data: undefined } as unknown as ReturnType<typeof useRecurringRules>);
+    vi.mocked(useRecurringRules).mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: undefined,
+    } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     expect(screen.getByText("Recurring Bookings")).toBeInTheDocument();
   });
@@ -577,7 +677,8 @@ describe("RecurringPage", () => {
           {
             id: "r1",
             bookingTypeName: "Haircut",
-            customerName: "Carol",
+            customerFirstName: "Carol",
+            customerLastName: "",
             frequency: "Daily",
             status: "Active",
             nextOccurrenceAt: null,
@@ -588,7 +689,9 @@ describe("RecurringPage", () => {
       },
     } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
-    expect(screen.getByRole("button", { name: /cancel series/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /cancel series/i }),
+    ).toBeInTheDocument();
   });
 
   it("does not show Cancel Series button for inactive rules", () => {
@@ -600,7 +703,8 @@ describe("RecurringPage", () => {
           {
             id: "r2",
             bookingTypeName: "Yoga",
-            customerName: "Eve",
+            customerFirstName: "Eve",
+            customerLastName: "",
             frequency: "Monthly",
             status: "Cancelled",
             nextOccurrenceAt: null,
@@ -611,7 +715,9 @@ describe("RecurringPage", () => {
       },
     } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
-    expect(screen.queryByRole("button", { name: /cancel series/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /cancel series/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("opens confirmation dialog on Cancel Series click", () => {
@@ -623,7 +729,8 @@ describe("RecurringPage", () => {
           {
             id: "r1",
             bookingTypeName: "Haircut",
-            customerName: "Carol",
+            customerFirstName: "Carol",
+            customerLastName: "",
             frequency: "Weekly",
             status: "Active",
             nextOccurrenceAt: null,
@@ -634,7 +741,9 @@ describe("RecurringPage", () => {
       },
     } as unknown as ReturnType<typeof useRecurringRules>);
     render(<RecurringPage />, { wrapper: createWrapper() });
-    act(() => { fireEvent.click(screen.getByRole("button", { name: /cancel series/i })); });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /cancel series/i }));
+    });
     expect(screen.getByText("Cancel recurring series?")).toBeInTheDocument();
   });
 
@@ -657,7 +766,8 @@ describe("RecurringPage", () => {
           {
             id: "r3",
             bookingTypeName: "Yoga",
-            customerName: "Eve",
+            customerFirstName: "Eve",
+            customerLastName: "",
             frequency: "Monthly",
             status: "Active",
             nextOccurrenceAt: null,
@@ -680,7 +790,8 @@ describe("RecurringPage", () => {
           {
             id: "r1",
             bookingTypeName: "Haircut",
-            customerName: "Carol",
+            customerFirstName: "Carol",
+            customerLastName: "",
             frequency: "Weekly",
             status: "Active",
             nextOccurrenceAt: null,
@@ -691,14 +802,23 @@ describe("RecurringPage", () => {
       },
     } as unknown as ReturnType<typeof useRecurringRules>);
     const mutateAsync = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useCancelRecurringSeries).mockReturnValue({ ...mockMutation, mutateAsync } as unknown as ReturnType<typeof useCancelRecurringSeries>);
+    vi.mocked(useCancelRecurringSeries).mockReturnValue({
+      ...mockMutation,
+      mutateAsync,
+    } as unknown as ReturnType<typeof useCancelRecurringSeries>);
     render(<RecurringPage />, { wrapper: createWrapper() });
     // Open the dialog
-    act(() => { fireEvent.click(screen.getByRole("button", { name: /cancel series/i })); });
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /cancel series/i }));
+    });
     expect(screen.getByText("Cancel recurring series?")).toBeInTheDocument();
     // Click the "Cancel Series" action inside the dialog (the AlertDialogAction)
-    const cancelSeriesButtons = screen.getAllByRole("button", { name: /cancel series/i });
-    act(() => { fireEvent.click(cancelSeriesButtons[cancelSeriesButtons.length - 1]); });
+    const cancelSeriesButtons = screen.getAllByRole("button", {
+      name: /cancel series/i,
+    });
+    act(() => {
+      fireEvent.click(cancelSeriesButtons[cancelSeriesButtons.length - 1]);
+    });
     expect(mutateAsync).toHaveBeenCalledWith("r1");
   });
 
@@ -706,7 +826,8 @@ describe("RecurringPage", () => {
     const items = Array.from({ length: 20 }, (_, i) => ({
       id: `r${i}`,
       bookingTypeName: "Yoga",
-      customerName: `Person${i}`,
+      customerFirstName: `Person${i}`,
+      customerLastName: "",
       frequency: "Weekly",
       status: "Active",
       nextOccurrenceAt: null,
@@ -719,7 +840,11 @@ describe("RecurringPage", () => {
     render(<RecurringPage />, { wrapper: createWrapper() });
     const next = screen.getByRole("button", { name: /^next$/i });
     expect(next).not.toBeDisabled();
-    act(() => { fireEvent.click(next); });
-    expect(screen.getByRole("button", { name: /previous/i })).not.toBeDisabled();
+    act(() => {
+      fireEvent.click(next);
+    });
+    expect(
+      screen.getByRole("button", { name: /previous/i }),
+    ).not.toBeDisabled();
   });
 });

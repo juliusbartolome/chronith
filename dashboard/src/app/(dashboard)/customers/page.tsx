@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,10 +10,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -21,15 +21,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { useCustomers, useDeactivateCustomer } from '@/hooks/use-customers'
+} from "@/components/ui/table";
+import { useCustomers, useDeactivateCustomer } from "@/hooks/use-customers";
 
 export default function CustomersPage() {
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [confirmId, setConfirmId] = useState<string | null>(null)
-  const { data, isLoading, isError } = useCustomers({ search: search || undefined, page })
-  const deactivate = useDeactivateCustomer()
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const { data, isLoading, isError } = useCustomers({
+    search: search || undefined,
+    page,
+  });
+  const deactivate = useDeactivateCustomer();
 
   return (
     <div className="space-y-6 p-6">
@@ -46,7 +49,9 @@ export default function CustomersPage() {
         className="max-w-sm"
       />
       {isLoading && <p>Loading...</p>}
-      {isError && <p className="text-sm text-red-600">Failed to load customers.</p>}
+      {isError && (
+        <p className="text-sm text-red-600">Failed to load customers.</p>
+      )}
       {data && (
         <div className="rounded-md border">
           <Table>
@@ -63,15 +68,17 @@ export default function CustomersPage() {
             <TableBody>
               {data.items.map((c) => (
                 <TableRow key={c.id}>
-                  <TableCell className="font-medium">{c.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {c.firstName} {c.lastName}
+                  </TableCell>
                   <TableCell>{c.email}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{c.authProvider}</Badge>
                   </TableCell>
                   <TableCell>{c.bookingCount}</TableCell>
                   <TableCell>
-                    <Badge variant={c.isActive ? 'default' : 'secondary'}>
-                      {c.isActive ? 'Active' : 'Inactive'}
+                    <Badge variant={c.isActive ? "default" : "secondary"}>
+                      {c.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -128,7 +135,9 @@ export default function CustomersPage() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
-                  deactivate.mutateAsync(confirmId).finally(() => setConfirmId(null))
+                  deactivate
+                    .mutateAsync(confirmId)
+                    .finally(() => setConfirmId(null));
                 }}
               >
                 Deactivate
@@ -138,5 +147,5 @@ export default function CustomersPage() {
         </AlertDialog>
       )}
     </div>
-  )
+  );
 }

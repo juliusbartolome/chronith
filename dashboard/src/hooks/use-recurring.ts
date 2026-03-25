@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface RecurringRuleDto {
   id: string;
-  customerName: string;
+  customerFirstName: string;
+  customerLastName: string;
   customerEmail: string;
   bookingTypeName: string;
   frequency: "Daily" | "Weekly" | "Monthly";

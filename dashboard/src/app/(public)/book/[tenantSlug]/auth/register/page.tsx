@@ -13,20 +13,22 @@ import { useCustomerRegister } from "@/hooks/use-customer-auth";
 export default function CustomerRegisterPage() {
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
+  const [mobile, setMobile] = useState("");
   const registerMutation = useCustomerRegister();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
       await registerMutation.mutateAsync({
-        name,
+        firstName,
+        lastName,
         email,
         password,
-        phone: phone || undefined,
+        mobile: mobile || undefined,
       });
       router.push(`/book/${tenantSlug}`);
     } catch {
@@ -43,12 +45,21 @@ export default function CustomerRegisterPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
+              <Label htmlFor="firstName">First name</Label>
               <Input
-                id="name"
+                id="firstName"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last name</Label>
+              <Input
+                id="lastName"
+                required
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -73,12 +84,12 @@ export default function CustomerRegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone (optional)</Label>
+              <Label htmlFor="mobile">Mobile (optional)</Label>
               <Input
-                id="phone"
+                id="mobile"
                 type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
               />
             </div>
             <Button
@@ -93,10 +104,7 @@ export default function CustomerRegisterPage() {
           </form>
           <p className="text-sm text-center mt-4 text-muted-foreground">
             Already have an account?{" "}
-            <Link
-              href={`/book/${tenantSlug}/auth/login`}
-              className="underline"
-            >
+            <Link href={`/book/${tenantSlug}/auth/login`} className="underline">
               Sign in
             </Link>
           </p>

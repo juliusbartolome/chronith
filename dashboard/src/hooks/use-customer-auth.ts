@@ -2,9 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export type CustomerProfileDto = {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  phone: string | null;
+  mobile: string | null;
   emailVerified: boolean;
   createdAt: string;
 };
@@ -15,10 +16,11 @@ export type CustomerLoginRequest = {
 };
 
 export type CustomerRegisterRequest = {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
-  phone?: string;
+  mobile?: string;
 };
 
 export type CustomerBookingDto = {
@@ -113,7 +115,8 @@ export type BookingDetailDto = {
   endTime: string;
   status: string;
   staffName: string | null;
-  customerName: string;
+  firstName: string;
+  lastName: string;
   customerEmail: string;
   priceCentavos: number;
   notes: string | null;

@@ -14,9 +14,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { PublicCustomField } from "@/hooks/use-public-booking";
 
 const baseSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Valid email required"),
-  phone: z.string().optional(),
+  mobile: z.string().optional(),
 });
 
 type BaseDetails = z.infer<typeof baseSchema>;
@@ -108,9 +109,10 @@ export default function CustomerDetailsPage() {
   } = useForm<BaseDetails>({
     resolver: zodResolver(baseSchema),
     defaultValues: {
-      name: session.customerInfo?.name ?? "",
+      firstName: session.customerInfo?.firstName ?? "",
+      lastName: session.customerInfo?.lastName ?? "",
       email: session.customerInfo?.email ?? "",
-      phone: session.customerInfo?.phone ?? "",
+      mobile: session.customerInfo?.mobile ?? "",
     },
   });
 
@@ -128,9 +130,10 @@ export default function CustomerDetailsPage() {
     }
 
     setCustomerInfo({
-      name: values.name,
+      firstName: values.firstName,
+      lastName: values.lastName,
       email: values.email,
-      phone: values.phone || undefined,
+      mobile: values.mobile || undefined,
     });
     setCustomFields(customFieldValues);
     router.push(`/book/${tenantSlug}/${btSlug}/confirm`);
@@ -143,10 +146,22 @@ export default function CustomerDetailsPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <Label htmlFor="name">Full Name *</Label>
-          <Input id="name" {...register("name")} />
-          {errors.name && (
-            <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
+          <Label htmlFor="firstName">First Name *</Label>
+          <Input id="firstName" {...register("firstName")} />
+          {errors.firstName && (
+            <p className="mt-1 text-xs text-red-600">
+              {errors.firstName.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <Label htmlFor="lastName">Last Name *</Label>
+          <Input id="lastName" {...register("lastName")} />
+          {errors.lastName && (
+            <p className="mt-1 text-xs text-red-600">
+              {errors.lastName.message}
+            </p>
           )}
         </div>
 
@@ -159,8 +174,8 @@ export default function CustomerDetailsPage() {
         </div>
 
         <div>
-          <Label htmlFor="phone">Phone (optional)</Label>
-          <Input id="phone" type="tel" {...register("phone")} />
+          <Label htmlFor="mobile">Mobile (optional)</Label>
+          <Input id="mobile" type="tel" {...register("mobile")} />
         </div>
 
         {/* Dynamic custom fields */}

@@ -22,7 +22,9 @@ describe("usePublicBookingTypes", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("fetches booking types for a tenant", async () => {
-    const mockData = [{ slug: "haircut", name: "Haircut", durationMinutes: 30 }];
+    const mockData = [
+      { slug: "haircut", name: "Haircut", durationMinutes: 30 },
+    ];
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockData,
@@ -146,7 +148,8 @@ describe("useCreatePublicBooking", () => {
       bookingTypeSlug: "haircut",
       date: "2026-03-15",
       startTime: "09:00",
-      customerName: "Jane",
+      firstName: "Jane",
+      lastName: "Doe",
       customerEmail: "jane@test.com",
     });
 
@@ -171,7 +174,8 @@ describe("useCreatePublicBooking", () => {
       bookingTypeSlug: "haircut",
       date: "2026-03-15",
       startTime: "09:00",
-      customerName: "Jane",
+      firstName: "Jane",
+      lastName: "Doe",
       customerEmail: "jane@test.com",
     });
 
@@ -193,11 +197,14 @@ describe("useCreatePublicBooking", () => {
       bookingTypeSlug: "haircut",
       date: "2026-03-15",
       startTime: "09:00",
-      customerName: "Jane",
+      firstName: "Jane",
+      lastName: "Doe",
       customerEmail: "jane@test.com",
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect((result.current.error as Error).message).toBe("Failed to create booking");
+    expect((result.current.error as Error).message).toBe(
+      "Failed to create booking",
+    );
   });
 });

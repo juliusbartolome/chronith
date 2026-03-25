@@ -34,9 +34,10 @@ export type CreatePublicBookingRequest = {
   date: string;
   startTime: string;
   staffId?: string;
-  customerName: string;
+  firstName: string;
+  lastName: string;
   customerEmail: string;
-  customerPhone?: string;
+  mobile?: string;
   customFields?: Record<string, unknown>;
 };
 
@@ -47,7 +48,8 @@ export type PublicBookingCreatedDto = {
   startTime: string;
   endTime: string;
   status: string;
-  customerName: string;
+  firstName: string;
+  lastName: string;
   customerEmail: string;
   priceCentavos: number;
 };

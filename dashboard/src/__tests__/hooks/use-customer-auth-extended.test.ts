@@ -25,7 +25,12 @@ describe("useCustomerLogin", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("logs in successfully", async () => {
-    const mockData = { id: "c1", name: "Jane", email: "jane@test.com" };
+    const mockData = {
+      id: "c1",
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "jane@test.com",
+    };
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockData,
@@ -62,7 +67,12 @@ describe("useCustomerRegister", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("registers successfully", async () => {
-    const mockData = { id: "c2", name: "John", email: "john@test.com" };
+    const mockData = {
+      id: "c2",
+      firstName: "John",
+      lastName: "Doe",
+      email: "john@test.com",
+    };
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockData,
@@ -73,7 +83,8 @@ describe("useCustomerRegister", () => {
     });
 
     result.current.mutate({
-      name: "John",
+      firstName: "John",
+      lastName: "Doe",
       email: "john@test.com",
       password: "pass123",
     });
@@ -81,7 +92,7 @@ describe("useCustomerRegister", () => {
   });
 
   it("registers with optional phone", async () => {
-    const mockData = { id: "c3", name: "Alice" };
+    const mockData = { id: "c3", firstName: "Alice", lastName: "" };
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockData,
@@ -92,10 +103,11 @@ describe("useCustomerRegister", () => {
     });
 
     result.current.mutate({
-      name: "Alice",
+      firstName: "Alice",
+      lastName: "",
       email: "alice@test.com",
       password: "pass",
-      phone: "+639171234567",
+      mobile: "+639171234567",
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
@@ -110,7 +122,12 @@ describe("useCustomerRegister", () => {
       wrapper: createWrapper(),
     });
 
-    result.current.mutate({ name: "X", email: "x@x.com", password: "p" });
+    result.current.mutate({
+      firstName: "X",
+      lastName: "",
+      email: "x@x.com",
+      password: "p",
+    });
     await waitFor(() => expect(result.current.isError).toBe(true));
   });
 });
@@ -141,7 +158,12 @@ describe("useCustomerMe", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("returns profile when authenticated", async () => {
-    const mockData = { id: "c1", name: "Jane", email: "jane@test.com" };
+    const mockData = {
+      id: "c1",
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "jane@test.com",
+    };
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockData,
@@ -240,7 +262,11 @@ describe("useBookingDetail", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("fetches booking detail", async () => {
-    const mockData = { id: "b1", bookingTypeName: "Haircut", status: "Confirmed" };
+    const mockData = {
+      id: "b1",
+      bookingTypeName: "Haircut",
+      status: "Confirmed",
+    };
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockData,

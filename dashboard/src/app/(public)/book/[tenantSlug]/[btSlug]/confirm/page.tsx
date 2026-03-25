@@ -18,9 +18,12 @@ export default function ConfirmPage() {
   const router = useRouter();
 
   const session = useBookingSession();
-  const setConfirmedBookingId = useBookingSession((s) => s.setConfirmedBookingId);
+  const setConfirmedBookingId = useBookingSession(
+    (s) => s.setConfirmedBookingId,
+  );
 
-  const { mutateAsync: createBooking, isPending } = useCreatePublicBooking(tenantSlug);
+  const { mutateAsync: createBooking, isPending } =
+    useCreatePublicBooking(tenantSlug);
 
   // Guard: incomplete session
   useEffect(() => {
@@ -40,18 +43,24 @@ export default function ConfirmPage() {
         date: session.selectedDate!,
         startTime: session.selectedSlot!,
         staffId: session.selectedStaffId ?? undefined,
-        customerName: session.customerInfo.name,
+        firstName: session.customerInfo.firstName,
+        lastName: session.customerInfo.lastName,
         customerEmail: session.customerInfo.email,
-        customerPhone: session.customerInfo.phone,
-        customFields: Object.keys(session.customFields).length > 0
-          ? session.customFields
-          : undefined,
+        mobile: session.customerInfo.mobile,
+        customFields:
+          Object.keys(session.customFields).length > 0
+            ? session.customFields
+            : undefined,
       });
 
       setConfirmedBookingId(result.id);
       router.push(`/book/${tenantSlug}/${btSlug}/success`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create booking. Please try again.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Failed to create booking. Please try again.",
+      );
     }
   };
 
@@ -69,37 +78,51 @@ export default function ConfirmPage() {
           <Separator />
           <div className="flex justify-between text-sm">
             <span className="text-zinc-500">Date</span>
-            <span className="font-medium text-zinc-900">{session.selectedDate}</span>
+            <span className="font-medium text-zinc-900">
+              {session.selectedDate}
+            </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-zinc-500">Time</span>
-            <span className="font-medium text-zinc-900">{session.selectedSlot}</span>
+            <span className="font-medium text-zinc-900">
+              {session.selectedSlot}
+            </span>
           </div>
           {session.selectedStaffName && (
             <div className="flex justify-between text-sm">
               <span className="text-zinc-500">Staff</span>
-              <span className="font-medium text-zinc-900">{session.selectedStaffName}</span>
+              <span className="font-medium text-zinc-900">
+                {session.selectedStaffName}
+              </span>
             </div>
           )}
           <Separator />
           <div className="flex justify-between text-sm">
             <span className="text-zinc-500">Name</span>
-            <span className="font-medium text-zinc-900">{session.customerInfo?.name}</span>
+            <span className="font-medium text-zinc-900">
+              {session.customerInfo?.firstName} {session.customerInfo?.lastName}
+            </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-zinc-500">Email</span>
-            <span className="font-medium text-zinc-900">{session.customerInfo?.email}</span>
+            <span className="font-medium text-zinc-900">
+              {session.customerInfo?.email}
+            </span>
           </div>
-          {session.customerInfo?.phone && (
+          {session.customerInfo?.mobile && (
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-500">Phone</span>
-              <span className="font-medium text-zinc-900">{session.customerInfo.phone}</span>
+              <span className="text-zinc-500">Mobile</span>
+              <span className="font-medium text-zinc-900">
+                {session.customerInfo.mobile}
+              </span>
             </div>
           )}
           <Separator />
           <div className="flex justify-between text-sm font-semibold">
             <span className="text-zinc-700">Total</span>
-            <span className="text-zinc-900">{formatPrice(session.priceCentavos)}</span>
+            <span className="text-zinc-900">
+              {formatPrice(session.priceCentavos)}
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -113,11 +136,7 @@ export default function ConfirmPage() {
         >
           Back
         </Button>
-        <Button
-          className="flex-1"
-          onClick={handleConfirm}
-          disabled={isPending}
-        >
+        <Button className="flex-1" onClick={handleConfirm} disabled={isPending}>
           {isPending ? "Confirming…" : "Confirm Booking"}
         </Button>
       </div>
