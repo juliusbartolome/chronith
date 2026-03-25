@@ -56,4 +56,25 @@ public sealed class CreateTenantPaymentConfigCommandHandlerTests
         result.PublicNote.Should().Be("Scan to pay");
         result.QrCodeUrl.Should().Be("https://qr.example.com");
     }
+
+    [Fact]
+    public async Task Handle_WithRedirectUrls_CreatesConfigWithUrls()
+    {
+        var handler = new CreateTenantPaymentConfigCommandHandler(_repo, _tenantContext, _unitOfWork);
+        var cmd = new CreateTenantPaymentConfigCommand
+        {
+            ProviderName = "PayMongo",
+            Label = "PayMongo Dev",
+            Settings = """{"SecretKey":"sk_test"}""",
+            PublicNote = null,
+            QrCodeUrl = null,
+            PaymentSuccessUrl = "https://myapp.com/success",
+            PaymentFailureUrl = "https://myapp.com/failed"
+        };
+
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        result.PaymentSuccessUrl.Should().Be("https://myapp.com/success");
+        result.PaymentFailureUrl.Should().Be("https://myapp.com/failed");
+    }
 }

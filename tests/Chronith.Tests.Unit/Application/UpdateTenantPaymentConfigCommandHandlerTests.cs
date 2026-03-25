@@ -52,4 +52,29 @@ public sealed class UpdateTenantPaymentConfigCommandHandlerTests
 
         await act.Should().ThrowAsync<NotFoundException>();
     }
+
+    [Fact]
+    public async Task Handle_WithRedirectUrls_UpdatesUrls()
+    {
+        var id = Guid.NewGuid();
+        var existing = TenantPaymentConfig.Create(Guid.NewGuid(), "PayMongo", "Label", "{}", null, null);
+        _repo.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(existing);
+
+        var handler = new UpdateTenantPaymentConfigCommandHandler(_repo, _unitOfWork);
+        var cmd = new UpdateTenantPaymentConfigCommand
+        {
+            Id = id,
+            Label = "Label",
+            Settings = "{}",
+            PublicNote = null,
+            QrCodeUrl = null,
+            PaymentSuccessUrl = "https://myapp.com/success",
+            PaymentFailureUrl = "https://myapp.com/failed"
+        };
+
+        var result = await handler.Handle(cmd, CancellationToken.None);
+
+        result.PaymentSuccessUrl.Should().Be("https://myapp.com/success");
+        result.PaymentFailureUrl.Should().Be("https://myapp.com/failed");
+    }
 }
