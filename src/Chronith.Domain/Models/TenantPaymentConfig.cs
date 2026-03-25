@@ -11,6 +11,8 @@ public sealed class TenantPaymentConfig
     public string Settings { get; private set; } = "{}";
     public string? PublicNote { get; private set; }
     public string? QrCodeUrl { get; private set; }
+    public string? PaymentSuccessUrl { get; private set; }
+    public string? PaymentFailureUrl { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
@@ -22,7 +24,9 @@ public sealed class TenantPaymentConfig
         string label,
         string settings,
         string? publicNote,
-        string? qrCodeUrl)
+        string? qrCodeUrl,
+        string? paymentSuccessUrl = null,
+        string? paymentFailureUrl = null)
         => new()
         {
             Id = Guid.NewGuid(),
@@ -34,16 +38,21 @@ public sealed class TenantPaymentConfig
             Settings = settings,
             PublicNote = publicNote,
             QrCodeUrl = qrCodeUrl,
+            PaymentSuccessUrl = paymentSuccessUrl,
+            PaymentFailureUrl = paymentFailureUrl,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
-    public void UpdateDetails(string label, string settings, string? publicNote, string? qrCodeUrl)
+    public void UpdateDetails(string label, string settings, string? publicNote, string? qrCodeUrl,
+        string? paymentSuccessUrl = null, string? paymentFailureUrl = null)
     {
         Label = label;
         Settings = settings;
         PublicNote = publicNote;
         QrCodeUrl = qrCodeUrl;
+        PaymentSuccessUrl = paymentSuccessUrl;
+        PaymentFailureUrl = paymentFailureUrl;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
