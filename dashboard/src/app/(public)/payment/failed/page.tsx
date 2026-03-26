@@ -1,11 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { usePaymentResult } from "@/hooks/use-payment-result";
 import { Button } from "@/components/ui/button";
-
-export const dynamic = "force-dynamic";
 
 function Spinner({ className = "h-8 w-8" }: { className?: string }) {
   return (
@@ -32,7 +31,7 @@ function Spinner({ className = "h-8 w-8" }: { className?: string }) {
   );
 }
 
-export default function PaymentFailedPage() {
+function PaymentFailedContent() {
   const searchParams = useSearchParams();
   const tenantSlug = searchParams.get("tenantSlug");
 
@@ -154,5 +153,22 @@ export default function PaymentFailedPage() {
         </Button>
       )}
     </div>
+  );
+}
+
+export default function PaymentFailedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-lg mx-auto px-4 py-16 text-center">
+          <div className="mb-6 flex justify-center">
+            <Spinner />
+          </div>
+          <p className="text-zinc-500 text-sm">Loading...</p>
+        </div>
+      }
+    >
+      <PaymentFailedContent />
+    </Suspense>
   );
 }

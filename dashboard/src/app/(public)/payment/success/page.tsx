@@ -1,12 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { usePaymentResult } from "@/hooks/use-payment-result";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-
-export const dynamic = "force-dynamic";
 
 function formatAmount(centavos: number): string {
   return (centavos / 100).toLocaleString("en-PH", {
@@ -56,7 +55,7 @@ function Spinner({ className = "h-8 w-8" }: { className?: string }) {
   );
 }
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const tenantSlug = searchParams.get("tenantSlug");
 
@@ -261,5 +260,22 @@ export default function PaymentSuccessPage() {
         </Button>
       )}
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-lg mx-auto px-4 py-16 text-center">
+          <div className="mb-6 flex justify-center">
+            <Spinner />
+          </div>
+          <p className="text-zinc-500 text-sm">Verifying payment...</p>
+        </div>
+      }
+    >
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
