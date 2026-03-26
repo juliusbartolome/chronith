@@ -38,7 +38,7 @@ public sealed class TenantPaymentProviderResolver(
         {
             "PAYMONGO" => BuildPayMongo(config.Settings),
             "MAYA"     => BuildMaya(config.Settings),
-            _          => (IPaymentProvider?)null
+            _          => null
         };
 
         if (provider is not null)
