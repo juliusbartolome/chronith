@@ -33,31 +33,21 @@ export type VerificationState =
 const POLL_INTERVAL_MS = 3_000;
 const MAX_POLL_ATTEMPTS = 10;
 
-function buildVerifyUrl(params: PaymentResultParams): string {
-  const qs = new URLSearchParams({
-    bookingId: params.bookingId!,
-    tenantSlug: params.tenantSlug!,
-    expires: params.expires!,
-    sig: params.sig!,
-  });
-  return `/api/public/payment/verify?${qs}`;
-}
-
-function hasAllParams(params: PaymentResultParams): boolean {
-  return (
-    params.bookingId !== null &&
-    params.tenantSlug !== null &&
-    params.expires !== null &&
-    params.sig !== null
-  );
-}
-
 export function usePaymentResult(
   params: PaymentResultParams,
   options?: { poll?: boolean },
 ): VerificationState {
+  const { bookingId, tenantSlug, expires, sig } = params;
+  const poll = options?.poll ?? false;
+
+  const allParamsPresent =
+    bookingId !== null &&
+    tenantSlug !== null &&
+    expires !== null &&
+    sig !== null;
+
   const [state, setState] = useState<VerificationState>(() =>
-    hasAllParams(params) ? { status: "loading" } : { status: "invalid" },
+    allParamsPresent ? { status: "loading" } : { status: "invalid" },
   );
 
   const pollCountRef = useRef(0);
@@ -73,7 +63,13 @@ export function usePaymentResult(
 
   const fetchStatus = useCallback(
     async (signal: AbortSignal): Promise<VerificationState> => {
-      const res = await fetch(buildVerifyUrl(params), { signal });
+      const qs = new URLSearchParams({
+        bookingId: bookingId!,
+        tenantSlug: tenantSlug!,
+        expires: expires!,
+        sig: sig!,
+      });
+      const res = await fetch(`/api/public/payment/verify?${qs}`, { signal });
 
       if (res.status === 401) {
         return { status: "invalid" };
@@ -90,12 +86,11 @@ export function usePaymentResult(
       const booking: BookingStatus = await res.json();
       return { status: "verified", booking };
     },
-    [params],
+    [bookingId, tenantSlug, expires, sig],
   );
 
   useEffect(() => {
-    if (!hasAllParams(params)) {
-      setState({ status: "invalid" });
+    if (!allParamsPresent) {
       return;
     }
 
@@ -115,7 +110,7 @@ export function usePaymentResult(
         setState(result);
 
         const shouldPoll =
-          options?.poll &&
+          poll &&
           result.status === "verified" &&
           result.booking.status === "PendingPayment";
 
@@ -173,15 +168,7 @@ export function usePaymentResult(
       clearPolling();
       controller.abort();
     };
-  }, [
-    params.bookingId,
-    params.tenantSlug,
-    params.expires,
-    params.sig,
-    options?.poll,
-    fetchStatus,
-    clearPolling,
-  ]);
+  }, [allParamsPresent, poll, fetchStatus, clearPolling]);
 
   return state;
 }
