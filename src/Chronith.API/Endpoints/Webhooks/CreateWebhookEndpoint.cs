@@ -15,6 +15,7 @@ public sealed class CreateWebhookRequest
     // Body
     public string Url { get; set; } = string.Empty;
     public string Secret { get; set; } = string.Empty;
+    public List<string> EventTypes { get; set; } = [];
 }
 
 public sealed class CreateWebhookEndpoint(ISender sender)
@@ -35,7 +36,8 @@ public sealed class CreateWebhookEndpoint(ISender sender)
         {
             BookingTypeSlug = req.Slug,
             Url = req.Url,
-            Secret = req.Secret
+            Secret = req.Secret,
+            EventTypes = req.EventTypes
         }, ct);
 
         await Send.ResponseAsync(result, 201, ct);

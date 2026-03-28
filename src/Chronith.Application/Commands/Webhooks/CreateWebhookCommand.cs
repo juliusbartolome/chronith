@@ -15,6 +15,7 @@ public sealed record CreateWebhookCommand : IRequest<WebhookDto>
     public required string BookingTypeSlug { get; init; }
     public required string Url { get; init; }
     public required string Secret { get; init; }
+    public required IReadOnlyList<string> EventTypes { get; init; }
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -44,7 +45,7 @@ public sealed class CreateWebhookHandler(
         var bt = await bookingTypeRepo.GetBySlugAsync(tenantContext.TenantId, cmd.BookingTypeSlug, ct)
             ?? throw new NotFoundException("BookingType", cmd.BookingTypeSlug);
 
-        var webhook = Webhook.Create(tenantContext.TenantId, bt.Id, cmd.Url, cmd.Secret);
+        var webhook = Webhook.Create(tenantContext.TenantId, bt.Id, cmd.Url, cmd.Secret, cmd.EventTypes);
         await webhookRepo.AddAsync(webhook, ct);
         await unitOfWork.SaveChangesAsync(ct);
         return webhook.ToDto();

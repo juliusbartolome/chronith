@@ -29,8 +29,8 @@ public sealed class WebhookOutboxHandlerTests
         var bookingTypeId = Guid.NewGuid();
         var webhooks = new List<Webhook>
         {
-            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook1", "s1"),
-            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook2", "s2"),
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook1", "s1", WebhookEventTypes.All),
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook2", "s2", WebhookEventTypes.All),
         };
 
         var webhookRepo = Substitute.For<IWebhookRepository>();
@@ -65,7 +65,7 @@ public sealed class WebhookOutboxHandlerTests
         var bookingTypeId = Guid.NewGuid();
         var webhooks = new List<Webhook>
         {
-            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook1", "s1"),
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook1", "s1", WebhookEventTypes.All),
         };
 
         var webhookRepo = Substitute.For<IWebhookRepository>();
@@ -129,7 +129,7 @@ public sealed class WebhookOutboxHandlerTests
         var bookingTypeId = Guid.NewGuid();
         var webhooks = new List<Webhook>
         {
-            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "secret"),
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "secret", WebhookEventTypes.All),
         };
         var webhookRepo = Substitute.For<IWebhookRepository>();
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
@@ -170,7 +170,7 @@ public sealed class WebhookOutboxHandlerTests
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
         var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
         webhookRepo.ListAsync(tenantId, bookingTypeId, Arg.Any<CancellationToken>())
-            .Returns(new List<Webhook> { Webhook.Create(tenantId, bookingTypeId, "https://h.co", "s") });
+            .Returns(new List<Webhook> { Webhook.Create(tenantId, bookingTypeId, "https://h.co", "s", WebhookEventTypes.All) });
 
         var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
         var notification = new BookingStatusChangedNotification(

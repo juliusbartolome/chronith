@@ -58,7 +58,7 @@ public class WebhookOutboxHandlerDualWriteTests
         // Arrange
         var notification = MakeNotification(BookingStatus.Confirmed);
         _webhookRepo.ListAsync(TenantId, BookingTypeId, Arg.Any<CancellationToken>())
-            .Returns(new List<Webhook> { Webhook.Create(TenantId, BookingTypeId, "https://tenant.example.com/webhook", "secret") });
+            .Returns(new List<Webhook> { Webhook.Create(TenantId, BookingTypeId, "https://tenant.example.com/webhook", "secret", WebhookEventTypes.All) });
 
         var bt = CreateBookingTypeWithCallback("https://customer.example.com/callback");
         _bookingTypeRepo.GetByIdAsync(BookingTypeId, Arg.Any<CancellationToken>())
@@ -106,7 +106,7 @@ public class WebhookOutboxHandlerDualWriteTests
     {
         var notification = MakeNotification(BookingStatus.Confirmed);
         _webhookRepo.ListAsync(TenantId, BookingTypeId, Arg.Any<CancellationToken>())
-            .Returns(new List<Webhook> { Webhook.Create(TenantId, BookingTypeId, "https://tenant.example.com/webhook", "secret") });
+            .Returns(new List<Webhook> { Webhook.Create(TenantId, BookingTypeId, "https://tenant.example.com/webhook", "secret", WebhookEventTypes.All) });
 
         // BookingType has no callback URL
         var bt = CreateBookingTypeWithoutCallback();

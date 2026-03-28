@@ -78,7 +78,9 @@ public sealed class WebhookRepository(
     private Webhook MapToDomain(WebhookEntity e)
     {
         var decryptedSecret = DecryptSecret(e.Secret);
-        var domain = Webhook.Create(e.TenantId, e.BookingTypeId, e.Url, decryptedSecret);
+        var eventTypes = e.EventSubscriptions?.Select(s => s.EventName).ToList()
+            ?? (IReadOnlyList<string>)WebhookEventTypes.All;
+        var domain = Webhook.Create(e.TenantId, e.BookingTypeId, e.Url, decryptedSecret, eventTypes);
         // Overwrite Id with stored value via reflection
         var idProp = typeof(Webhook).GetProperty(nameof(Webhook.Id),
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);

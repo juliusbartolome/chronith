@@ -8,6 +8,7 @@ public static class WebhookMapper
     public static WebhookDto ToDto(this Webhook webhook) =>
         new(
             Id: webhook.Id,
-            Url: webhook.Url
+            Url: webhook.Url,
+            EventTypes: webhook.EventTypes
         );
 }
