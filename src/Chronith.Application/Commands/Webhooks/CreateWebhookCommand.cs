@@ -28,6 +28,10 @@ public sealed class CreateWebhookValidator : AbstractValidator<CreateWebhookComm
         RuleFor(x => x.Url).NotEmpty().Must(u => Uri.TryCreate(u, UriKind.Absolute, out _))
             .WithMessage("Url must be a valid absolute URI.").MaximumLength(2048);
         RuleFor(x => x.Secret).NotEmpty().MinimumLength(16);
+        RuleFor(x => x.EventTypes).NotEmpty()
+            .WithMessage("At least one event type is required.");
+        RuleForEach(x => x.EventTypes).Must(WebhookEventTypes.IsValid)
+            .WithMessage("'{PropertyValue}' is not a valid webhook event type.");
     }
 }
 
