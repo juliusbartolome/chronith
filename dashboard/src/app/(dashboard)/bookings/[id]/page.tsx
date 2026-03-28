@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   useBooking,
   useConfirmBooking,
+  usePayBooking,
   useCancelBooking,
 } from "@/hooks/use-bookings";
 import { BookingStatusBadge } from "@/components/bookings/booking-status-badge";
@@ -35,6 +36,7 @@ export default function BookingDetailPage() {
   const router = useRouter();
   const { data: booking, isLoading } = useBooking(id);
   const confirm = useConfirmBooking();
+  const pay = usePayBooking();
   const cancel = useCancelBooking();
 
   if (isLoading) return <p className="text-sm text-zinc-500">Loading…</p>;
@@ -53,6 +55,16 @@ export default function BookingDetailPage() {
         </div>
 
         <div className="flex gap-2">
+          {booking.status === "PendingPayment" && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => pay.mutate(id)}
+              disabled={pay.isPending}
+            >
+              Mark as Paid
+            </Button>
+          )}
           {booking.status === "PendingVerification" && (
             <Button
               size="sm"

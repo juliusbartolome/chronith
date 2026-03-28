@@ -21,6 +21,7 @@ public sealed class NotificationOutboxHandler(
             BookingStatus.PendingVerification => "notification.payment_received",
             BookingStatus.Confirmed           => "notification.booking_confirmed",
             BookingStatus.Cancelled           => "notification.booking_cancelled",
+            BookingStatus.PaymentFailed       => "notification.payment_failed",
             _                                 => null
         };
 

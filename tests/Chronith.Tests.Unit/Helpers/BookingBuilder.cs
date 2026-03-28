@@ -48,7 +48,8 @@ public sealed class BookingBuilder
         // Ensure amount matches expected starting state
         if (status == BookingStatus.PendingPayment ||
             status == BookingStatus.PendingVerification ||
-            status == BookingStatus.Confirmed)
+            status == BookingStatus.Confirmed ||
+            status == BookingStatus.PaymentFailed)
         {
             _amountInCentavos = 10000; // nonzero so booking starts in PendingPayment
         }
@@ -92,6 +93,9 @@ public sealed class BookingBuilder
                 break;
             case BookingStatus.Cancelled:
                 booking.Cancel(actor, role);
+                break;
+            case BookingStatus.PaymentFailed:
+                booking.FailPayment(actor, role);
                 break;
             default:
                 throw new InvalidOperationException($"Unknown status: {_targetStatus}");

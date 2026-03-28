@@ -4,6 +4,7 @@ using System.Text.Json;
 using Chronith.Application.DTOs;
 using Chronith.Infrastructure.Payments.PayMongo;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 
@@ -22,7 +23,8 @@ public sealed class PayMongoProviderTests
             SuccessUrl = "https://example.com/{bookingId}/success",
             FailureUrl = "https://example.com/{bookingId}/failed"
         });
-        _provider = new PayMongoProvider(options, Substitute.For<IHttpClientFactory>());
+        _provider = new PayMongoProvider(options, Substitute.For<IHttpClientFactory>(),
+            NullLogger<PayMongoProvider>.Instance);
     }
 
     [Fact]

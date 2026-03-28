@@ -25,7 +25,7 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
         await using var db = SeedData.CreateDbContext(fixture.Factory);
         await SeedData.SeedTenantAsync(db);
 
-        // Free booking type: price=0, Automatic mode (should skip payment → PendingVerification)
+        // Free booking type: price=0, Automatic mode (should skip payment → Confirmed)
         await SeedData.SeedBookingTypeAsync(db,
             slug: FreeBookingSlug,
             capacity: 10,
@@ -49,10 +49,10 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
             paymentMode: PaymentMode.Manual);
     }
 
-    // ── Free booking: price=0 → PendingVerification (skips PendingPayment) ──
+    // ── Free booking: price=0 → Confirmed (skips PendingPayment entirely) ──
 
     [Fact]
-    public async Task CreateBooking_FreeBookingType_StatusIsPendingVerification()
+    public async Task CreateBooking_FreeBookingType_StatusIsConfirmed()
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient("Customer");
@@ -68,8 +68,8 @@ public sealed class PaymentFlowTests(FunctionalTestFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var booking = await response.ReadFromApiJsonAsync<BookingDto>();
         booking.Should().NotBeNull();
-        booking!.Status.Should().Be(BookingStatus.PendingVerification,
-            "free bookings (price=0) should skip PendingPayment and go directly to PendingVerification");
+        booking!.Status.Should().Be(BookingStatus.Confirmed,
+            "free bookings (price=0) should skip the payment pipeline and start directly as Confirmed");
         booking.AmountInCentavos.Should().Be(0);
     }
 
