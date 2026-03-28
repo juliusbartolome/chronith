@@ -23,6 +23,7 @@ public sealed class WebhookAuthTests(FunctionalTestFixture fixture)
     private string ListUrl => $"/v1/booking-types/{BookingTypeSlug}/webhooks";
     private string CreateUrl => $"/v1/booking-types/{BookingTypeSlug}/webhooks";
     private string DeleteUrl(Guid id) => $"/v1/booking-types/{BookingTypeSlug}/webhooks/{id}";
+    private string UpdateUrl(Guid id) => $"/v1/booking-types/{BookingTypeSlug}/webhooks/{id}";
 
     // GET /booking-types/{slug}/webhooks — Admin → 200; others → 403; anon → 401
     [Theory]
@@ -64,7 +65,12 @@ public sealed class WebhookAuthTests(FunctionalTestFixture fixture)
     {
         await EnsureSeedAsync();
         var client = fixture.CreateClient(role);
-        var response = await client.PostAsJsonAsync(CreateUrl, new { url = "https://example.com", secret = "s" });
+        var response = await client.PostAsJsonAsync(CreateUrl, new
+        {
+            url = "https://example.com",
+            secret = "s",
+            eventTypes = new[] { WebhookEventTypes.Confirmed }
+        });
         response.StatusCode.Should().Be(expected);
     }
 
@@ -95,6 +101,33 @@ public sealed class WebhookAuthTests(FunctionalTestFixture fixture)
         var client = fixture.CreateAnonymousClient();
         var response = await client.DeleteAsync(DeleteUrl(Guid.NewGuid()));
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    // PATCH /booking-types/{slug}/webhooks/{id} — Admin → 200; others → 403; anon → 401
+    [Fact]
+    public async Task UpdateWebhook_Anonymous_Returns401()
+    {
+        var client = fixture.CreateAnonymousClient();
+        var response = await client.PatchAsJsonAsync(UpdateUrl(Guid.NewGuid()), new
+        {
+            url = "https://example.com/anon-update"
+        });
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Theory]
+    [InlineData("TenantStaff", HttpStatusCode.Forbidden)]
+    [InlineData("Customer", HttpStatusCode.Forbidden)]
+    [InlineData("TenantPaymentService", HttpStatusCode.Forbidden)]
+    public async Task UpdateWebhook_NonAdmin_ReturnsForbidden(string role, HttpStatusCode expected)
+    {
+        await EnsureSeedAsync();
+        var client = fixture.CreateClient(role);
+        var response = await client.PatchAsJsonAsync(UpdateUrl(Guid.NewGuid()), new
+        {
+            url = "https://example.com/non-admin-update"
+        });
+        response.StatusCode.Should().Be(expected);
     }
 
     // --- API Key scope tests ---
@@ -141,7 +174,8 @@ public sealed class WebhookAuthTests(FunctionalTestFixture fixture)
         var response = await apiKeyClient.PostAsJsonAsync(CreateUrl, new
         {
             url = $"https://example.com/api-key-hook-{Guid.NewGuid():N}",
-            secret = "api-key-secret-at-least-16chars"
+            secret = "api-key-secret-at-least-16chars",
+            eventTypes = new[] { WebhookEventTypes.Confirmed }
         });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
