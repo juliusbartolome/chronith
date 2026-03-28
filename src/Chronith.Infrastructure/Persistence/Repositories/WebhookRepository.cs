@@ -18,6 +18,7 @@ public sealed class WebhookRepository(
         var entities = await db.Webhooks
             .TagWith("ListAsync — WebhookRepository")
             .AsNoTracking()
+            .Include(w => w.EventSubscriptions)
             .Where(w => w.TenantId == tenantId && w.BookingTypeId == bookingTypeId)
             .ToListAsync(ct);
 
@@ -30,6 +31,7 @@ public sealed class WebhookRepository(
         var entity = await db.Webhooks
             .TagWith("GetByIdAsync — WebhookRepository")
             .AsNoTracking()
+            .Include(w => w.EventSubscriptions)
             .FirstOrDefaultAsync(w => w.TenantId == tenantId && w.Id == webhookId, ct);
 
         return entity is null ? null : MapToDomain(entity);
@@ -44,6 +46,7 @@ public sealed class WebhookRepository(
         var entity = await db.Webhooks
             .TagWith("GetByIdCrossTenantAsync — WebhookRepository")
             .AsNoTracking()
+            .Include(w => w.EventSubscriptions)
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(w => w.Id == webhookId && !w.IsDeleted, ct);
 
@@ -62,6 +65,14 @@ public sealed class WebhookRepository(
             IsDeleted = webhook.IsDeleted
         };
         await db.Webhooks.AddAsync(entity, ct);
+
+        await db.WebhookEventSubscriptions.AddRangeAsync(
+            webhook.EventTypes.Select(e => new WebhookEventSubscriptionEntity
+            {
+                Id = Guid.NewGuid(),
+                WebhookId = webhook.Id,
+                EventName = e
+            }), ct);
     }
 
     public async Task DeleteAsync(Guid tenantId, Guid webhookId, CancellationToken ct = default)
@@ -73,6 +84,30 @@ public sealed class WebhookRepository(
         {
             entity.IsDeleted = true;
         }
+    }
+
+    public async Task UpdateAsync(Webhook webhook, CancellationToken ct = default)
+    {
+        var entity = await db.Webhooks
+            .FirstOrDefaultAsync(w => w.TenantId == webhook.TenantId && w.Id == webhook.Id, ct);
+
+        if (entity is null) return;
+
+        entity.Url = webhook.Url;
+        entity.Secret = encryptionService.Encrypt(webhook.Secret) ?? string.Empty;
+
+        // Replace subscriptions: delete existing + re-insert
+        await db.WebhookEventSubscriptions
+            .Where(s => s.WebhookId == webhook.Id)
+            .ExecuteDeleteAsync(ct);
+
+        await db.WebhookEventSubscriptions.AddRangeAsync(
+            webhook.EventTypes.Select(e => new WebhookEventSubscriptionEntity
+            {
+                Id = Guid.NewGuid(),
+                WebhookId = webhook.Id,
+                EventName = e
+            }), ct);
     }
 
     private Webhook MapToDomain(WebhookEntity e)

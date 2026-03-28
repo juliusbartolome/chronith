@@ -8,5 +8,6 @@ public interface IWebhookRepository
     Task<Webhook?> GetByIdAsync(Guid tenantId, Guid webhookId, CancellationToken ct = default);
     Task<Webhook?> GetByIdCrossTenantAsync(Guid webhookId, CancellationToken ct = default);
     Task AddAsync(Webhook webhook, CancellationToken ct = default);
+    Task UpdateAsync(Webhook webhook, CancellationToken ct = default);
     Task DeleteAsync(Guid tenantId, Guid webhookId, CancellationToken ct = default);
 }
