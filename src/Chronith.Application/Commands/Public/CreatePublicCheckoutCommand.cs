@@ -5,6 +5,7 @@ using Chronith.Domain.Enums;
 using Chronith.Domain.Exceptions;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Chronith.Application.Commands.Public;
@@ -52,12 +53,16 @@ public sealed class CreatePublicCheckoutHandler(
     ITenantPaymentProviderResolver resolver,
     IBookingUrlSigner signer,
     IOptions<PaymentPageOptions> pageOptions,
-    ITenantPaymentConfigRepository configRepo)
+    ITenantPaymentConfigRepository configRepo,
+    ILogger<CreatePublicCheckoutHandler> logger)
     : IRequestHandler<CreatePublicCheckoutCommand, CreateCheckoutResult>
 {
     public async Task<CreateCheckoutResult> Handle(
         CreatePublicCheckoutCommand cmd, CancellationToken ct)
     {
+        logger.LogInformation("Creating checkout for booking {BookingId}, provider {ProviderName}",
+            cmd.BookingId, cmd.ProviderName);
+
         var tenant = await tenantRepo.GetBySlugAsync(cmd.TenantSlug, ct)
             ?? throw new NotFoundException("Tenant", cmd.TenantSlug);
 
@@ -84,6 +89,13 @@ public sealed class CreatePublicCheckoutHandler(
         var resolvedSuccessBase = cmd.SuccessUrl ?? configSuccessUrl ?? defaultSuccessUrl;
         var resolvedFailureBase = cmd.FailureUrl ?? configFailureUrl ?? defaultFailureUrl;
 
+        var urlSource = cmd.SuccessUrl is not null || cmd.FailureUrl is not null
+            ? "request override"
+            : configSuccessUrl is not null || configFailureUrl is not null
+                ? "tenant config"
+                : "global default";
+        logger.LogInformation("URL resolution: using {UrlSource} (request > tenant-config > global)", urlSource);
+
         // Always append HMAC signature
         var successUrl = signer.GenerateSignedUrl(resolvedSuccessBase, cmd.BookingId, cmd.TenantSlug);
         var failureUrl = signer.GenerateSignedUrl(resolvedFailureBase, cmd.BookingId, cmd.TenantSlug);
@@ -101,6 +113,9 @@ public sealed class CreatePublicCheckoutHandler(
 
         booking.SetCheckoutDetails(checkoutResult.CheckoutUrl, checkoutResult.ProviderTransactionId);
         await bookingRepo.UpdateAsync(booking, ct);
+
+        logger.LogInformation("Checkout session created for booking {BookingId}, redirecting to {ProviderName}",
+            cmd.BookingId, cmd.ProviderName);
 
         return checkoutResult;
     }

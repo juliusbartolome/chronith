@@ -114,7 +114,7 @@ public sealed class PublicCreateBookingHandlerTests
         var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
         result.PaymentUrl.Should().BeNull();
-        result.Status.Should().Be(BookingStatus.PendingVerification);
+        result.Status.Should().Be(BookingStatus.Confirmed);
     }
 
     [Fact]

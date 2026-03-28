@@ -22,6 +22,7 @@ public sealed class WebhookOutboxHandler(
             BookingStatus.PendingVerification => "booking.payment_received",
             BookingStatus.Confirmed           => "booking.confirmed",
             BookingStatus.Cancelled           => "booking.cancelled",
+            BookingStatus.PaymentFailed       => "booking.payment_failed",
             _                                 => null
         };
 
@@ -30,6 +31,7 @@ public sealed class WebhookOutboxHandler(
             BookingStatus.PendingVerification => "customer.payment.received",
             BookingStatus.Confirmed           => "customer.booking.confirmed",
             BookingStatus.Cancelled           => "customer.booking.cancelled",
+            BookingStatus.PaymentFailed       => "customer.payment.failed",
             _                                 => null
         };
 

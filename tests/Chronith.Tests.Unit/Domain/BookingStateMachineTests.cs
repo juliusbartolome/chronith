@@ -178,10 +178,182 @@ public sealed class BookingStateMachineTests
         booking.StatusChanges[2].ToStatus.Should().Be(BookingStatus.Cancelled);
     }
 
+    // ── ConfirmPayment transitions (automated payment path) ──────────────────
+
+    [Fact]
+    public void ConfirmPayment_From_PendingPayment_Transitions_To_Confirmed()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PendingPayment).Build();
+
+        booking.ConfirmPayment("payment-webhook", "PayMongo");
+
+        booking.Status.Should().Be(BookingStatus.Confirmed);
+    }
+
+    [Fact]
+    public void ConfirmPayment_From_PendingVerification_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PendingVerification).Build();
+
+        var act = () => booking.ConfirmPayment("payment-webhook", "PayMongo");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void ConfirmPayment_From_Confirmed_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.Confirmed).Build();
+
+        var act = () => booking.ConfirmPayment("payment-webhook", "PayMongo");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void ConfirmPayment_From_Cancelled_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.Cancelled).Build();
+
+        var act = () => booking.ConfirmPayment("payment-webhook", "PayMongo");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void ConfirmPayment_From_PaymentFailed_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PaymentFailed).Build();
+
+        var act = () => booking.ConfirmPayment("payment-webhook", "PayMongo");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void ConfirmPayment_Appends_StatusChange_With_Correct_FromAndTo()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PendingPayment).Build();
+
+        booking.ConfirmPayment("payment-webhook", "PayMongo");
+
+        booking.StatusChanges.Should().ContainSingle();
+        var change = booking.StatusChanges[0];
+        change.FromStatus.Should().Be(BookingStatus.PendingPayment);
+        change.ToStatus.Should().Be(BookingStatus.Confirmed);
+    }
+
+    // ── FailPayment transitions ──────────────────────────────────────────────
+
+    [Fact]
+    public void FailPayment_From_PendingPayment_Transitions_To_PaymentFailed()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PendingPayment).Build();
+
+        booking.FailPayment("payment-webhook", "PayMongo");
+
+        booking.Status.Should().Be(BookingStatus.PaymentFailed);
+    }
+
+    [Fact]
+    public void FailPayment_From_PendingVerification_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PendingVerification).Build();
+
+        var act = () => booking.FailPayment("payment-webhook", "PayMongo");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void FailPayment_From_Confirmed_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.Confirmed).Build();
+
+        var act = () => booking.FailPayment("payment-webhook", "PayMongo");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void FailPayment_From_Cancelled_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.Cancelled).Build();
+
+        var act = () => booking.FailPayment("payment-webhook", "PayMongo");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void FailPayment_From_PaymentFailed_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PaymentFailed).Build();
+
+        var act = () => booking.FailPayment("payment-webhook", "PayMongo");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void FailPayment_Appends_StatusChange_With_Correct_FromAndTo()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PendingPayment).Build();
+
+        booking.FailPayment("payment-webhook", "PayMongo");
+
+        booking.StatusChanges.Should().ContainSingle();
+        var change = booking.StatusChanges[0];
+        change.FromStatus.Should().Be(BookingStatus.PendingPayment);
+        change.ToStatus.Should().Be(BookingStatus.PaymentFailed);
+    }
+
+    // ── PaymentFailed is terminal — rejects Cancel, AssignStaff, Reschedule ──
+
+    [Fact]
+    public void Cancel_From_PaymentFailed_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PaymentFailed).Build();
+
+        var act = () => booking.Cancel("user-1", "admin");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void AssignStaff_From_PaymentFailed_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PaymentFailed).Build();
+
+        var act = () => booking.AssignStaff(Guid.NewGuid(), "user-1", "admin");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void Reschedule_From_PaymentFailed_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PaymentFailed).Build();
+
+        var act = () => booking.Reschedule(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddHours(1), "user-1", "admin");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
+    [Fact]
+    public void Pay_From_PaymentFailed_Throws_InvalidStateTransitionException()
+    {
+        var booking = new BookingBuilder().InStatus(BookingStatus.PaymentFailed).Build();
+
+        var act = () => booking.Pay("user-1", "admin");
+
+        act.Should().Throw<InvalidStateTransitionException>();
+    }
+
     // ── Free booking flow ────────────────────────────────────────────────────
 
     [Fact]
-    public void Create_WithZeroAmount_Starts_In_PendingVerification()
+    public void Create_WithZeroAmount_Starts_In_Confirmed()
     {
         var booking = Booking.Create(
             tenantId: Guid.NewGuid(),
@@ -193,7 +365,7 @@ public sealed class BookingStateMachineTests
             amountInCentavos: 0,
             currency: "PHP");
 
-        booking.Status.Should().Be(BookingStatus.PendingVerification);
+        booking.Status.Should().Be(BookingStatus.Confirmed);
         booking.AmountInCentavos.Should().Be(0);
     }
 

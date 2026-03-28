@@ -8,6 +8,7 @@ const STATUS_CONFIG = {
   },
   Confirmed: { label: "Confirmed", variant: "default" as const },
   Cancelled: { label: "Cancelled", variant: "destructive" as const },
+  PaymentFailed: { label: "Payment Failed", variant: "destructive" as const },
 };
 
 export function BookingStatusBadge({ status }: { status: string }) {

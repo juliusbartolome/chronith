@@ -1,10 +1,11 @@
 using Chronith.Application.Commands.Bookings;
 using FastEndpoints;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Chronith.API.Endpoints.Payments;
 
-public sealed class PaymentWebhookEndpoint(ISender sender)
+public sealed class PaymentWebhookEndpoint(ISender sender, ILogger<PaymentWebhookEndpoint> logger)
     : EndpointWithoutRequest
 {
     public override void Configure()
@@ -29,6 +30,9 @@ public sealed class PaymentWebhookEndpoint(ISender sender)
             .ToDictionary(h => h.Key.ToLowerInvariant(), h => h.Value.ToString());
 
         var sourceIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        logger.LogInformation("Webhook received: tenant {TenantId}, provider {Provider}, source {SourceIp}",
+            tenantId, provider, sourceIp);
 
         await sender.Send(new ProcessPaymentWebhookCommand
         {

@@ -2,6 +2,7 @@ using Chronith.Application.Interfaces;
 using Chronith.Application.Notifications;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
+using Chronith.Tests.Unit.Helpers;
 using FluentAssertions;
 using NSubstitute;
 
@@ -123,6 +124,7 @@ public sealed class WebhookOutboxHandlerTests
     [InlineData(BookingStatus.Confirmed, "booking.confirmed")]
     [InlineData(BookingStatus.Cancelled, "booking.cancelled")]
     [InlineData(BookingStatus.PendingVerification, "booking.payment_received")]
+    [InlineData(BookingStatus.PaymentFailed, "booking.payment_failed")]
     public async Task Handle_MapsStatusToCorrectEventType(BookingStatus status, string expectedEventType)
     {
         var tenantId = Guid.NewGuid();
@@ -189,5 +191,49 @@ public sealed class WebhookOutboxHandlerTests
 
         await outboxRepo.DidNotReceive().AddRangeAsync(Arg.Any<IEnumerable<WebhookOutboxEntry>>(), Arg.Any<CancellationToken>());
         await webhookRepo.DidNotReceive().ListAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_PaymentFailed_CreatesCustomerCallbackWithCorrectEventType()
+    {
+        var tenantId = Guid.NewGuid();
+        var bookingTypeId = Guid.NewGuid();
+        var webhookRepo = Substitute.For<IWebhookRepository>();
+        var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
+
+        // No tenant webhooks
+        webhookRepo.ListAsync(tenantId, bookingTypeId, Arg.Any<CancellationToken>())
+            .Returns(new List<Webhook>());
+
+        // Booking type with a customer callback URL
+        var bookingType = BookingTypeBuilder.BuildTimeSlot(tenantId: tenantId);
+        bookingType.SetCustomerCallback("https://example.com/callback");
+        bookingTypeRepo.GetByIdAsync(bookingTypeId, Arg.Any<CancellationToken>())
+            .Returns(bookingType);
+
+        var capturedEntries = new List<WebhookOutboxEntry>();
+        await outboxRepo.AddRangeAsync(
+            Arg.Do<IEnumerable<WebhookOutboxEntry>>(e => capturedEntries.AddRange(e)),
+            Arg.Any<CancellationToken>());
+
+        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
+        var notification = new BookingStatusChangedNotification(
+            BookingId: Guid.NewGuid(),
+            TenantId: tenantId,
+            BookingTypeId: bookingTypeId,
+            BookingTypeSlug: "slug",
+            FromStatus: BookingStatus.PendingPayment,
+            ToStatus: BookingStatus.PaymentFailed,
+            Start: DateTimeOffset.UtcNow,
+            End: DateTimeOffset.UtcNow.AddHours(1),
+            CustomerId: "u1",
+            CustomerEmail: "u@example.com");
+
+        await handler.Handle(notification, CancellationToken.None);
+
+        capturedEntries.Should().HaveCount(1);
+        capturedEntries[0].EventType.Should().Be("customer.payment.failed");
+        capturedEntries[0].Category.Should().Be(OutboxCategory.CustomerCallback);
     }
 }

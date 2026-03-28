@@ -98,7 +98,7 @@ public sealed class GetPublicBookingStatusQueryHandlerTests
         var result = await handler.Handle(
             new GetPublicBookingStatusQuery(tenantId, bookingId), CancellationToken.None);
 
-        result.Status.Should().Be(BookingStatus.PendingVerification);
+        result.Status.Should().Be(BookingStatus.Confirmed);
         result.CheckoutUrl.Should().BeNull();
     }
 

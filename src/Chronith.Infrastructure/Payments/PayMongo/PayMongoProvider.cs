@@ -6,13 +6,15 @@ using System.Text.Json;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
 using Chronith.Domain.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Chronith.Infrastructure.Payments.PayMongo;
 
 public sealed class PayMongoProvider(
     IOptions<PayMongoOptions> options,
-    IHttpClientFactory httpClientFactory)
+    IHttpClientFactory httpClientFactory,
+    ILogger<PayMongoProvider> logger)
     : IPaymentProvider
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -62,7 +64,12 @@ public sealed class PayMongoProvider(
         httpRequest.Content = JsonContent.Create(payload);
 
         var response = await client.SendAsync(httpRequest, ct);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(ct);
+            logger.LogError("PayMongo API error: {StatusCode} {ErrorBody}", response.StatusCode, errorBody);
+            response.EnsureSuccessStatusCode();
+        }
 
         var json = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
         var checkoutUrl = json.GetProperty("data")
@@ -73,6 +80,9 @@ public sealed class PayMongoProvider(
             .GetProperty("id")
             .GetString()!;
 
+        logger.LogInformation("PayMongo checkout created: {CheckoutId} for booking {BookingId}",
+            checkoutId, request.BookingId);
+
         return new CreateCheckoutResult(checkoutUrl, checkoutId);
     }
 
@@ -80,7 +90,10 @@ public sealed class PayMongoProvider(
     {
         // Header key is lowercase when collected from ASP.NET Core request headers
         if (!context.Headers.TryGetValue("paymongo-signature", out var signature))
+        {
+            logger.LogWarning("PayMongo webhook missing paymongo-signature header");
             return false;
+        }
 
         return ValidateWebhookSignature(context.RawBody, signature);
     }
@@ -105,6 +118,12 @@ public sealed class PayMongoProvider(
             "payment.failed" => PaymentEventType.Failed,
             _ => PaymentEventType.Failed
         };
+
+        if (paymentEventType == PaymentEventType.Failed
+            && eventType is not "payment.failed")
+        {
+            logger.LogDebug("Unknown PayMongo event type {EventType} mapped to Failed", eventType);
+        }
 
         return new WebhookPaymentEvent(resourceId, paymentEventType);
     }
@@ -172,19 +191,29 @@ public sealed class PayMongoProvider(
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var tolerance = options.Value.WebhookTimestampToleranceSeconds;
             if (Math.Abs(now - unixTimestamp) > tolerance)
+            {
+                logger.LogWarning("PayMongo webhook timestamp outside tolerance: {Timestamp} (now: {Now}, tolerance: {Tolerance}s)",
+                    unixTimestamp, now, tolerance);
                 return false;
+            }
 
             var toSign = $"{timestamp}.{rawBody}";
             var key = Encoding.UTF8.GetBytes(options.Value.WebhookSecret);
             var expected = HMACSHA256.HashData(key, Encoding.UTF8.GetBytes(toSign));
             var expectedHex = Convert.ToHexStringLower(expected);
 
-            return CryptographicOperations.FixedTimeEquals(
+            var isValid = CryptographicOperations.FixedTimeEquals(
                 Encoding.UTF8.GetBytes(expectedHex),
                 Encoding.UTF8.GetBytes(signature));
+
+            if (!isValid)
+                logger.LogWarning("PayMongo webhook signature mismatch");
+
+            return isValid;
         }
         catch (Exception ex) when (ex is InvalidOperationException or FormatException or OverflowException or ArgumentException)
         {
+            logger.LogWarning(ex, "PayMongo webhook signature validation failed");
             return false;
         }
     }

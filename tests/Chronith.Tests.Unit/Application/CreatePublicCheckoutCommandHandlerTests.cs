@@ -7,6 +7,7 @@ using Chronith.Domain.Exceptions;
 using Chronith.Domain.Models;
 using Chronith.Tests.Unit.Helpers;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 
@@ -57,7 +58,8 @@ public sealed class CreatePublicCheckoutCommandHandlerTests
         }
 
         var handler = new CreatePublicCheckoutHandler(
-            bookingRepo, tenantRepo, resolver, signer, pageOptions, configRepo);
+            bookingRepo, tenantRepo, resolver, signer, pageOptions, configRepo,
+            Substitute.For<ILogger<CreatePublicCheckoutHandler>>());
 
         return (handler, mockProvider, bookingRepo);
     }
