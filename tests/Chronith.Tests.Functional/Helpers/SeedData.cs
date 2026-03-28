@@ -169,6 +169,18 @@ public static class SeedData
             Secret = secret,
             IsDeleted = false
         });
+
+        // Seed default event subscriptions (all event types)
+        foreach (var eventName in Chronith.Domain.Models.WebhookEventTypes.All)
+        {
+            db.WebhookEventSubscriptions.Add(new WebhookEventSubscriptionEntity
+            {
+                Id = Guid.NewGuid(),
+                WebhookId = id,
+                EventName = eventName
+            });
+        }
+
         await db.SaveChangesAsync();
         return id;
     }
