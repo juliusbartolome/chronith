@@ -42,7 +42,11 @@ public sealed class WebhookOutboxHandler(
         if (tenantEventType is not null)
         {
             var webhooks = await webhookRepo.ListAsync(notification.TenantId, notification.BookingTypeId, ct);
-            if (webhooks.Count > 0)
+            var subscribedWebhooks = webhooks
+                .Where(w => w.EventTypes.Contains(tenantEventType))
+                .ToList();
+
+            if (subscribedWebhooks.Count > 0)
             {
                 var tenantPayload = new BookingEventPayload(
                     Event: tenantEventType,
@@ -58,7 +62,7 @@ public sealed class WebhookOutboxHandler(
 
                 var tenantPayloadJson = JsonSerializer.Serialize(tenantPayload, JsonOptions);
 
-                entries.AddRange(webhooks.Select(w => new WebhookOutboxEntry
+                entries.AddRange(subscribedWebhooks.Select(w => new WebhookOutboxEntry
                 {
                     TenantId = notification.TenantId,
                     WebhookId = w.Id,
