@@ -86,7 +86,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
         var entry = new PendingOutboxEntry(entryId, Guid.NewGuid(), webhookId, null, "booking.confirmed", "{}", 0, OutboxCategory.TenantWebhook);
-        var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
+        var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret", WebhookEventTypes.All);
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
         httpHandler.StatusCode = HttpStatusCode.OK;
@@ -105,7 +105,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
         var entry = new PendingOutboxEntry(entryId, Guid.NewGuid(), webhookId, null, "booking.confirmed", "{}", 0, OutboxCategory.TenantWebhook);
-        var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
+        var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret", WebhookEventTypes.All);
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
         httpHandler.StatusCode = HttpStatusCode.InternalServerError;
@@ -150,7 +150,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
         var entry = new PendingOutboxEntry(entryId, Guid.NewGuid(), webhookId, null, "booking.confirmed", "{}", 4, OutboxCategory.TenantWebhook);
-        var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
+        var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret", WebhookEventTypes.All);
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
         httpHandler.StatusCode = HttpStatusCode.ServiceUnavailable;
@@ -174,7 +174,7 @@ public sealed class WebhookDispatcherServiceTests : IDisposable
         var entryId = Guid.NewGuid();
         var webhookId = Guid.NewGuid();
         var entry = new PendingOutboxEntry(entryId, Guid.NewGuid(), webhookId, null, "booking.confirmed", "{}", 5, OutboxCategory.TenantWebhook);
-        var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret");
+        var webhook = Webhook.Create(Guid.NewGuid(), Guid.NewGuid(), "https://example.com/hook", "secret", WebhookEventTypes.All);
 
         var (sut, outboxRepo, webhookRepo, httpHandler) = BuildSut(pending: [entry]);
         httpHandler.StatusCode = HttpStatusCode.ServiceUnavailable;

@@ -55,7 +55,7 @@ public sealed class WebhookRepositoryTests(PostgresFixture postgres)
         var bookingTypeId = await SeedBookingTypeAsync(db, tenantId);
 
         var repo = CreateRepo(db);
-        var webhook = Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "super_secret_signing_key");
+        var webhook = Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "super_secret_signing_key", WebhookEventTypes.All);
 
         await repo.AddAsync(webhook);
         await db.SaveChangesAsync();
@@ -76,7 +76,7 @@ public sealed class WebhookRepositoryTests(PostgresFixture postgres)
         var bookingTypeId = await SeedBookingTypeAsync(db, tenantId);
 
         var repo = CreateRepo(db);
-        var webhook = Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "my_signing_secret");
+        var webhook = Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "my_signing_secret", WebhookEventTypes.All);
 
         await repo.AddAsync(webhook);
         await db.SaveChangesAsync();
@@ -96,8 +96,8 @@ public sealed class WebhookRepositoryTests(PostgresFixture postgres)
         var bookingTypeId = await SeedBookingTypeAsync(db, tenantId);
 
         var repo = CreateRepo(db);
-        var webhook1 = Webhook.Create(tenantId, bookingTypeId, "https://a.com/hook", "secret_one");
-        var webhook2 = Webhook.Create(tenantId, bookingTypeId, "https://b.com/hook", "secret_two");
+        var webhook1 = Webhook.Create(tenantId, bookingTypeId, "https://a.com/hook", "secret_one", WebhookEventTypes.All);
+        var webhook2 = Webhook.Create(tenantId, bookingTypeId, "https://b.com/hook", "secret_two", WebhookEventTypes.All);
 
         await repo.AddAsync(webhook1);
         await repo.AddAsync(webhook2);
@@ -119,7 +119,7 @@ public sealed class WebhookRepositoryTests(PostgresFixture postgres)
         var bookingTypeId = await SeedBookingTypeAsync(db, tenantId);
 
         var repo = CreateRepo(db);
-        var webhook = Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "cross_tenant_secret");
+        var webhook = Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "cross_tenant_secret", WebhookEventTypes.All);
 
         await repo.AddAsync(webhook);
         await db.SaveChangesAsync();
@@ -139,7 +139,7 @@ public sealed class WebhookRepositoryTests(PostgresFixture postgres)
         var bookingTypeId = await SeedBookingTypeAsync(db, tenantId);
 
         var repo = CreateRepo(db);
-        var webhook = Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "deleted_secret");
+        var webhook = Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "deleted_secret", WebhookEventTypes.All);
 
         await repo.AddAsync(webhook);
         await db.SaveChangesAsync();

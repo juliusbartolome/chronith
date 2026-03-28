@@ -2,5 +2,6 @@ namespace Chronith.Application.DTOs;
 
 public sealed record WebhookDto(
     Guid Id,
-    string Url
+    string Url,
+    IReadOnlyList<string> EventTypes
 );

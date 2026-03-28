@@ -20,6 +20,7 @@ public sealed class ChronithDbContext : DbContext
     public DbSet<BookingEntity> Bookings => Set<BookingEntity>();
     public DbSet<TenantEntity> Tenants => Set<TenantEntity>();
     public DbSet<WebhookEntity> Webhooks => Set<WebhookEntity>();
+    public DbSet<WebhookEventSubscriptionEntity> WebhookEventSubscriptions => Set<WebhookEventSubscriptionEntity>();
     public DbSet<AvailabilityWindowEntity> AvailabilityWindows => Set<AvailabilityWindowEntity>();
     public DbSet<BookingStatusChangeEntity> BookingStatusChanges => Set<BookingStatusChangeEntity>();
     // No global query filter: webhook_outbox_entries is accessed by the

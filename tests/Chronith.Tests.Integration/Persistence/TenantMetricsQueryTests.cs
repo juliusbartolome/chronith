@@ -170,6 +170,16 @@ public sealed class TenantMetricsQueryTests(PostgresFixture postgres)
             Secret = "secret",
         });
 
+        foreach (var eventName in Chronith.Domain.Models.WebhookEventTypes.All)
+        {
+            db.WebhookEventSubscriptions.Add(new WebhookEventSubscriptionEntity
+            {
+                Id = Guid.NewGuid(),
+                WebhookId = webhookId,
+                EventName = eventName
+            });
+        }
+
         await db.SaveChangesAsync();
         return (bookingTypeId, webhookId);
     }

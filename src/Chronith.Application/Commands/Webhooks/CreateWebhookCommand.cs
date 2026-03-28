@@ -15,6 +15,7 @@ public sealed record CreateWebhookCommand : IRequest<WebhookDto>
     public required string BookingTypeSlug { get; init; }
     public required string Url { get; init; }
     public required string Secret { get; init; }
+    public required IReadOnlyList<string> EventTypes { get; init; }
 }
 
 // ── Validator ─────────────────────────────────────────────────────────────────
@@ -27,6 +28,10 @@ public sealed class CreateWebhookValidator : AbstractValidator<CreateWebhookComm
         RuleFor(x => x.Url).NotEmpty().Must(u => Uri.TryCreate(u, UriKind.Absolute, out _))
             .WithMessage("Url must be a valid absolute URI.").MaximumLength(2048);
         RuleFor(x => x.Secret).NotEmpty().MinimumLength(16);
+        RuleFor(x => x.EventTypes).NotEmpty()
+            .WithMessage("At least one event type is required.");
+        RuleForEach(x => x.EventTypes).Must(WebhookEventTypes.IsValid)
+            .WithMessage("'{PropertyValue}' is not a valid webhook event type.");
     }
 }
 
@@ -44,7 +49,7 @@ public sealed class CreateWebhookHandler(
         var bt = await bookingTypeRepo.GetBySlugAsync(tenantContext.TenantId, cmd.BookingTypeSlug, ct)
             ?? throw new NotFoundException("BookingType", cmd.BookingTypeSlug);
 
-        var webhook = Webhook.Create(tenantContext.TenantId, bt.Id, cmd.Url, cmd.Secret);
+        var webhook = Webhook.Create(tenantContext.TenantId, bt.Id, cmd.Url, cmd.Secret, cmd.EventTypes);
         await webhookRepo.AddAsync(webhook, ct);
         await unitOfWork.SaveChangesAsync(ct);
         return webhook.ToDto();

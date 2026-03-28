@@ -11,4 +11,5 @@ public sealed class WebhookEntity
 
     // Navigation
     public BookingTypeEntity? BookingType { get; set; }
+    public List<WebhookEventSubscriptionEntity> EventSubscriptions { get; set; } = [];
 }

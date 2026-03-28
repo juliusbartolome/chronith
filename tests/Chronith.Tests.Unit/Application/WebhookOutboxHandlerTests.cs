@@ -30,8 +30,8 @@ public sealed class WebhookOutboxHandlerTests
         var bookingTypeId = Guid.NewGuid();
         var webhooks = new List<Webhook>
         {
-            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook1", "s1"),
-            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook2", "s2"),
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook1", "s1", WebhookEventTypes.All),
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook2", "s2", WebhookEventTypes.All),
         };
 
         var webhookRepo = Substitute.For<IWebhookRepository>();
@@ -66,7 +66,7 @@ public sealed class WebhookOutboxHandlerTests
         var bookingTypeId = Guid.NewGuid();
         var webhooks = new List<Webhook>
         {
-            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook1", "s1"),
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook1", "s1", WebhookEventTypes.All),
         };
 
         var webhookRepo = Substitute.For<IWebhookRepository>();
@@ -131,7 +131,7 @@ public sealed class WebhookOutboxHandlerTests
         var bookingTypeId = Guid.NewGuid();
         var webhooks = new List<Webhook>
         {
-            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "secret"),
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "secret", WebhookEventTypes.All),
         };
         var webhookRepo = Substitute.For<IWebhookRepository>();
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
@@ -172,7 +172,7 @@ public sealed class WebhookOutboxHandlerTests
         var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
         var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
         webhookRepo.ListAsync(tenantId, bookingTypeId, Arg.Any<CancellationToken>())
-            .Returns(new List<Webhook> { Webhook.Create(tenantId, bookingTypeId, "https://h.co", "s") });
+            .Returns(new List<Webhook> { Webhook.Create(tenantId, bookingTypeId, "https://h.co", "s", WebhookEventTypes.All) });
 
         var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
         var notification = new BookingStatusChangedNotification(
@@ -235,5 +235,129 @@ public sealed class WebhookOutboxHandlerTests
         capturedEntries.Should().HaveCount(1);
         capturedEntries[0].EventType.Should().Be("customer.payment.failed");
         capturedEntries[0].Category.Should().Be(OutboxCategory.CustomerCallback);
+    }
+
+    // ── Event subscription filtering tests ────────────────────────────────────
+
+    [Fact]
+    public async Task Handle_WebhookSubscribedToEvent_CreatesOutboxEntry()
+    {
+        var tenantId = Guid.NewGuid();
+        var bookingTypeId = Guid.NewGuid();
+        var webhooks = new List<Webhook>
+        {
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "secret",
+                new[] { WebhookEventTypes.Confirmed }),
+        };
+
+        var webhookRepo = Substitute.For<IWebhookRepository>();
+        var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
+        webhookRepo.ListAsync(tenantId, bookingTypeId, Arg.Any<CancellationToken>()).Returns(webhooks);
+
+        var capturedEntries = new List<WebhookOutboxEntry>();
+        await outboxRepo.AddRangeAsync(
+            Arg.Do<IEnumerable<WebhookOutboxEntry>>(e => capturedEntries.AddRange(e)),
+            Arg.Any<CancellationToken>());
+
+        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
+        var notification = MakeNotification(bookingTypeId, tenantId); // ToStatus = Confirmed
+
+        await handler.Handle(notification, CancellationToken.None);
+
+        capturedEntries.Should().HaveCount(1);
+        capturedEntries[0].EventType.Should().Be("booking.confirmed");
+    }
+
+    [Fact]
+    public async Task Handle_WebhookNotSubscribedToEvent_SkipsWebhook()
+    {
+        var tenantId = Guid.NewGuid();
+        var bookingTypeId = Guid.NewGuid();
+        // Webhook only subscribed to cancelled, but notification is for confirmed
+        var webhooks = new List<Webhook>
+        {
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/hook", "secret",
+                new[] { WebhookEventTypes.Cancelled }),
+        };
+
+        var webhookRepo = Substitute.For<IWebhookRepository>();
+        var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
+        webhookRepo.ListAsync(tenantId, bookingTypeId, Arg.Any<CancellationToken>()).Returns(webhooks);
+
+        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
+        var notification = MakeNotification(bookingTypeId, tenantId); // ToStatus = Confirmed
+
+        await handler.Handle(notification, CancellationToken.None);
+
+        await outboxRepo.DidNotReceive().AddRangeAsync(
+            Arg.Any<IEnumerable<WebhookOutboxEntry>>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_MultipleWebhooks_OnlySubscribedOnesGetEntries()
+    {
+        var tenantId = Guid.NewGuid();
+        var bookingTypeId = Guid.NewGuid();
+        var webhooks = new List<Webhook>
+        {
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/subscribed", "secret1",
+                new[] { WebhookEventTypes.Confirmed }),
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/not-subscribed", "secret2",
+                new[] { WebhookEventTypes.Cancelled }),
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/also-subscribed", "secret3",
+                new[] { WebhookEventTypes.Confirmed, WebhookEventTypes.Cancelled }),
+        };
+
+        var webhookRepo = Substitute.For<IWebhookRepository>();
+        var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
+        webhookRepo.ListAsync(tenantId, bookingTypeId, Arg.Any<CancellationToken>()).Returns(webhooks);
+
+        var capturedEntries = new List<WebhookOutboxEntry>();
+        await outboxRepo.AddRangeAsync(
+            Arg.Do<IEnumerable<WebhookOutboxEntry>>(e => capturedEntries.AddRange(e)),
+            Arg.Any<CancellationToken>());
+
+        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
+        var notification = MakeNotification(bookingTypeId, tenantId); // ToStatus = Confirmed
+
+        await handler.Handle(notification, CancellationToken.None);
+
+        capturedEntries.Should().HaveCount(2);
+        capturedEntries.Select(e => e.WebhookId).Should()
+            .Contain(webhooks[0].Id)
+            .And.Contain(webhooks[2].Id)
+            .And.NotContain(webhooks[1].Id);
+    }
+
+    [Fact]
+    public async Task Handle_WebhookSubscribedToAllEvents_AlwaysGetsEntry()
+    {
+        var tenantId = Guid.NewGuid();
+        var bookingTypeId = Guid.NewGuid();
+        var webhooks = new List<Webhook>
+        {
+            Webhook.Create(tenantId, bookingTypeId, "https://example.com/all-events", "secret",
+                WebhookEventTypes.All),
+        };
+
+        var webhookRepo = Substitute.For<IWebhookRepository>();
+        var outboxRepo = Substitute.For<IWebhookOutboxRepository>();
+        var bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
+        webhookRepo.ListAsync(tenantId, bookingTypeId, Arg.Any<CancellationToken>()).Returns(webhooks);
+
+        var capturedEntries = new List<WebhookOutboxEntry>();
+        await outboxRepo.AddRangeAsync(
+            Arg.Do<IEnumerable<WebhookOutboxEntry>>(e => capturedEntries.AddRange(e)),
+            Arg.Any<CancellationToken>());
+
+        var handler = new WebhookOutboxHandler(webhookRepo, outboxRepo, bookingTypeRepo);
+
+        // Test with Confirmed
+        await handler.Handle(MakeNotification(bookingTypeId, tenantId), CancellationToken.None);
+        capturedEntries.Should().HaveCount(1);
+        capturedEntries[0].EventType.Should().Be("booking.confirmed");
     }
 }
