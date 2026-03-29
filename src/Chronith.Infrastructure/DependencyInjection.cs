@@ -13,6 +13,7 @@ using Chronith.Infrastructure.Providers;
 using Chronith.Infrastructure.RateLimiting;
 using Chronith.Infrastructure.Security;
 using Chronith.Infrastructure.Services;
+using Chronith.Infrastructure.Storage;
 using Chronith.Infrastructure.Persistence.Seeding;
 using Chronith.Infrastructure.Services.Audit;
 using Chronith.Infrastructure.Services.Notifications;
@@ -150,6 +151,10 @@ public static class DependencyInjection
         services.AddSingleton<IBlindIndexService, HmacBlindIndexService>();
         services.AddSingleton<IPasswordHasher, Argon2idPasswordHasher>();
         services.AddScoped<IAuditPiiRedactor, AuditPiiRedactor>();
+
+        // Blob storage
+        services.Configure<BlobStorageOptions>(configuration.GetSection(BlobStorageOptions.SectionName));
+        services.AddSingleton<IFileStorageService, AzureBlobStorageService>();
 
         // Booking URL signing (HMAC-based payment flow)
         services.Configure<PaymentPageOptions>(configuration.GetSection(PaymentPageOptions.SectionName));

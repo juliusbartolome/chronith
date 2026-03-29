@@ -43,6 +43,15 @@ services:
     volumes:
       - ./docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
 
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - azurite_data:/data
+
   pgbouncer:
     image: edoburu/pgbouncer:v1.25.1-p0
     depends_on:
@@ -71,6 +80,8 @@ services:
         condition: service_healthy
       jaeger:
         condition: service_started
+      azurite:
+        condition: service_started
     environment:
       Database__Provider: PostgreSQL
       Database__ConnectionString: "Host=pgbouncer;Port=5432;Database=chronith;Username=chronith;Password=${POSTGRES_PASSWORD:-chronith};Pooling=false"
@@ -90,6 +101,7 @@ services:
       Observability__EnableMetrics: "true"
       RateLimiting__Auth__PermitLimit: "99999"
       RateLimiting__Auth__WindowSeconds: "300"
+      BlobStorage__ConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1"
 
   dashboard:
     build:
@@ -107,3 +119,4 @@ services:
 
 volumes:
   postgres_data:
+  azurite_data:
