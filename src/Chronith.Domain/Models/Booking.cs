@@ -20,6 +20,9 @@ public sealed class Booking
     public long AmountInCentavos { get; private set; }
     public string Currency { get; private set; } = "PHP";
     public string? CheckoutUrl { get; private set; }
+    public string? ProofOfPaymentUrl { get; private set; }
+    public string? ProofOfPaymentFileName { get; private set; }
+    public string? PaymentNote { get; private set; }
     public Guid? StaffMemberId { get; private set; }
     public string? CustomFields { get; private set; }
     public bool IsDeleted { get; private set; }
@@ -82,6 +85,23 @@ public sealed class Booking
     {
         if (Status != BookingStatus.PendingPayment)
             throw new InvalidStateTransitionException(Status, "pay");
+        Transition(BookingStatus.PendingVerification, changedById, changedByRole);
+    }
+
+    public void SubmitProofOfPayment(
+        string? proofUrl,
+        string? proofFileName,
+        string? paymentNote,
+        string changedById,
+        string changedByRole)
+    {
+        if (Status != BookingStatus.PendingPayment)
+            throw new InvalidStateTransitionException(Status, "submit proof of payment");
+
+        ProofOfPaymentUrl = proofUrl;
+        ProofOfPaymentFileName = proofFileName;
+        PaymentNote = paymentNote;
+
         Transition(BookingStatus.PendingVerification, changedById, changedByRole);
     }
 
