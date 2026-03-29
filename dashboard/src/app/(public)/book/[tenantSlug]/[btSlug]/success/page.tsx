@@ -2,9 +2,21 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import {
+  CheckCircle2,
+  Clock,
+  XCircle,
+  AlertCircle,
+  FileImage,
+  ExternalLink,
+} from "lucide-react";
 import { useBookingSession } from "@/lib/booking-session";
+import { useBookingStatus } from "@/hooks/use-manual-payment";
+import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 function buildGoogleCalendarUrl(params: {
   title: string;
@@ -60,6 +72,74 @@ function generateIcalContent(params: {
     .join("\r\n");
 }
 
+function isSafeHttpUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url);
+}
+
+function getConfirmedDescription(email?: string): string {
+  return email
+    ? `Your appointment has been successfully booked. A confirmation email will be sent to ${email}.`
+    : "Your appointment has been successfully booked. A confirmation email will be sent shortly.";
+}
+
+const statusConfig = {
+  Confirmed: {
+    icon: CheckCircle2,
+    iconBg: "bg-green-100",
+    iconColor: "text-green-600",
+    title: "Your booking is confirmed!",
+    description:
+      "Your appointment has been successfully booked. A confirmation email will be sent shortly.",
+    badgeVariant: "outline" as const,
+    badgeClass: "text-green-600 border-green-300",
+    badgeLabel: "Confirmed",
+  },
+  PendingVerification: {
+    icon: Clock,
+    iconBg: "bg-blue-100",
+    iconColor: "text-blue-600",
+    title: "Payment submitted!",
+    description:
+      "Waiting for staff verification. You'll receive a confirmation once your payment has been reviewed.",
+    badgeVariant: "outline" as const,
+    badgeClass: "text-blue-600 border-blue-300",
+    badgeLabel: "Pending Verification",
+  },
+  PendingPayment: {
+    icon: AlertCircle,
+    iconBg: "bg-amber-100",
+    iconColor: "text-amber-600",
+    title: "Please complete your payment.",
+    description:
+      "Your booking is reserved but not yet paid. Complete your payment to confirm your booking.",
+    badgeVariant: "outline" as const,
+    badgeClass: "text-amber-600 border-amber-300",
+    badgeLabel: "Awaiting Payment",
+  },
+  Cancelled: {
+    icon: XCircle,
+    iconBg: "bg-red-100",
+    iconColor: "text-red-600",
+    title: "This booking has been cancelled.",
+    description:
+      "This booking is no longer active. If you believe this is an error, please contact the business.",
+    badgeVariant: "destructive" as const,
+    badgeClass: "",
+    badgeLabel: "Cancelled",
+  },
+  PaymentFailed: {
+    icon: XCircle,
+    iconBg: "bg-red-100",
+    iconColor: "text-red-600",
+    title: "Payment failed. Please try again.",
+    description:
+      "There was an issue processing your payment. Check your email for the payment link to try again.",
+    badgeVariant: "destructive" as const,
+    badgeClass: "",
+    badgeLabel: "Payment Failed",
+  },
+} as const;
+
 export default function SuccessPage() {
   const { tenantSlug, btSlug } = useParams<{
     tenantSlug: string;
@@ -71,6 +151,12 @@ export default function SuccessPage() {
   const resetSession = useBookingSession((s) => s.resetSession);
 
   const bookingId = session.confirmedBookingId;
+
+  const {
+    data: booking,
+    isLoading: isStatusLoading,
+    error: statusError,
+  } = useBookingStatus(tenantSlug, bookingId ?? "", !!bookingId);
 
   // Guard: no confirmed booking
   useEffect(() => {
@@ -114,35 +200,106 @@ export default function SuccessPage() {
         })
       : null;
 
+  // Loading state while fetching booking status
+  if (isStatusLoading) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <div className="mb-6 flex justify-center">
+          <Skeleton className="h-16 w-16 rounded-full" />
+        </div>
+        <Skeleton className="h-7 w-64 mx-auto mb-2" />
+        <Skeleton className="h-4 w-80 mx-auto mb-8" />
+        <Skeleton className="h-[140px] w-full rounded-xl mb-8" />
+        <Skeleton className="h-10 w-full rounded-md" />
+      </div>
+    );
+  }
+
+  // Error state — fetch failed
+  if (statusError && !booking) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <div className="mb-6 flex justify-center">
+          <div className="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center">
+            <XCircle className="h-8 w-8 text-red-600" />
+          </div>
+        </div>
+        <h1 className="text-2xl font-bold text-zinc-900 mb-2">
+          Unable to load booking status
+        </h1>
+        <p className="text-zinc-500 text-sm mb-8">
+          We couldn&apos;t retrieve the status of your booking. Please try
+          refreshing the page.
+        </p>
+        <Button onClick={handleBookAnother} className="w-full">
+          Book Another Appointment
+        </Button>
+      </div>
+    );
+  }
+
+  // Determine which status config to use.
+  // If booking data hasn't returned yet (unlikely after loading state), fall
+  // back to Confirmed (preserves original behavior — the booking was just created).
+  const status = booking?.status ?? "Confirmed";
+  const config = statusConfig[status];
+  const StatusIcon = config.icon;
+
+  const showCalendarExport = status === "Confirmed";
+  const proofOfPaymentUrl =
+    booking?.proofOfPaymentUrl &&
+    status !== "Cancelled" &&
+    isSafeHttpUrl(booking.proofOfPaymentUrl)
+      ? booking.proofOfPaymentUrl
+      : null;
+  const safeCheckoutUrl =
+    status === "PendingPayment" &&
+    booking?.checkoutUrl &&
+    isSafeHttpUrl(booking.checkoutUrl)
+      ? booking.checkoutUrl
+      : null;
+
   return (
     <div className="max-w-lg mx-auto px-4 py-16 text-center">
+      {/* Status Icon */}
       <div className="mb-6 flex justify-center">
-        <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-          <svg
-            className="h-8 w-8 text-green-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
+        <div
+          className={`h-16 w-16 rounded-full ${config.iconBg} flex items-center justify-center`}
+        >
+          <StatusIcon className={`h-8 w-8 ${config.iconColor}`} />
         </div>
       </div>
 
-      <h1 className="text-2xl font-bold text-zinc-900 mb-2">
-        Booking Confirmed!
-      </h1>
+      {/* Status Badge (when we have live data) */}
+      {booking && !statusError && (
+        <div className="mb-4 flex justify-center">
+          <Badge variant={config.badgeVariant} className={config.badgeClass}>
+            {config.badgeLabel}
+          </Badge>
+        </div>
+      )}
+
+      {/* Title & Description */}
+      <h1 className="text-2xl font-bold text-zinc-900 mb-2">{config.title}</h1>
       <p className="text-zinc-500 text-sm mb-8">
-        Your appointment has been successfully booked. A confirmation email will
-        be sent to{" "}
-        <span className="font-medium">{session.customerInfo?.email}</span>.
+        {status === "Confirmed"
+          ? getConfirmedDescription(session.customerInfo?.email)
+          : config.description}
       </p>
 
+      {/* Payment Page Link — only for PendingPayment when checkoutUrl is available */}
+      {safeCheckoutUrl && (
+        <div className="mb-8">
+          <a
+            href={safeCheckoutUrl}
+            className="inline-flex items-center justify-center rounded-md bg-amber-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-amber-700 transition-colors"
+          >
+            Go to Payment Page
+          </a>
+        </div>
+      )}
+
+      {/* Booking Summary Card */}
       <Card className="text-left mb-8">
         <CardContent className="pt-4 space-y-2 text-sm">
           <div className="flex justify-between">
@@ -173,28 +330,78 @@ export default function SuccessPage() {
               {session.selectedStaffName}
             </p>
           )}
+          {booking && booking.amountInCentavos > 0 && (
+            <div className="flex justify-between">
+              <span className="text-zinc-500">Amount</span>
+              <span className="font-medium text-zinc-900">
+                {formatPrice(booking.amountInCentavos)}
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Add to Calendar */}
-      <div className="space-y-2 mb-8">
-        <p className="text-sm font-medium text-zinc-700">Add to Calendar</p>
-        <div className="flex flex-col sm:flex-row gap-2 justify-center">
-          {googleCalUrl && (
-            <a
-              href={googleCalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-zinc-50"
-            >
-              Google Calendar
-            </a>
-          )}
-          <Button variant="outline" onClick={handleDownloadIcal}>
-            Apple / Outlook (.ics)
-          </Button>
+      {/* Proof of Payment Display */}
+      {proofOfPaymentUrl && (
+        <Card className="text-left mb-8">
+          <CardContent className="pt-4 space-y-3">
+            <p className="text-sm font-medium text-zinc-700">
+              Proof of Payment
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg border overflow-hidden bg-zinc-50 shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={proofOfPaymentUrl}
+                  alt="Proof of payment"
+                  className="h-20 w-20 object-cover"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                {booking?.proofOfPaymentFileName && (
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <FileImage className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                    <span className="text-xs text-zinc-600 truncate">
+                      {booking.proofOfPaymentFileName}
+                    </span>
+                  </div>
+                )}
+                <a
+                  href={proofOfPaymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                >
+                  View proof
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Calendar Export — only for Confirmed bookings */}
+      {showCalendarExport && (
+        <div className="space-y-2 mb-8">
+          <p className="text-sm font-medium text-zinc-700">Add to Calendar</p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            {googleCalUrl && (
+              <a
+                href={googleCalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-zinc-50"
+              >
+                Google Calendar
+              </a>
+            )}
+            <Button variant="outline" onClick={handleDownloadIcal}>
+              Apple / Outlook (.ics)
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <Button onClick={handleBookAnother} className="w-full">
         Book Another Appointment
