@@ -49,6 +49,18 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<BookingEntit
             .HasColumnName("checkout_url")
             .HasMaxLength(2048);
 
+        builder.Property(b => b.ProofOfPaymentUrl)
+            .HasMaxLength(2048)
+            .IsRequired(false);
+
+        builder.Property(b => b.ProofOfPaymentFileName)
+            .HasMaxLength(500)
+            .IsRequired(false);
+
+        builder.Property(b => b.PaymentNote)
+            .HasMaxLength(500)
+            .IsRequired(false);
+
         builder.Property(b => b.Status)
             .HasConversion<string>()
             .HasMaxLength(30);
