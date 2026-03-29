@@ -1,15 +1,20 @@
 using System.Text.Json;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Options;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 namespace Chronith.Application.Notifications;
 
 public sealed class WebhookOutboxHandler(
     IWebhookRepository webhookRepo,
     IWebhookOutboxRepository outboxRepo,
-    IBookingTypeRepository bookingTypeRepo)
+    IBookingTypeRepository bookingTypeRepo,
+    IBookingUrlSigner signer,
+    ITenantRepository tenantRepo,
+    IOptions<PaymentPageOptions> pageOptions)
     : INotificationHandler<BookingStatusChangedNotification>
 {
     private static readonly JsonSerializerOptions JsonOptions =
@@ -38,6 +43,20 @@ public sealed class WebhookOutboxHandler(
         // If neither category is triggered, do nothing
         if (tenantEventType is null && customerEventType is null) return;
 
+        // ── Generate staff verify URL for PendingVerification transitions ─────
+        string? staffVerifyUrl = null;
+        if (notification.ToStatus == BookingStatus.PendingVerification)
+        {
+            var tenant = await tenantRepo.GetByIdAsync(notification.TenantId, ct);
+            if (tenant is not null)
+            {
+                staffVerifyUrl = signer.GenerateStaffVerifyUrl(
+                    pageOptions.Value.StaffVerifyBaseUrl,
+                    notification.BookingId,
+                    tenant.Slug);
+            }
+        }
+
         var entries = new List<WebhookOutboxEntry>();
 
         // ── Tenant Webhook entries ────────────────────────────────────────────
@@ -60,7 +79,8 @@ public sealed class WebhookOutboxHandler(
                     End: notification.End,
                     CustomerId: notification.CustomerId,
                     CustomerEmail: notification.CustomerEmail,
-                    OccurredAt: DateTimeOffset.UtcNow);
+                    OccurredAt: DateTimeOffset.UtcNow,
+                    StaffVerifyUrl: staffVerifyUrl);
 
                 var tenantPayloadJson = JsonSerializer.Serialize(tenantPayload, JsonOptions);
 
@@ -122,7 +142,8 @@ file sealed record BookingEventPayload(
     DateTimeOffset End,
     string CustomerId,
     string CustomerEmail,
-    DateTimeOffset OccurredAt);
+    DateTimeOffset OccurredAt,
+    string? StaffVerifyUrl);
 
 file sealed record CustomerCallbackPayload(
     Guid BookingId,

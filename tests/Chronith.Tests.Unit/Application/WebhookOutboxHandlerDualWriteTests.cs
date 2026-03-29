@@ -1,8 +1,10 @@
 using Chronith.Application.Interfaces;
 using Chronith.Application.Notifications;
+using Chronith.Application.Options;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using FluentAssertions;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace Chronith.Tests.Unit.Application;
@@ -12,6 +14,12 @@ public class WebhookOutboxHandlerDualWriteTests
     private readonly IWebhookRepository _webhookRepo = Substitute.For<IWebhookRepository>();
     private readonly IWebhookOutboxRepository _outboxRepo = Substitute.For<IWebhookOutboxRepository>();
     private readonly IBookingTypeRepository _bookingTypeRepo = Substitute.For<IBookingTypeRepository>();
+    private readonly IBookingUrlSigner _signer = Substitute.For<IBookingUrlSigner>();
+    private readonly ITenantRepository _tenantRepo = Substitute.For<ITenantRepository>();
+    private readonly IOptions<PaymentPageOptions> _pageOptions = Options.Create(new PaymentPageOptions());
+
+    private WebhookOutboxHandler CreateHandler() =>
+        new(_webhookRepo, _outboxRepo, _bookingTypeRepo, _signer, _tenantRepo, _pageOptions);
 
     private static readonly Guid TenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid BookingTypeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -68,7 +76,7 @@ public class WebhookOutboxHandlerDualWriteTests
         _outboxRepo.AddRangeAsync(Arg.Do<IEnumerable<WebhookOutboxEntry>>(e => writtenEntries.AddRange(e)), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var handler = new WebhookOutboxHandler(_webhookRepo, _outboxRepo, _bookingTypeRepo);
+        var handler = CreateHandler();
 
         // Act
         await handler.Handle(notification, CancellationToken.None);
@@ -94,7 +102,7 @@ public class WebhookOutboxHandlerDualWriteTests
         _outboxRepo.AddRangeAsync(Arg.Do<IEnumerable<WebhookOutboxEntry>>(e => writtenEntries.AddRange(e)), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var handler = new WebhookOutboxHandler(_webhookRepo, _outboxRepo, _bookingTypeRepo);
+        var handler = CreateHandler();
         await handler.Handle(notification, CancellationToken.None);
 
         var callbackEntry = writtenEntries.Single(e => e.Category == OutboxCategory.CustomerCallback);
@@ -117,7 +125,7 @@ public class WebhookOutboxHandlerDualWriteTests
         _outboxRepo.AddRangeAsync(Arg.Do<IEnumerable<WebhookOutboxEntry>>(e => writtenEntries.AddRange(e)), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
-        var handler = new WebhookOutboxHandler(_webhookRepo, _outboxRepo, _bookingTypeRepo);
+        var handler = CreateHandler();
         await handler.Handle(notification, CancellationToken.None);
 
         writtenEntries.Should().HaveCount(1);
