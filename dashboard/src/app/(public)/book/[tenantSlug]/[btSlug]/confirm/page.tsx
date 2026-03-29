@@ -54,6 +54,19 @@ export default function ConfirmPage() {
       });
 
       setConfirmedBookingId(result.id);
+
+      if (result.paymentUrl) {
+        // Validate URL before redirecting to prevent open redirect
+        try {
+          const url = new URL(result.paymentUrl);
+          if (url.protocol === "https:" || url.protocol === "http:") {
+            window.location.href = result.paymentUrl;
+            return;
+          }
+        } catch {
+          // Invalid URL — fall through to success page
+        }
+      }
       router.push(`/book/${tenantSlug}/${btSlug}/success`);
     } catch (err) {
       toast.error(
