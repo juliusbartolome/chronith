@@ -14,7 +14,10 @@ public sealed record GetPublicBookingStatusQuery(Guid TenantId, Guid BookingId)
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
-public sealed class GetPublicBookingStatusQueryHandler(IBookingRepository bookingRepository)
+public sealed class GetPublicBookingStatusQueryHandler(
+    IBookingRepository bookingRepository,
+    IBookingTypeRepository bookingTypeRepository,
+    ITenantPaymentConfigRepository tenantPaymentConfigRepository)
     : IRequestHandler<GetPublicBookingStatusQuery, PublicBookingStatusDto>
 {
     public async Task<PublicBookingStatusDto> Handle(
@@ -29,6 +32,26 @@ public sealed class GetPublicBookingStatusQueryHandler(IBookingRepository bookin
             ? booking.CheckoutUrl
             : null;
 
+        // Load the booking type to determine payment mode
+        var bookingType = await bookingTypeRepository.GetByIdAsync(booking.BookingTypeId, ct);
+        var paymentMode = bookingType?.PaymentMode;
+
+        // Build manual payment options when payment mode is Manual
+        ManualPaymentOptionsDto? manualPaymentOptions = null;
+        if (paymentMode == PaymentMode.Manual)
+        {
+            var config = await tenantPaymentConfigRepository
+                .GetActiveByProviderNameAsync(query.TenantId, "Manual", ct);
+
+            if (config is not null)
+            {
+                manualPaymentOptions = new ManualPaymentOptionsDto(
+                    QrCodeUrl: config.QrCodeUrl,
+                    PublicNote: config.PublicNote,
+                    Label: config.Label);
+            }
+        }
+
         return new PublicBookingStatusDto(
             Id: booking.Id,
             ReferenceId: booking.Id.ToString("N"),
@@ -38,6 +61,11 @@ public sealed class GetPublicBookingStatusQueryHandler(IBookingRepository bookin
             AmountInCentavos: booking.AmountInCentavos,
             Currency: booking.Currency,
             PaymentReference: booking.PaymentReference,
-            CheckoutUrl: checkoutUrl);
+            CheckoutUrl: checkoutUrl,
+            PaymentMode: paymentMode?.ToString(),
+            ManualPaymentOptions: manualPaymentOptions,
+            ProofOfPaymentUrl: booking.ProofOfPaymentUrl,
+            ProofOfPaymentFileName: booking.ProofOfPaymentFileName,
+            PaymentNote: booking.PaymentNote);
     }
 }

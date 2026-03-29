@@ -25,6 +25,9 @@ public sealed class BookingBuilder
     private string? _firstName = null;
     private string? _lastName = null;
     private string? _mobile = null;
+    private string? _proofOfPaymentUrl = null;
+    private string? _proofOfPaymentFileName = null;
+    private string? _paymentNote = null;
 
     public BookingBuilder WithTenantId(Guid tenantId) { _tenantId = tenantId; return this; }
     public BookingBuilder WithId(Guid id) { _id = id; return this; }
@@ -41,6 +44,9 @@ public sealed class BookingBuilder
     public BookingBuilder WithFirstName(string? firstName) { _firstName = firstName; return this; }
     public BookingBuilder WithLastName(string? lastName) { _lastName = lastName; return this; }
     public BookingBuilder WithMobile(string? mobile) { _mobile = mobile; return this; }
+    public BookingBuilder WithProofOfPaymentUrl(string? url) { _proofOfPaymentUrl = url; return this; }
+    public BookingBuilder WithProofOfPaymentFileName(string? name) { _proofOfPaymentFileName = name; return this; }
+    public BookingBuilder WithPaymentNote(string? note) { _paymentNote = note; return this; }
 
     public BookingBuilder InStatus(BookingStatus status)
     {
@@ -104,6 +110,14 @@ public sealed class BookingBuilder
         // Set checkout URL via reflection if specified
         if (_checkoutUrl is not null)
             SetProperty(booking, "CheckoutUrl", _checkoutUrl);
+
+        // Set proof-of-payment fields via reflection if specified
+        if (_proofOfPaymentUrl is not null)
+            SetProperty(booking, "ProofOfPaymentUrl", _proofOfPaymentUrl);
+        if (_proofOfPaymentFileName is not null)
+            SetProperty(booking, "ProofOfPaymentFileName", _proofOfPaymentFileName);
+        if (_paymentNote is not null)
+            SetProperty(booking, "PaymentNote", _paymentNote);
 
         return booking;
     }

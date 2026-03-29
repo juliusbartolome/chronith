@@ -11,5 +11,10 @@ public sealed record PublicBookingStatusDto(
     long AmountInCentavos,
     string Currency,
     string? PaymentReference,
-    string? CheckoutUrl
+    string? CheckoutUrl,
+    string? PaymentMode,
+    ManualPaymentOptionsDto? ManualPaymentOptions,
+    string? ProofOfPaymentUrl,
+    string? ProofOfPaymentFileName,
+    string? PaymentNote
 );
