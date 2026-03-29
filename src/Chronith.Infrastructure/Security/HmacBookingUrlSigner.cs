@@ -9,8 +9,10 @@ namespace Chronith.Infrastructure.Security;
 public sealed class HmacBookingUrlSigner : IBookingUrlSigner
 {
     private const string DomainPrefix = "booking-access";
+    private const string StaffVerifyPrefix = "staff-verify";
     private readonly byte[] _key;
     private readonly int _lifetimeSeconds;
+    private readonly int _staffVerifyLifetimeSeconds;
 
     public HmacBookingUrlSigner(
         IOptions<BlindIndexOptions> hmacOptions,
@@ -36,12 +38,13 @@ public sealed class HmacBookingUrlSigner : IBookingUrlSigner
                 $"Security:HmacKey must be exactly 32 bytes. Got {_key.Length} bytes.");
 
         _lifetimeSeconds = pageOptions.Value.TokenLifetimeSeconds;
+        _staffVerifyLifetimeSeconds = pageOptions.Value.StaffVerifyLifetimeSeconds;
     }
 
     public string GenerateSignedUrl(string baseUrl, Guid bookingId, string tenantSlug)
     {
         var expires = DateTimeOffset.UtcNow.AddSeconds(_lifetimeSeconds).ToUnixTimeSeconds();
-        var signature = ComputeSignature(bookingId, tenantSlug, expires);
+        var signature = ComputeSignature(DomainPrefix, bookingId, tenantSlug, expires);
 
         return $"{baseUrl}?bookingId={bookingId}&tenantSlug={tenantSlug}&expires={expires}&sig={signature}";
     }
@@ -51,16 +54,36 @@ public sealed class HmacBookingUrlSigner : IBookingUrlSigner
         if (expires < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
             return false;
 
-        var expected = ComputeSignature(bookingId, tenantSlug, expires);
+        var expected = ComputeSignature(DomainPrefix, bookingId, tenantSlug, expires);
 
         return CryptographicOperations.FixedTimeEquals(
             Encoding.UTF8.GetBytes(expected),
             Encoding.UTF8.GetBytes(signature));
     }
 
-    private string ComputeSignature(Guid bookingId, string tenantSlug, long expires)
+    public string GenerateStaffVerifyUrl(string baseUrl, Guid bookingId, string tenantSlug)
     {
-        var payload = $"{DomainPrefix}.{bookingId}.{tenantSlug}.{expires}";
+        var expires = DateTimeOffset.UtcNow.AddSeconds(_staffVerifyLifetimeSeconds).ToUnixTimeSeconds();
+        var signature = ComputeSignature(StaffVerifyPrefix, bookingId, tenantSlug, expires);
+
+        return $"{baseUrl}?bookingId={bookingId}&tenantSlug={tenantSlug}&expires={expires}&sig={signature}";
+    }
+
+    public bool ValidateStaffVerify(Guid bookingId, string tenantSlug, long expires, string signature)
+    {
+        if (expires < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            return false;
+
+        var expected = ComputeSignature(StaffVerifyPrefix, bookingId, tenantSlug, expires);
+
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(expected),
+            Encoding.UTF8.GetBytes(signature));
+    }
+
+    private string ComputeSignature(string prefix, Guid bookingId, string tenantSlug, long expires)
+    {
+        var payload = $"{prefix}.{bookingId}.{tenantSlug}.{expires}";
         var bytes = Encoding.UTF8.GetBytes(payload);
         using var hmac = new HMACSHA256(_key);
         var hash = hmac.ComputeHash(bytes);

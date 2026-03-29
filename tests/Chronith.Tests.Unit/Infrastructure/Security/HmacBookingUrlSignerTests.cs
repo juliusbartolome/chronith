@@ -158,4 +158,70 @@ public sealed class HmacBookingUrlSignerTests
         var act = () => new HmacBookingUrlSigner(hmacOptions, pageOptions);
         act.Should().Throw<InvalidOperationException>();
     }
+
+    // ── Staff Verify URL tests ─────────────────────────────────────────────
+
+    [Fact]
+    public void GenerateStaffVerifyUrl_ProducesUrlWithStaffVerifyDomainPrefix()
+    {
+        var signer = CreateSigner();
+        var bookingId = Guid.NewGuid();
+
+        var url = signer.GenerateStaffVerifyUrl("https://app.com/verify", bookingId, "test-tenant");
+
+        url.Should().StartWith("https://app.com/verify?");
+        url.Should().Contain($"bookingId={bookingId}");
+        url.Should().Contain("tenantSlug=test-tenant");
+        url.Should().Contain("expires=");
+        url.Should().Contain("sig=");
+    }
+
+    [Fact]
+    public void ValidateStaffVerify_RejectsCustomerDomainSignatures()
+    {
+        // Generate a booking-access (customer) URL, then try to validate it as staff-verify
+        var signer = CreateSigner();
+        var bookingId = Guid.NewGuid();
+        var tenantSlug = "test-tenant";
+
+        var customerUrl = signer.GenerateSignedUrl("https://app.com/pay", bookingId, tenantSlug);
+        var qs = System.Web.HttpUtility.ParseQueryString(new Uri(customerUrl).Query);
+        var expires = long.Parse(qs["expires"]!);
+        var sig = qs["sig"]!;
+
+        // Customer signature must NOT work for staff verification (domain separation)
+        signer.ValidateStaffVerify(bookingId, tenantSlug, expires, sig).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ValidateStaffVerify_AcceptsValidStaffVerifySignature()
+    {
+        var signer = CreateSigner();
+        var bookingId = Guid.NewGuid();
+        var tenantSlug = "test-tenant";
+
+        var url = signer.GenerateStaffVerifyUrl("https://app.com/verify", bookingId, tenantSlug);
+        var qs = System.Web.HttpUtility.ParseQueryString(new Uri(url).Query);
+        var expires = long.Parse(qs["expires"]!);
+        var sig = qs["sig"]!;
+
+        signer.ValidateStaffVerify(bookingId, tenantSlug, expires, sig).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Validate_RejectsStaffVerifyDomainSignatures()
+    {
+        // Generate a staff-verify URL, then try to validate it as customer booking-access
+        var signer = CreateSigner();
+        var bookingId = Guid.NewGuid();
+        var tenantSlug = "test-tenant";
+
+        var staffUrl = signer.GenerateStaffVerifyUrl("https://app.com/verify", bookingId, tenantSlug);
+        var qs = System.Web.HttpUtility.ParseQueryString(new Uri(staffUrl).Query);
+        var expires = long.Parse(qs["expires"]!);
+        var sig = qs["sig"]!;
+
+        // Staff-verify signature must NOT work for customer validation (domain separation)
+        signer.Validate(bookingId, tenantSlug, expires, sig).Should().BeFalse();
+    }
 }

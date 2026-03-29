@@ -14,4 +14,9 @@ public sealed class PaymentPageOptions
     /// Lifetime of generated booking access tokens in seconds. Default: 3600 (1 hour).
     /// </summary>
     public int TokenLifetimeSeconds { get; set; } = 3600;
+
+    /// <summary>
+    /// Lifetime of generated staff verification tokens in seconds. Default: 86400 (24 hours).
+    /// </summary>
+    public int StaffVerifyLifetimeSeconds { get; set; } = 86400;
 }
