@@ -165,7 +165,7 @@ public sealed class ConfirmManualPaymentHandlerTests
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.Status.Should().Be(BookingStatus.PendingVerification);
-        await _bookingRepo.Received(1).UpdateAsync(booking, Arg.Any<CancellationToken>());
+        await _bookingRepo.Received(1).UpdatePublicAsync(booking, TenantId, Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

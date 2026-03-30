@@ -83,8 +83,8 @@ public sealed class VerifyBookingPaymentCommandHandler(
             toStatus = BookingStatus.Cancelled;
         }
 
-        // 5. Persist
-        await bookingRepo.UpdateAsync(booking, ct);
+        // 5. Persist (use public update — bypasses tenant query filter for anonymous endpoints)
+        await bookingRepo.UpdatePublicAsync(booking, tenant.Id, ct);
 
         // 6. Load booking type for notification slug and DTO
         var bookingType = await bookingTypeRepo.GetByIdAsync(booking.BookingTypeId, ct);

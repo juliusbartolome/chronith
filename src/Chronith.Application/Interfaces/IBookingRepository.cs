@@ -45,6 +45,12 @@ public interface IBookingRepository
     Task UpdateAsync(Booking booking, CancellationToken ct = default);
 
     /// <summary>
+    /// Public-safe update that bypasses the global tenant query filter.
+    /// Uses explicit Id + TenantId filters. Safe for anonymous / cross-tenant endpoints.
+    /// </summary>
+    Task UpdatePublicAsync(Booking booking, Guid tenantId, CancellationToken ct = default);
+
+    /// <summary>
     /// Looks up a booking by its payment reference (provider transaction ID).
     /// When tenantId is Guid.Empty, searches across all tenants (for webhook processing).
     /// </summary>

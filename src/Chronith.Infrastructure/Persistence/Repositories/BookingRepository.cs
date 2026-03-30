@@ -266,6 +266,31 @@ public sealed class BookingRepository(
                 .SetProperty(b => b.CheckoutUrl, booking.CheckoutUrl),
                 ct);
 
+        await InsertNewStatusChangesAsync(booking, ct);
+    }
+
+    public async Task UpdatePublicAsync(Booking booking, Guid tenantId, CancellationToken ct = default)
+    {
+        // Bypasses global tenant query filter — mirrors GetPublicByIdAsync.
+        // Uses explicit TenantId + Id + !IsDeleted filters for safety.
+        await _db.Bookings
+            .IgnoreQueryFilters()
+            .Where(b => b.Id == booking.Id && b.TenantId == tenantId && !b.IsDeleted)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(b => b.Status, booking.Status)
+                .SetProperty(b => b.IsDeleted, booking.IsDeleted)
+                .SetProperty(b => b.PaymentReference, booking.PaymentReference)
+                .SetProperty(b => b.CheckoutUrl, booking.CheckoutUrl)
+                .SetProperty(b => b.ProofOfPaymentUrl, booking.ProofOfPaymentUrl)
+                .SetProperty(b => b.ProofOfPaymentFileName, booking.ProofOfPaymentFileName)
+                .SetProperty(b => b.PaymentNote, booking.PaymentNote),
+                ct);
+
+        await InsertNewStatusChangesAsync(booking, ct);
+    }
+
+    private async Task InsertNewStatusChangesAsync(Booking booking, CancellationToken ct)
+    {
         // Insert any new status change records
         var existingIds = await _db.BookingStatusChanges
             .Where(sc => sc.BookingId == booking.Id)

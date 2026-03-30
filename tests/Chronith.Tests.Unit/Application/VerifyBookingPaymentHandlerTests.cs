@@ -107,7 +107,7 @@ public sealed class VerifyBookingPaymentHandlerTests
 
         booking.Status.Should().Be(BookingStatus.Confirmed);
         result.Status.Should().Be(BookingStatus.Confirmed);
-        await _bookingRepo.Received(1).UpdateAsync(booking, Arg.Any<CancellationToken>());
+        await _bookingRepo.Received(1).UpdatePublicAsync(booking, TenantId, Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -140,7 +140,7 @@ public sealed class VerifyBookingPaymentHandlerTests
 
         booking.Status.Should().Be(BookingStatus.Cancelled);
         result.Status.Should().Be(BookingStatus.Cancelled);
-        await _bookingRepo.Received(1).UpdateAsync(booking, Arg.Any<CancellationToken>());
+        await _bookingRepo.Received(1).UpdatePublicAsync(booking, TenantId, Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

@@ -1,6 +1,9 @@
+using System.Collections.Concurrent;
+using Chronith.Application.Interfaces;
 using Chronith.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
@@ -51,6 +54,17 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
                 // HMAC payment page settings for signed URL generation
                 builder.UseSetting("PaymentPage:BaseUrl", "https://test.example.com/pay");
                 builder.UseSetting("PaymentPage:TokenLifetimeSeconds", "3600");
+
+                // Replace Azure Blob Storage with in-memory stub so functional tests
+                // that upload proof-of-payment files work without Azurite.
+                builder.ConfigureTestServices(services =>
+                {
+                    var descriptor = services.SingleOrDefault(
+                        d => d.ServiceType == typeof(IFileStorageService));
+                    if (descriptor is not null)
+                        services.Remove(descriptor);
+                    services.AddSingleton<IFileStorageService, InMemoryFileStorageService>();
+                });
             });
 
         // Run migrations
@@ -95,3 +109,39 @@ public sealed class FunctionalTestFixture : IAsyncLifetime
 
 [CollectionDefinition("Functional")]
 public class FunctionalCollection : ICollectionFixture<FunctionalTestFixture> { }
+
+/// <summary>
+/// In-memory stub for <see cref="IFileStorageService"/> used by functional tests.
+/// Stores blobs in a <see cref="ConcurrentDictionary{TKey,TValue}"/> and returns
+/// deterministic URLs so assertions can verify proof-of-payment upload behaviour
+/// without requiring Azurite or Azure Blob Storage.
+/// </summary>
+internal sealed class InMemoryFileStorageService : IFileStorageService
+{
+    private readonly ConcurrentDictionary<string, byte[]> _blobs = new();
+
+    public async Task<FileUploadResult> UploadAsync(
+        string containerName, string fileName, Stream content, string contentType, CancellationToken ct = default)
+    {
+        using var ms = new MemoryStream();
+        await content.CopyToAsync(ms, ct);
+        var key = $"{containerName}/{fileName}";
+        _blobs[key] = ms.ToArray();
+        var url = $"https://memory.blob.local/{key}";
+        return new FileUploadResult(url, fileName);
+    }
+
+    public Task<Stream?> DownloadAsync(string containerName, string fileName, CancellationToken ct = default)
+    {
+        var key = $"{containerName}/{fileName}";
+        if (_blobs.TryGetValue(key, out var data))
+            return Task.FromResult<Stream?>(new MemoryStream(data));
+        return Task.FromResult<Stream?>(null);
+    }
+
+    public Task DeleteAsync(string containerName, string fileName, CancellationToken ct = default)
+    {
+        _blobs.TryRemove($"{containerName}/{fileName}", out _);
+        return Task.CompletedTask;
+    }
+}

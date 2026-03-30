@@ -88,8 +88,8 @@ public sealed class ConfirmManualPaymentCommandHandler(
         var fromStatus = booking.Status;
         booking.SubmitProofOfPayment(proofUrl, proofFileName, cmd.PaymentNote, "customer", "customer");
 
-        // 6. Persist
-        await bookingRepo.UpdateAsync(booking, ct);
+        // 6. Persist (use public update — bypasses tenant query filter for anonymous endpoints)
+        await bookingRepo.UpdatePublicAsync(booking, tenant.Id, ct);
 
         // 7. Load booking type for notification slug and DTO
         var bookingType = await bookingTypeRepo.GetByIdAsync(booking.BookingTypeId, ct);
