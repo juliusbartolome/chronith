@@ -1,14 +1,19 @@
 using System.Text.Json;
 using Chronith.Application.Interfaces;
+using Chronith.Application.Options;
 using Chronith.Domain.Enums;
 using Chronith.Domain.Models;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 namespace Chronith.Application.Notifications;
 
 public sealed class NotificationOutboxHandler(
     INotificationConfigRepository configRepo,
-    IWebhookOutboxRepository outboxRepo)
+    IWebhookOutboxRepository outboxRepo,
+    IBookingUrlSigner signer,
+    ITenantRepository tenantRepo,
+    IOptions<PaymentPageOptions> pageOptions)
     : INotificationHandler<BookingStatusChangedNotification>
 {
     private static readonly JsonSerializerOptions JsonOptions =
@@ -32,6 +37,20 @@ public sealed class NotificationOutboxHandler(
 
         if (enabledConfigs.Count == 0) return;
 
+        // ── Generate staff verify URL for PendingVerification transitions ─────
+        string? staffVerifyUrl = null;
+        if (notification.ToStatus == BookingStatus.PendingVerification)
+        {
+            var tenant = await tenantRepo.GetByIdAsync(notification.TenantId, ct);
+            if (tenant is not null)
+            {
+                staffVerifyUrl = signer.GenerateStaffVerifyUrl(
+                    pageOptions.Value.StaffVerifyBaseUrl,
+                    notification.BookingId,
+                    tenant.Slug);
+            }
+        }
+
         var payload = new NotificationPayload(
             Event: eventType,
             BookingId: notification.BookingId,
@@ -45,7 +64,8 @@ public sealed class NotificationOutboxHandler(
             CustomerFirstName: notification.CustomerFirstName,
             CustomerLastName: notification.CustomerLastName,
             CustomerMobile: notification.CustomerMobile,
-            OccurredAt: DateTimeOffset.UtcNow);
+            OccurredAt: DateTimeOffset.UtcNow,
+            StaffVerifyUrl: staffVerifyUrl);
 
         var payloadJson = JsonSerializer.Serialize(payload, JsonOptions);
 
@@ -77,4 +97,5 @@ file sealed record NotificationPayload(
     string CustomerFirstName,
     string CustomerLastName,
     string? CustomerMobile,
-    DateTimeOffset OccurredAt);
+    DateTimeOffset OccurredAt,
+    string? StaffVerifyUrl);

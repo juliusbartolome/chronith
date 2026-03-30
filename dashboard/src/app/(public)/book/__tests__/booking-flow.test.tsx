@@ -9,6 +9,34 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
+// Mock the manual payment hook (useBookingStatus used by success page)
+vi.mock("@/hooks/use-manual-payment", () => ({
+  useBookingStatus: vi.fn(() => ({
+    data: {
+      id: "booking-123",
+      referenceId: "REF-123",
+      status: "Confirmed",
+      start: "2026-03-15T09:00:00Z",
+      end: "2026-03-15T10:00:00Z",
+      amountInCentavos: 50000,
+      currency: "PHP",
+      paymentReference: null,
+      checkoutUrl: null,
+      paymentMode: null,
+      manualPaymentOptions: null,
+      proofOfPaymentUrl: null,
+      proofOfPaymentFileName: null,
+      paymentNote: null,
+    },
+    isLoading: false,
+    error: null,
+  })),
+  useConfirmManualPayment: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
+}));
+
 // Mock the hooks
 vi.mock("@/hooks/use-public-booking", () => ({
   usePublicBookingTypes: vi.fn(() => ({
@@ -109,7 +137,9 @@ describe("Success Page", () => {
       await import("../[tenantSlug]/[btSlug]/success/page");
     render(createElement(SuccessPage), { wrapper: createWrapper() });
     await waitFor(() =>
-      expect(screen.getByText("Booking Confirmed!")).toBeInTheDocument(),
+      expect(
+        screen.getByText("Your booking is confirmed!"),
+      ).toBeInTheDocument(),
     );
   });
 });

@@ -19,6 +19,9 @@ public sealed class BookingEntity
     public long AmountInCentavos { get; set; }
     public string Currency { get; set; } = "PHP";
     public string? CheckoutUrl { get; set; }
+    public string? ProofOfPaymentUrl { get; set; }
+    public string? ProofOfPaymentFileName { get; set; }
+    public string? PaymentNote { get; set; }
     public Guid? StaffMemberId { get; set; }
     public string? CustomFields { get; set; }
     public Guid? CustomerAccountId { get; set; }

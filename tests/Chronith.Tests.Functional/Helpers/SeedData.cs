@@ -363,6 +363,51 @@ public static class SeedData
         return id;
     }
 
+    public static async Task<Guid> SeedTenantPaymentConfigAsync(
+        ChronithDbContext db,
+        string providerName = "Manual",
+        string label = "Manual Payment",
+        string? publicNote = "Please send payment via GCash.",
+        string? qrCodeUrl = "https://example.com/qr.png",
+        Guid? tenantId = null,
+        WebApplicationFactory<Program>? factory = null)
+    {
+        var tid = tenantId ?? TestConstants.TenantId;
+
+        // Idempotent — return existing id if (tenantId, providerName) already seeded
+        var existing = db.TenantPaymentConfigs.IgnoreQueryFilters()
+            .FirstOrDefault(c => c.TenantId == tid && c.ProviderName == providerName);
+        if (existing is not null) return existing.Id;
+
+        // Settings must be encrypted with the versioned AES-256-GCM format
+        // ({version}:{base64}) or TenantPaymentConfigRepository.DecryptSettings will throw.
+        var settings = "{}";
+        if (factory is not null)
+        {
+            using var scope = factory.Services.CreateScope();
+            var encryptionService = scope.ServiceProvider.GetRequiredService<IEncryptionService>();
+            settings = encryptionService.Encrypt("{}") ?? "{}";
+        }
+
+        var id = Guid.NewGuid();
+        db.TenantPaymentConfigs.Add(new TenantPaymentConfigEntity
+        {
+            Id = id,
+            TenantId = tid,
+            ProviderName = providerName,
+            Label = label,
+            IsActive = true,
+            IsDeleted = false,
+            Settings = settings,
+            PublicNote = publicNote,
+            QrCodeUrl = qrCodeUrl,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
     public static async Task<Guid> SeedNotificationTemplateAsync(
         ChronithDbContext db,
         string eventType = "booking.confirmed",

@@ -52,6 +52,7 @@ export type PublicBookingCreatedDto = {
   lastName: string;
   customerEmail: string;
   priceCentavos: number;
+  paymentUrl: string | null;
 };
 
 export function usePublicBookingTypes(tenantSlug: string) {

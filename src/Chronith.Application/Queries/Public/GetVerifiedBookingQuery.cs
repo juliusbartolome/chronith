@@ -1,7 +1,7 @@
 using Chronith.Application.Behaviors;
 using Chronith.Application.DTOs;
 using Chronith.Application.Interfaces;
-using Chronith.Domain.Enums;
+using Chronith.Application.Mappers;
 using Chronith.Domain.Exceptions;
 using MediatR;
 
@@ -14,7 +14,10 @@ public sealed record GetVerifiedBookingQuery(Guid TenantId, Guid BookingId)
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
-public sealed class GetVerifiedBookingQueryHandler(IBookingRepository bookingRepository)
+public sealed class GetVerifiedBookingQueryHandler(
+    IBookingRepository bookingRepository,
+    IBookingTypeRepository bookingTypeRepository,
+    ITenantPaymentConfigRepository tenantPaymentConfigRepository)
     : IRequestHandler<GetVerifiedBookingQuery, PublicBookingStatusDto>
 {
     public async Task<PublicBookingStatusDto> Handle(
@@ -23,19 +26,7 @@ public sealed class GetVerifiedBookingQueryHandler(IBookingRepository bookingRep
         var booking = await bookingRepository.GetPublicByIdAsync(query.TenantId, query.BookingId, ct)
             ?? throw new NotFoundException("Booking", query.BookingId);
 
-        var checkoutUrl = booking.Status == BookingStatus.PendingPayment
-            ? booking.CheckoutUrl
-            : null;
-
-        return new PublicBookingStatusDto(
-            Id: booking.Id,
-            ReferenceId: booking.Id.ToString("N"),
-            Status: booking.Status,
-            Start: booking.Start,
-            End: booking.End,
-            AmountInCentavos: booking.AmountInCentavos,
-            Currency: booking.Currency,
-            PaymentReference: booking.PaymentReference,
-            CheckoutUrl: checkoutUrl);
+        return await PublicBookingStatusMapper.ToPublicStatusDtoAsync(
+            booking, bookingTypeRepository, tenantPaymentConfigRepository, query.TenantId, ct);
     }
 }
