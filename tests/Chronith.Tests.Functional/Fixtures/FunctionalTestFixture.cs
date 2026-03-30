@@ -135,7 +135,11 @@ internal sealed class InMemoryFileStorageService : IFileStorageService
     {
         var key = $"{containerName}/{fileName}";
         if (_blobs.TryGetValue(key, out var data))
-            return Task.FromResult<Stream?>(new MemoryStream(data));
+        {
+            // Caller owns the returned stream and is responsible for disposal.
+            Stream result = new MemoryStream(data); // lgtm [cs/disposable-not-disposed]
+            return Task.FromResult<Stream?>(result);
+        }
         return Task.FromResult<Stream?>(null);
     }
 

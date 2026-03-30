@@ -54,7 +54,7 @@ public sealed class ManualPaymentAuthTests(FunctionalTestFixture fixture)
         var (expires, sig) = ExtractHmacParams(customerUrl);
 
         var client = fixture.CreateAnonymousClient();
-        var content = new MultipartFormDataContent();
+        using var content = new MultipartFormDataContent();
         content.Add(new StringContent(""), "PaymentNote");
         var response = await client.PostAsync(
             $"/v1/public/{TenantSlug}/bookings/{bookingId}/confirm-payment?expires={expires}&sig={sig}",
@@ -115,7 +115,7 @@ public sealed class ManualPaymentAuthTests(FunctionalTestFixture fixture)
         var expiredTimestamp = DateTimeOffset.UtcNow.AddSeconds(-10).ToUnixTimeSeconds();
 
         var client = fixture.CreateAnonymousClient();
-        var content = new MultipartFormDataContent();
+        using var content = new MultipartFormDataContent();
         content.Add(new StringContent(""), "PaymentNote");
         var response = await client.PostAsync(
             $"/v1/public/{TenantSlug}/bookings/{bookingId}/confirm-payment?expires={expiredTimestamp}&sig={sig}",
@@ -202,7 +202,7 @@ public sealed class ManualPaymentAuthTests(FunctionalTestFixture fixture)
 
         // Send the staff-domain sig to the confirm-payment endpoint
         var client = fixture.CreateAnonymousClient();
-        var content = new MultipartFormDataContent();
+        using var content = new MultipartFormDataContent();
         content.Add(new StringContent(""), "PaymentNote");
         var response = await client.PostAsync(
             $"/v1/public/{TenantSlug}/bookings/{bookingId}/confirm-payment?expires={expires}&sig={sig}",

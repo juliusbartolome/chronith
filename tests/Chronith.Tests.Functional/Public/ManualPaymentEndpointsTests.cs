@@ -93,7 +93,7 @@ public sealed class ManualPaymentEndpointsTests(FunctionalTestFixture fixture)
         var customerUrl = signer.GenerateSignedUrl("https://test.example.com/pay", bookingId, TenantSlug);
         var (expires, sig) = ExtractHmacParams(customerUrl);
 
-        var confirmContent = new MultipartFormDataContent();
+        using var confirmContent = new MultipartFormDataContent();
         var fileContent = new ByteArrayContent([0xFF, 0xD8, 0xFF, 0xE0]);
         fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
         confirmContent.Add(fileContent, "ProofFile", "proof.jpg");
@@ -138,7 +138,7 @@ public sealed class ManualPaymentEndpointsTests(FunctionalTestFixture fixture)
         var (expires, sig) = ExtractHmacParams(customerUrl);
 
         // Send multipart form without a file — just a note
-        var content = new MultipartFormDataContent();
+        using var content = new MultipartFormDataContent();
         content.Add(new StringContent("Paid via bank deposit"), "PaymentNote");
 
         var response = await client.PostAsync(
@@ -166,7 +166,7 @@ public sealed class ManualPaymentEndpointsTests(FunctionalTestFixture fixture)
         var customerUrl = signer.GenerateSignedUrl("https://test.example.com/pay", bookingId, TenantSlug);
         var (expires, sig) = ExtractHmacParams(customerUrl);
 
-        var confirmContent = new MultipartFormDataContent();
+        using var confirmContent = new MultipartFormDataContent();
         confirmContent.Add(new StringContent(""), "PaymentNote");
         var confirmResponse = await client.PostAsync(
             $"/v1/public/{TenantSlug}/bookings/{bookingId}/confirm-payment?expires={expires}&sig={sig}",
@@ -202,7 +202,7 @@ public sealed class ManualPaymentEndpointsTests(FunctionalTestFixture fixture)
         // Use an already-expired timestamp (1 second in the past)
         var expiredTimestamp = DateTimeOffset.UtcNow.AddSeconds(-1).ToUnixTimeSeconds();
 
-        var content = new MultipartFormDataContent();
+        using var content = new MultipartFormDataContent();
         content.Add(new StringContent(""), "PaymentNote");
         var response = await client.PostAsync(
             $"/v1/public/{TenantSlug}/bookings/{bookingId}/confirm-payment?expires={expiredTimestamp}&sig={sig}",
@@ -247,7 +247,7 @@ public sealed class ManualPaymentEndpointsTests(FunctionalTestFixture fixture)
         var expires = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds();
         var invalidSig = "this-is-not-a-valid-signature";
 
-        var content = new MultipartFormDataContent();
+        using var content = new MultipartFormDataContent();
         content.Add(new StringContent(""), "PaymentNote");
         var response = await client.PostAsync(
             $"/v1/public/{TenantSlug}/bookings/{bookingId}/confirm-payment?expires={expires}&sig={invalidSig}",
@@ -295,7 +295,7 @@ public sealed class ManualPaymentEndpointsTests(FunctionalTestFixture fixture)
         var customerUrl = signer.GenerateSignedUrl("https://test.example.com/pay", bookingId, TenantSlug);
         var (expires, sig) = ExtractHmacParams(customerUrl);
 
-        var content = new MultipartFormDataContent();
+        using var content = new MultipartFormDataContent();
         content.Add(new StringContent(""), "PaymentNote");
         var client = fixture.CreateAnonymousClient();
         var response = await client.PostAsync(
